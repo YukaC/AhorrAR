@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+/* Dark mode por clase (.dark en <html>), controlado por toggle + persistencia. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* AhorrAR accent = emerald (dinero/ahorro) + teal secundario */
+  --color-accent-50: oklch(0.979 0.021 166.113);
+  --color-accent-100: oklch(0.95 0.052 163.051);
+  --color-accent-200: oklch(0.905 0.093 164.15);
+  --color-accent-300: oklch(0.845 0.143 164.978);
+  --color-accent-400: oklch(0.765 0.177 163.223);
+  --color-accent-500: oklch(0.696 0.17 162.48);
+  --color-accent-600: oklch(0.596 0.145 163.225);
+  --color-accent-700: oklch(0.508 0.118 165.612);
+  --color-accent-800: oklch(0.432 0.095 166.913);
+  --color-accent-900: oklch(0.378 0.077 168.94);
+
+  --color-warm-50: oklch(0.985 0.002 85);
+
+  --shadow-card: 0 1px 2px oklch(0 0 0 / 0.05), 0 4px 16px -4px oklch(0 0 0 / 0.08);
+
+  /* Vocabulario de motion compartido: una sola curva para toda la app. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Entrada de vistas de estado (idle/running/error/done) sobre montaje. */
+  --animate-view-in: view-in 200ms var(--ease-out) both;
+  @keyframes view-in {
+    from {
+      opacity: 0;
+      translate: 0 10px;
+    }
+  }
+
+  /* Entrada escalonada de las cards del grid (solo en búsqueda nueva). */
+  --animate-card-in: card-in 180ms var(--ease-out) backwards;
+  @keyframes card-in {
+    from {
+      opacity: 0;
+      translate: 0 10px;
+    }
+  }
+}
+
+@layer base {
+  html {
+    @apply antialiased;
+    scroll-behavior: smooth;
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-warm-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100;
+  }
+  /* Crossfade suave al alternar tema: :where() (especificidad 0) para que
+     cualquier utilidad de transition de un componente tenga la última palabra. */
+  :where(body, header, main, section, article, div, li, p, h1, h2, h3, span, label, a, button, input, select)
+    {
+    transition:
+      background-color 250ms var(--ease-out),
+      border-color 250ms var(--ease-out),
+      color 250ms var(--ease-out);
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent-500 ring-offset-2 ring-offset-warm-50 dark:ring-offset-neutral-950;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
