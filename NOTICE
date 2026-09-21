@@ -1,0 +1,13 @@
+# NOTICE — Third-party software
+
+AhorrAR includes or depends on third-party open-source components. Their licenses apply to those components. Notable ones:
+
+| Component | License (typical) | Role |
+|---|---|---|
+| [Scrapling](https://github.com/d4vinci/Scrapling) | BSD-3-Clause | Primary crawler (Python) |
+| Playwright | Apache-2.0 | Browser automation (legacy Node path) |
+| Express, React, Vite, and other npm packages | see each package | API / UI |
+
+Full license texts for npm/Python packages live in their upstream repositories and in `node_modules` / the `uv` environment after install.
+
+AhorrAR itself is licensed under the MIT License — see [LICENSE](LICENSE).

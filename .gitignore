@@ -1,0 +1,39 @@
+# deps
+node_modules/
+scraper/.venv/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.codegraph/
+
+# builds
+dist/
+build/
+out/
+*.tsbuildinfo
+.vercel/
+
+# env / secrets
+.env
+.env.*
+!.env.example
+*.local
+MELI_*.token
+
+# logs
+*.log
+npm-debug.log*
+.DS_Store
+
+# crawler artifacts
+backend/.crawlee/
+backend/stealth/state/
+storage/
+scraper/.scrapling/
+
+# OS / editor
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
