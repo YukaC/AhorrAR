@@ -1,0 +1,20 @@
+{
+  "name": "ahorrar",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Price scraper recursivo geolocalizado: mejor precio por producto+país con envío confirmado",
+  "scripts": {
+    "install:all": "npm --prefix backend install && npm --prefix frontend install && cd scraper && uv sync",
+    "dev:scraper": "cd scraper && uv run ahorrar-scraper",
+    "dev:backend": "CRAWLER=auto npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev": "npm run dev:scraper & npm run dev:backend & npm run dev:frontend",
+    "test": "npm --prefix backend run test",
+    "typecheck": "npm --prefix backend run typecheck && npm --prefix frontend run typecheck",
+    "build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "start": "npm run dev"
+  },
+  "engines": {
+    "node": ">=22.18"
+  }
+}
