@@ -105,4 +105,24 @@ describe('rankByPriority', () => {
     expect(ml).toBeLessThanOrEqual(4); // 50% de 8
     expect(ranked.some((r) => r.store.name === 'tienda2')).toBe(true);
   });
+
+  it('relevancia fuerte gana a precio bajo débil (§V28)', () => {
+    const primary = result({
+      price: 800_000,
+      name: 'Notebook Lenovo IdeaPad 15 Intel i5',
+    });
+    const accessory = result({
+      price: 5_000,
+      name: 'Cable HDMI 2 metros negro',
+    });
+    const ranked = rankByPriority([accessory, primary], AR, null, 'notebook');
+    expect(ranked[0]!.name).toContain('Notebook');
+  });
+
+  it('perfume real gana a crema barata (§V28)', () => {
+    const frag = result({ price: 85_000, name: 'Dior Sauvage EDP 100ml' });
+    const cream = result({ price: 3_000, name: 'Crema corporal hidratante 200ml' });
+    const ranked = rankByPriority([cream, frag], AR, null, 'perfume');
+    expect(ranked[0]!.name).toContain('Sauvage');
+  });
 });

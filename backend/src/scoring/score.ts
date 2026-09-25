@@ -5,10 +5,12 @@
  *   1. Domain affinity — local (ccTLD país + marketplaces oficiales) antes
  *      que internacional (§V4). Modeled as a tier with a large gap so price
  *      can never flip tiers.
- *   2. Effective price — weighted by curation reputation (§V18: curated index
+ *   2. Title relevance — primary query match before weak/secondary (§V28).
+ *      Gap large enough that a cheap accessory cannot outrank a real product.
+ *   3. Effective price — weighted by curation reputation (§V18: curated index
  *      y shops descubiertas ponderan mejor) and interest-free installments
  *      bonus (§V18: cuotas sin interés).
- *   3. Depth (shallower wins; fewer hops = closer to the seed).
+ *   4. Depth (shallower wins; fewer hops = closer to the seed).
  *
  * When a cap is given, MercadoLibre share is clamped to ≤50% (§V17).
  * Implemented as a single weighted-decay numeric score. When two results tie
@@ -16,9 +18,11 @@
  */
 
 import type { CountryConfig, ProductResult } from '../../../shared/contract.ts';
+import { RELEVANCE_STRONG, titleRelevanceScore } from '../search/relevance.ts';
 import { hostOf, isCuratedHost, isKnownShopHost } from '../search/seeds.ts';
 
 const TIER_INT = 1_000_000;
+const TIER_WEAK_RELEVANCE = 100_000; // §V28: weak title match never beats strong on price
 const PRICE_FACTOR = 1e-3; // decays: price matters only inside the same tier
 const DEPTH_FACTOR = 1e-6; // minimal last-resort tiebreak
 
@@ -70,24 +74,31 @@ export function isLocalResult(result: Pick<ProductResult, 'store'>): boolean {
   return result.store.local === true;
 }
 
-export function scoreFor(result: ProductResult, country: CountryConfig): number {
+export function scoreFor(result: ProductResult, country: CountryConfig, product?: string): number {
   const local = isLocalResult(result) || domainAffinity(result.store.siteUrl, country);
   const tier = local ? 0 : TIER_INT;
+  const relevance =
+    product === undefined || product.trim() === ''
+      ? 1
+      : titleRelevanceScore(result.name, product);
+  const relevanceTier = relevance >= RELEVANCE_STRONG ? 0 : TIER_WEAK_RELEVANCE;
   const discount = reputationDiscount(result) + installmentDiscount(result);
   const effective = result.price * (1 - discount);
-  return tier + PRICE_FACTOR * effective + DEPTH_FACTOR * result.depth;
+  return tier + relevanceTier + PRICE_FACTOR * effective + DEPTH_FACTOR * result.depth;
 }
 
 /**
  * Rank by priority, optionally clamping ML share to ≤50% of the top
  * `maxResults` (§V17). Without a cap, behavior matches the pure sort.
+ * Pass `product` so title relevance can demote secondary listings (§V28).
  */
 export function rankByPriority(
   results: ProductResult[],
   country: CountryConfig,
   capMlShareOf?: number | null,
+  product?: string,
 ): ProductResult[] {
-  const ranked = [...results].sort((a, b) => scoreFor(a, country) - scoreFor(b, country));
+  const ranked = [...results].sort((a, b) => scoreFor(a, country, product) - scoreFor(b, country, product));
   if (capMlShareOf === undefined || capMlShareOf === null || capMlShareOf <= 0) {
     return ranked.map((r, i) => ({ ...r, rank: i + 1 }));
   }

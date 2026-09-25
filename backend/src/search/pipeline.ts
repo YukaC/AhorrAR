@@ -15,11 +15,11 @@ import type {
 import { normalizePrice } from '../normalize/price.ts';
 import { normalizeUrl } from '../normalize/url.ts';
 import { validateShipping } from '../shipping/shipping.ts';
-import { titleMatchesQuery } from './relevance.ts';
+import { isRelevantResult } from './relevance.ts';
 import type { RawItem } from './types.ts';
 
 export function finalizeRawItem(raw: RawItem, params: SearchParams, country: CountryConfig): ProductResult | null {
-  if (!titleMatchesQuery(raw.name, params.product)) return null;
+  if (!isRelevantResult(raw.name, params.product)) return null;
 
   const price = normalizePrice(raw.priceRaw, country);
   if (price === null) return null;
