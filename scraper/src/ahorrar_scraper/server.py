@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import asyncio
+import json
 import logging
 import os
 from typing import Any
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from ahorrar_scraper.crawl import crawl
@@ -49,6 +52,58 @@ def crawl_endpoint(req: CrawlRequest) -> dict[str, Any]:
         max_depth=req.maxDepth,
         include_ml=req.includeMl,
     )
+
+
+@app.post("/crawl/stream")
+async def crawl_stream(req: CrawlRequest) -> StreamingResponse:
+    """ndjson stream: {"type":"offer",...} | {"type":"progress",...} | {"type":"done","summary":...} | {"type":"error",...}"""
+    product = req.product.strip()
+    if not product:
+        raise HTTPException(400, "product required")
+    log.info(
+        "crawl/stream product=%r maxResults=%s includeMl=%s",
+        product,
+        req.maxResults,
+        req.includeMl,
+    )
+    queue: asyncio.Queue = asyncio.Queue()
+
+    def run() -> None:
+        def emit(evt: dict[str, Any]) -> None:
+            asyncio.run_coroutine_threadsafe(queue.put(evt), loop).result()
+
+        try:
+            import time
+
+            started = time.time()
+            summary = crawl(
+                product,
+                max_results=req.maxResults,
+                max_nodes=req.maxNodes,
+                max_depth=req.maxDepth,
+                include_ml=req.includeMl,
+                on_offer=lambda o: emit({"type": "offer", "offer": o}),
+                on_progress=lambda **kw: emit({"type": "progress", **kw}),
+            )
+            summary["elapsedMs"] = int((time.time() - started) * 1000)
+            emit({"type": "done", "summary": summary})
+        except Exception as exc:  # noqa: BLE001
+            log.exception("crawl/stream failed")
+            emit({"type": "error", "message": str(exc)})
+        finally:
+            asyncio.run_coroutine_threadsafe(queue.put(None), loop).result()
+
+    loop = asyncio.get_running_loop()
+    asyncio.get_event_loop().run_in_executor(None, run)
+
+    async def gen():
+        while True:
+            evt = await queue.get()
+            if evt is None:
+                break
+            yield json.dumps(evt, ensure_ascii=False) + "\n"
+
+    return StreamingResponse(gen(), media_type="application/x-ndjson")
 
 
 def main() -> None:
