@@ -167,6 +167,21 @@ export function useSearch() {
     setState((s) => (s.status === 'running' ? { ...s, status: 'idle', progress: null } : s));
   }, []);
 
+  /** Volver al idle (logo home): corta job en vuelo y limpia resultado/error. */
+  const goHome = useCallback(() => {
+    abortRef.current?.abort();
+    cleanupRef.current?.close();
+    cleanupRef.current = null;
+    abortRef.current = null;
+    lastParamsRef.current = null;
+    try {
+      localStorage.removeItem(LAST_SEARCH_KEY);
+    } catch {
+      /* private mode / quota */
+    }
+    setState(IDLE_STATE);
+  }, []);
+
   useEffect(() => () => {
     abortRef.current?.abort();
     cleanupRef.current?.close();
@@ -213,5 +228,5 @@ export function useSearch() {
     };
   }, []);
 
-  return { state, run, retry, cancel };
+  return { state, run, retry, cancel, goHome };
 }

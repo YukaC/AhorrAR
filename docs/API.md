@@ -3,9 +3,10 @@
 Single source of truth for types: [`shared/contract.ts`](../shared/contract.ts). All shapes below
 must match it (checked at runtime by `isSearchResponse` and covered by unit tests).
 
-Base URL (dev): `http://localhost:4000`
+Base URL (dev): `http://localhost:4000`  
+Base URL (prod): `https://ahorrar-api.fly.dev`
 
-Live-only: toda búsqueda dispara el crawler real (Playwright). Tests herméticos
+Live-only: toda búsqueda dispara el crawler real (Playwright/Scrapling). Tests herméticos
 inyectan fixtures; no existe modo mock en runtime.
 
 ## POST /api/search

@@ -30,7 +30,7 @@ scraper: GET :4100/health · POST :4100/crawl {product,maxResults,maxNodes,maxDe
 cmd: `npm run dev` (scraper+backend+frontend) · `cd scraper && uv sync && uv run ahorrar-scraper`
 cmd: `npm --prefix frontend run build` → tsc --noEmit && vite build && node scripts/prerender-home.mjs (prerender+check)
 env: PORT · HOST · CORS_ORIGINS · CRAWLER · SCRAPLING_URL · INCLUDE_ML · MELI_* · STEALTH_FETCH · STEALTH_PROXY
-deploy: Vercel (frontend) + Fly.io Docker API/Scrapling · docs/DEPLOY.md
+deploy: Vercel (frontend https://ahorrarg.vercel.app) + Fly.io Docker API/Scrapling (https://ahorrar-api.fly.dev) · GitHub main → auto-deploy · docs/DEPLOY.md
 docs: `docs/ARCHITECTURE.md` (vista ampliada) · `docs/progress.md` (estado narrativo) · `docs/testing-strategy.md` (mapa test→§V) · `docs/decisions/*.md` (ADRs) · `AGENTS.md` (instrucciones de sesión) · `ROADMAP.md` · `CHANGELOG.md` · `DONT_DO.md` (decisiones no-repetición)
 
 §V

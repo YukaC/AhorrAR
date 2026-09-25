@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Moon, Sun } from 'lucide-react';
+import { Github, Loader2, Moon, Sun } from 'lucide-react';
 import { useSearch } from './hooks/useSearch';
 import { useTheme } from './hooks/useTheme';
 import type { SearchParams } from '../../shared/contract';
@@ -16,12 +16,20 @@ import EventBanner from './components/EventBanner';
 
 const POPULAR_SEARCHES = ['iPhone 16', 'Notebook', 'PS5', 'Perfume', 'Zapatillas'];
 const DEFAULT_DOCUMENT_TITLE = 'AhorrAR — Comparador de precios en Argentina';
+const GITHUB_REPO_URL = 'https://github.com/YukaC/AhorrAR';
 
 export default function App() {
-  const { state, run, retry, cancel } = useSearch();
+  const { state, run, retry, cancel, goHome } = useSearch();
   const { theme, toggleTheme } = useTheme();
   const [sort, setSort] = useState<SortMode>('price-asc');
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+
+  function handleGoHome() {
+    setSort('price-asc');
+    setFilters(EMPTY_FILTERS);
+    goHome();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   const busy = state.status === 'running';
 
@@ -71,43 +79,62 @@ export default function App() {
 
       <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/85 backdrop-blur dark:border-neutral-800 dark:bg-neutral-900/85">
         <div className="mx-auto flex max-w-4xl items-center gap-4 px-4 py-5 sm:px-6">
-          <img
-            src="/icon.png"
-            alt=""
-            width={64}
-            height={64}
-            className="size-14 shrink-0 rounded-2xl object-cover shadow-md ring-1 ring-neutral-200 sm:size-16 dark:ring-neutral-700"
-          />
-          <div className="min-w-0">
-            <h1 className="text-2xl font-extrabold tracking-tight text-neutral-900 dark:text-neutral-50">
-              Ahorr<span className="text-accent-600">AR</span>
-            </h1>
-            <p className="truncate text-sm text-neutral-600 dark:text-neutral-300">
-              Buscá tu producto, al mejor precio
-            </p>
-          </div>
           <button
             type="button"
-            onClick={toggleTheme}
-            aria-label={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-            aria-pressed={theme === 'dark'}
-            className="ml-auto inline-flex size-11 shrink-0 items-center justify-center rounded-xl border border-neutral-200 bg-white text-neutral-700 transition-colors hover:border-accent-400 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:border-accent-500"
+            onClick={handleGoHome}
+            aria-label="Ir al inicio de AhorrAR"
+            className="flex min-w-0 cursor-pointer items-center gap-4 rounded-2xl text-left transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-neutral-950"
           >
-            <span className="relative block size-[18px]" aria-hidden="true">
-              <Sun
-                size={18}
-                className={`absolute inset-0 transition-all duration-300 ${
-                  theme === 'dark' ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-50 opacity-0'
-                }`}
-              />
-              <Moon
-                size={18}
-                className={`absolute inset-0 transition-all duration-300 ${
-                  theme === 'dark' ? 'rotate-90 scale-50 opacity-0' : 'rotate-0 scale-100 opacity-100'
-                }`}
-              />
-            </span>
+            <img
+              src="/icon.png"
+              alt=""
+              width={64}
+              height={64}
+              className="size-14 shrink-0 rounded-2xl object-cover shadow-md ring-1 ring-neutral-200 sm:size-16 dark:ring-neutral-700"
+            />
+            <div className="min-w-0">
+              <h1 className="text-2xl font-extrabold tracking-tight text-neutral-900 dark:text-neutral-50">
+                Ahorr<span className="text-accent-600">AR</span>
+              </h1>
+              <p className="truncate text-sm text-neutral-600 dark:text-neutral-300">
+                Buscá tu producto, al mejor precio
+              </p>
+            </div>
           </button>
+          <div className="ml-auto flex shrink-0 items-center gap-2.5">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+              aria-pressed={theme === 'dark'}
+              className="inline-flex size-11 items-center justify-center rounded-xl border border-neutral-200 bg-white text-neutral-700 transition-colors hover:border-accent-400 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:border-accent-500"
+            >
+              <span className="relative block size-[18px]" aria-hidden="true">
+                <Sun
+                  size={18}
+                  className={`absolute inset-0 transition-all duration-300 ${
+                    theme === 'dark' ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-50 opacity-0'
+                  }`}
+                />
+                <Moon
+                  size={18}
+                  className={`absolute inset-0 transition-all duration-300 ${
+                    theme === 'dark' ? 'rotate-90 scale-50 opacity-0' : 'rotate-0 scale-100 opacity-100'
+                  }`}
+                />
+              </span>
+            </button>
+            <a
+              href={GITHUB_REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Repositorio de AhorrAR en GitHub"
+              title="GitHub · YukaC/AhorrAR"
+              className="inline-flex size-11 items-center justify-center rounded-xl border border-neutral-200 bg-white text-neutral-700 transition-colors hover:border-accent-400 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:border-accent-500"
+            >
+              <Github aria-hidden="true" size={18} />
+            </a>
+          </div>
         </div>
       </header>
 

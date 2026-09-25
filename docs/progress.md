@@ -7,7 +7,7 @@
 
 ## En una línea
 
-v0.1.0 en dev · 30 §T hechos (T1–T15/T18–T33; T16–T17 abiertos) · Scrapling session + platform seeds · 0 bugs abiertos en SPEC §B.
+v0.2 en **prod** (https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev) · T1–T36 hechos; T16/T17/T37 abiertos · Scrapling + índice AR + relevance · 0 bugs abiertos en SPEC §B.
 
 ## Hecho
 
@@ -29,15 +29,19 @@ v0.1.0 en dev · 30 §T hechos (T1–T15/T18–T33; T16–T17 abiertos) · Scrap
   - `ar-shops.json` v3 (`platform`/`alive`/`entry`) + `scripts/probe_ar_shops.py` → 81 alive / 7 dead (vtex 52, woo 9, unknown 26) — §T31
   - Parsers Woo Store API + Shopify suggest/products + seeds platform-aware Node↔Python — §T32
   - `STEALTH_FETCH` gated (off default Fly; nota en `docs/DEPLOY.md`); `capture_xhr` diferido (ROADMAP) — §T33
+- [x] Frávega PDP itemId + prerender home SSG + UI polish — §T34–T36
+- [x] **Prod**: https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev · GitHub `main` → Vercel+Fly · relevance filter · header GitHub repo link
 
 ## En curso
 
-- [~] Verificación final y puesta en producción — §T.* (iteración 1, revisar §T)
+- [~] ML OAuth refresh + INCLUDE_ML end-to-end en prod (secret opcional) — §T16
+- [~] Filtro Envío gratis: señal real `shipping.free` + re-show pill — §T37
 
 ## Falta
 
-- [ ] Verificación final: prod ML OFF por secrets Fly (#)
-- [ ] Commit de la iteración Scrapling session + platform seeds (por decisión del usuario)
+- [ ] ML ON en prod solo con `MELI_ACCESS_TOKEN` + re-consent OK (§C.13, `docs/ML.md`)
+- [x] Deploy prod Vercel+Fly conectados a GitHub (`main` → redeploy UI+API)
+- [x] Dominio canónico UI `ahorrarg.vercel.app` (+ redirects 308)
 - [x] Live bench local (2026-09-24, scraper `:4100`, `includeMl=false`, maxResults=20):
 
   | query | elapsedMs | pagesFetched | #results | min price |
@@ -52,4 +56,4 @@ v0.1.0 en dev · 30 §T hechos (T1–T15/T18–T33; T16–T17 abiertos) · Scrap
 
 ## Bloqueantes
 
-- Despliegue a Fly requiere secrets (`MELI_ACCESS_TOKEN`); ML queda OFF en prod hasta que se inyecten (§C.13).
+- ML en prod requiere secret `MELI_ACCESS_TOKEN` (+ app r/w); por defecto `INCLUDE_ML=0` (§C.13).

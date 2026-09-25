@@ -103,9 +103,19 @@ frontend/src/
 
 Ver `docs/decisions/` (ADRs).
 
+## Producción
+
+| Pieza | URL |
+|---|---|
+| UI | https://ahorrarg.vercel.app |
+| API | https://ahorrar-api.fly.dev |
+| Repo | https://github.com/YukaC/AhorrAR |
+
+Push a `main` redeploya Vercel + Fly. Detalle: `docs/DEPLOY.md`.
+
 ## Deuda / notas
 
-- No hay caché de resultados por producto (cada búsqueda re-crawlea); lo indexado
-  sí acelera: hosts conocidos no re-descubren URL scheme. Opción futura: TTL cache.
+- Caché de resultados: TTL 15 min + SWR (§T25); hosts del índice no re-descubren URL scheme.
 - `crawl/stream` con `maxResults=10` y `maxDepth=3` tarda ~24 s en "samsung s24",
   pero los primeros partials llegan en ~2–3 s (SSE en vivo).
+- ML en prod off por defecto (`INCLUDE_ML=0`) hasta secret + app OAuth (§C.13).

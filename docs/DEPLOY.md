@@ -1,84 +1,96 @@
 # Deploy — Vercel (UI) + Fly.io (API + Scrapling)
 
+## URLs canónicas
+
+| Qué | URL |
+|---|---|
+| UI (prod) | https://ahorrarg.vercel.app |
+| API health | https://ahorrar-api.fly.dev/api/health |
+| Repo | https://github.com/YukaC/AhorrAR |
+
+Otros aliases Vercel del proyecto (`ahorrar-wine.vercel.app`, `*-yukas-projects-*.vercel.app`, `ahorrar-git-main-…`) redirigen **308** → `ahorrarg.vercel.app`.
+
 ## Arquitectura
 
 ```
-Browser → Vercel Hobby (frontend estático)
-              │  VITE_API_BASE
+Browser → Vercel Hobby (frontend estático)  https://ahorrarg.vercel.app
+              │  VITE_API_BASE=https://ahorrar-api.fly.dev
               ▼
          Fly.io (Docker)  Node :4000 + Scrapling :4100 (mismo contenedor)
 ```
 
 Vercel **no** corre el crawler. Fly corre API + Scrapling en una VM `shared-cpu-1x` / 1 GB (auto-stop en idle = ahorro free/trial).
 
-## 1) API en Fly.io
+## Deploy automático (GitHub)
 
-```bash
-# una vez
-curl -L https://fly.io/install.sh | sh
-fly auth login
+Ambos hosts están **conectados al repo** `YukaC/AhorrAR`:
 
-# desde la raíz del repo
-chmod +x scripts/deploy-api.sh
-FLY_APP=ahorrar-api ./scripts/deploy-api.sh
-# o: fly deploy
-```
+| Host | Qué redeploya | Señal en GitHub |
+|---|---|---|
+| **Vercel** | frontend (`vercel.json` → `frontend/`) | commit status `Vercel` |
+| **Fly** | imagen Docker API+Scrapling | Deployments / check `Fly.io` |
 
-Health: `https://ahorrar-api.fly.dev/api/health`
+Push a **`main`** → UI + API. No hace falta `vercel`/`fly` CLI en el día a día.
 
-Secrets útiles:
+> **Importante:** Vercel ≠ GitHub Releases. Los tags Releases no disparan deploy. El status de Vercel vive en el **check del commit**; Fly en **Deployments**.
 
-```bash
-fly secrets set CORS_ORIGINS=https://TU-APP.vercel.app,http://localhost:5173
-# opcional ML:
-# fly secrets set MELI_ACCESS_TOKEN=... INCLUDE_ML=1
-```
-
-`fly.toml` ya fija `CRAWLER=scrapling` (sin Playwright en la imagen).
-
-### Stealth fetch (opcional, solo local)
-
-La cascada antibot `STEALTH_FETCH=1` usa Scrapling `StealthyFetcher` (browser). La imagen Fly/Docker sigue **HTTP-only** (`PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`); no hace falta browsers en prod.
-
-En local, si querés reintentos ante 403/challenge:
-
-```bash
-# una vez (instala browsers de Scrapling/Playwright)
-cd scraper && uv run scrapling install
-# o: uv run playwright install chromium
-
-STEALTH_FETCH=1          # default 0
-# STEALTH_PROXY=http://user:pass@host:port   # opcional
-npm run dev:scraper
-```
-
-Prod: dejar `STEALTH_FETCH` unset/`0`. Cobertura de tiendas viene del índice + APIs (VTEX/Woo/Shopify), no del browser.
-
-## 2) Frontend en Vercel
-
-```bash
-npm i -g vercel   # o usá npx
-chmod +x scripts/deploy-frontend.sh
-./scripts/deploy-frontend.sh        # preview
-./scripts/deploy-frontend.sh --prod # production
-```
-
-Root Directory: **repo root** (usa `vercel.json` → build `frontend/`).
-
-Env Production / Preview:
+Env Vercel (Production / Preview):
 
 | Key | Value |
 |---|---|
 | `VITE_API_BASE` | `https://ahorrar-api.fly.dev` |
 
-Redeploy después de setear `VITE_API_BASE`.
+Secret Fly:
 
-## 3) Orden recomendado
+```bash
+fly secrets set CORS_ORIGINS=https://ahorrarg.vercel.app,http://localhost:5173 -a ahorrar-api
+# opcional ML:
+# fly secrets set MELI_ACCESS_TOKEN=... INCLUDE_ML=1 -a ahorrar-api
+```
 
-1. `fly deploy` → anotá la URL del API  
-2. Vercel env `VITE_API_BASE`  
-3. `vercel --prod`  
-4. `fly secrets set CORS_ORIGINS=https://….vercel.app`
+## Deploy manual (emergencia)
+
+### 1) API en Fly.io
+
+```bash
+curl -L https://fly.io/install.sh | sh
+fly auth login
+chmod +x scripts/deploy-api.sh
+FLY_APP=ahorrar-api ./scripts/deploy-api.sh
+# o: fly deploy -a ahorrar-api --ha=false
+```
+
+Health: `https://ahorrar-api.fly.dev/api/health`
+
+`fly.toml` fija `CRAWLER=scrapling` (sin Playwright en la imagen).
+
+### Stealth fetch (opcional, solo local)
+
+La cascada antibot `STEALTH_FETCH=1` usa Scrapling `StealthyFetcher` (browser). La imagen Fly/Docker sigue **HTTP-only** (`PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`).
+
+```bash
+cd scraper && uv run scrapling install
+STEALTH_FETCH=1 npm run dev:scraper
+```
+
+Prod: dejar `STEALTH_FETCH` unset/`0`.
+
+### 2) Frontend en Vercel
+
+```bash
+chmod +x scripts/deploy-frontend.sh
+./scripts/deploy-frontend.sh --prod
+```
+
+Root Directory: **repo root** (`vercel.json` → `frontend/dist`).
+
+## Orden recomendado (primera vez / recovery)
+
+1. `fly deploy` → health OK  
+2. Vercel env `VITE_API_BASE=https://ahorrar-api.fly.dev`  
+3. Push a `main` o `vercel --prod`  
+4. `fly secrets set CORS_ORIGINS=https://ahorrarg.vercel.app,http://localhost:5173 -a ahorrar-api`  
+5. Confirmar UI canónica: https://ahorrarg.vercel.app  
 
 ## Local con Docker
 

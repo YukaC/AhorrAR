@@ -7,6 +7,9 @@ Unreleased = lo que aún no se desplegó. Los refs §T apuntan al plan en `SPEC.
 ## [WIP]
 
 ### Added
+- **Prod live**: UI https://ahorrarg.vercel.app (Vercel) + API https://ahorrar-api.fly.dev (Fly); GitHub `main` redeploya ambos; dominio canónico + redirects 308
+- **Relevance query↔title**: filtro Node+Python — marca/modelo sola (`iphone`) exige substring; categoría sola (`perfume`) no — evita junk tipo baffle en #1
+- UI: logo → home idle; link GitHub del repo en header; filtro “Solo local” eliminado; pill “Envío gratis” oculta hasta señal real (§T37)
 - **Scrapling session + platform seeds**: `FetcherSession` por worker, fetch kinds `hub|api|html`, early-stop; índice `ar-shops.json` v3 (`platform`/`alive`/`entry`) + probe offline `scripts/probe_ar_shops.py`; parsers Woo Store API + Shopify suggest/products; seeds platform-aware Node↔Python; `STEALTH_FETCH` gated (off en Fly) — §T30–T33
 - Streaming real por SSE: cards parciales en el frontend mientras el crawler corre — §T19/T20/T21
 - Índice curado de tiendas AR `shared/ar-shops.json` expandido de 14 a **88 tiendas** (32 con entry VTEX probeado con el fetcher real): fuentes comparaya.net API + precialo.com.ar — §T29
@@ -27,6 +30,7 @@ Unreleased = lo que aún no se desplegó. Los refs §T apuntan al plan en `SPEC.
 - Scraper: `visited` usado antes de definirse en el loop de ML (`crawl.py`)
 - Seeds Node: `ALLOWED_DOMAINS` (export muerto) poblaba el caché del índice a nivel de módulo y anulaba el override `AR_SHOPS_JSON` de los tests; `categoryFor` devolvía `perfume` vs índice `perfumeria` (prioridad por categoría rota) — §B5
 - `onProgress`/tipado de streaming y defaults de depth/nodesVisited
+- Prod Fly desactualizado vs `main` (solo secrets redeploy): `fly deploy` con imagen nueva restableció Carrefour/iPhone vs junk Farmacity
 
 ## [0.1.0] — primeras iteraciones (histórico)
 
