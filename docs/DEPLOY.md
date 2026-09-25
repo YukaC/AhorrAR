@@ -63,6 +63,13 @@ Access ~6h: **auto-refresh on 401** persiste tokens en el volume. Solo si el ref
 falla (revoke): `cd scraper && uv run python scripts/ml_login.py refresh` y re-setear secrets.
 Crear volume (una vez): `fly volumes create meli_data --region gru --size 1 -a ahorrar-api`
 
+### Warm cache (prod ON)
+
+`fly.toml` fija `WARM_CACHE=1`: al arrancar, el scraper pre-calienta la caché de ofertas
+con las 5 búsquedas populares (cada 300s, presupuesto bajo `max_results=8`/`max_nodes=30`)
+→ las primeras búsquedas reales de esas queries responden desde caché (0 fetches).
+Apagar: quitar `WARM_CACHE` del `[env]` de `fly.toml` (default off).
+
 ## Deploy manual (emergencia)
 
 ### 1) API en Fly.io
