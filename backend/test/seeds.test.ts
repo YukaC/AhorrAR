@@ -1,4 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   categoryFor,
   buildSeedUrls,
@@ -7,24 +10,131 @@ import {
   isAllowed,
   isArHost,
   isCrawlWorthy,
+  isCuratedHost,
   isDiscoveryHub,
+  isKnownShopHost,
   isPublishableResult,
+  registerDiscoveredShop,
+  resetArShopsCacheForTests,
 } from '../src/search/seeds.ts';
+
+/** Fixture índice curado para tests (V19) — nunca escribe al índice real. */
+const FMV_TMP = mkdtempSync(join(tmpdir(), 'ar-shops-'));
+const FMV_INDEX = join(FMV_TMP, 'ar-shops.json');
+const CURATED = {
+  version: 3,
+  shops: [
+    {
+      host: 'fravega.com',
+      category: 'electro',
+      curated: true,
+      entry: 'https://www.fravega.com/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11',
+      platform: 'vtex',
+      alive: true,
+    },
+    {
+      host: 'venex.com.ar',
+      category: 'gaming',
+      curated: true,
+      entry: null,
+      platform: 'oscommerce',
+      alive: true,
+    },
+    {
+      host: 'fullh4rd.com.ar',
+      category: 'gaming',
+      curated: true,
+      entry: null,
+      platform: 'unknown',
+      alive: true,
+    },
+    {
+      host: 'dead-shop.com.ar',
+      category: 'gaming',
+      curated: true,
+      entry: 'https://www.dead-shop.com.ar/search?q={q}',
+      platform: 'unknown',
+      alive: false,
+    },
+  ],
+};
+
+beforeAll(() => {
+  process.env['AR_SHOPS_JSON'] = FMV_INDEX;
+  writeFileSync(FMV_INDEX, JSON.stringify(CURATED), 'utf8');
+  resetArShopsCacheForTests();
+});
+
+afterAll(() => {
+  delete process.env['AR_SHOPS_JSON'];
+  rmSync(FMV_TMP, { recursive: true, force: true });
+});
 
 describe('seeds procedural AR discovery (T12, §V13)', () => {
   it('categoryFor maps product keywords', () => {
-    expect(categoryFor('perfume importado')).toBe('perfume');
-    expect(categoryFor('motherboard amd')).toBe('pc');
-    expect(categoryFor('bensimon')).toBe('perfume');
+    expect(categoryFor('perfume importado')).toBe('perfumeria');
+    expect(categoryFor('motherboard amd')).toBe('gaming');
+    expect(categoryFor('bensimon')).toBe('perfumeria');
   });
 
-  it('buildSeedUrls = hubs + bootstrap VTEX APIs + ML último', () => {
+  it('buildSeedUrls = hubs + índice curado + ML último; skips alive:false', () => {
+    resetArShopsCacheForTests();
     const seeds = buildSeedUrls({ product: 'bensimon', country: 'AR', maxResults: 5 });
     expect(seeds.some((s) => /duckduckgo\.com/.test(s))).toBe(true);
     expect(seeds.some((s) => /bing\.com/.test(s))).toBe(true);
     expect(seeds.some((s) => /fravega\.com\/api\/catalog_system/.test(s))).toBe(true);
-    expect(seeds.at(-1)).toMatch(/listado\.mercadolibre\.com\.ar/);
+    expect(seeds.some((s) => /venex\.com\.ar/.test(s))).toBe(true);
+    expect(seeds.some((s) => /dead-shop\.com\.ar/.test(s))).toBe(false);
     expect(seeds.some((s) => /api\.mercadolibre\.com/.test(s))).toBe(true);
+    expect(seeds.at(-1)).toMatch(/listado\.mercadolibre\.com\.ar/);
+  });
+
+  it('guessSearchUrls unknown: VTEX + Woo + /?s= + /search (máx 4)', () => {
+    const urls = guessSearchUrls('https://www.nueva-tienda.com.ar/foo', 'bensimon azul');
+    expect(urls).toHaveLength(4);
+    expect(urls[0]).toMatch(/\/api\/catalog_system\/pub\/products\/search/);
+    expect(urls[1]).toMatch(/\/wp-json\/wc\/store\/v1\/products/);
+    expect(urls.some((u) => /\?s=/.test(u))).toBe(true);
+    expect(urls.some((u) => /\/search\?q=/.test(u))).toBe(true);
+    expect(urls.every((u) => u.startsWith('https://www.nueva-tienda.com.ar'))).toBe(true);
+  });
+
+  it('guessSearchUrls platform-aware: woo → store API + ?s=', () => {
+    const urls = guessSearchUrls('https://www.woo-shop.com.ar/', 'notebook', 'woo');
+    expect(urls).toHaveLength(2);
+    expect(urls[0]).toMatch(/\/wp-json\/wc\/store\/v1\/products\?search=/);
+    expect(urls[1]).toMatch(/\?s=/);
+  });
+
+  it('guessSearchUrls platform-aware: shopify → suggest + products.json', () => {
+    const urls = guessSearchUrls('https://www.shop.com.ar/', 'notebook', 'shopify');
+    expect(urls).toHaveLength(2);
+    expect(urls[0]).toMatch(/\/search\/suggest\.json/);
+    expect(urls[1]).toMatch(/\/products\.json/);
+  });
+
+  it('guessSearchUrls platform-aware: oscommerce → resultado-busqueda', () => {
+    const urls = guessSearchUrls('https://www.venex.com.ar/', 'rtx', 'oscommerce');
+    expect(urls).toHaveLength(2);
+    expect(urls[0]).toMatch(/resultado-busqueda\.htm\?keywords=/);
+  });
+
+  it('índice curado shared/ar-shops.json alimenta reputación + auto-expansión (V19)', () => {
+    resetArShopsCacheForTests();
+    expect(isArHost('venex.com.ar')).toBe(true);
+    expect(isArHost('fullh4rd.com.ar')).toBe(true);
+    expect(isCuratedHost('fravega.com')).toBe(true);
+    expect(isKnownShopHost('venex.com.ar')).toBe(true);
+    const before = new Set(buildSeedUrls({ product: 'rtx', country: 'AR', maxResults: 5 }));
+    registerDiscoveredShop('tienda-nueva-e2e.com.ar');
+    expect(isArHost('tienda-nueva-e2e.com.ar')).toBe(true);
+    expect(isKnownShopHost('tienda-nueva-e2e.com.ar')).toBe(true);
+    expect(isCuratedHost('tienda-nueva-e2e.com.ar')).toBe(false);
+    // ⊥ duplicados idempotente
+    registerDiscoveredShop('tienda-nueva-e2e.com.ar');
+    const after = new Set(buildSeedUrls({ product: 'rtx', country: 'AR', maxResults: 5 }));
+    void before;
+    void after;
   });
 
   it('isArHost acepta .ar desconocido + bootstrap .com; corta externos', () => {

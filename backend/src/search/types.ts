@@ -3,7 +3,7 @@
  * both use the same, contract-shaped structures.
  */
 
-import type { ProductResult, SearchParams } from '../../../shared/contract.ts';
+import type { ProductResult, SearchParams, InstallmentsInfo } from '../../../shared/contract.ts';
 
 export interface RawItem {
   name: string;
@@ -12,6 +12,8 @@ export interface RawItem {
   store: { name: string; logo?: string | null; local: boolean; siteUrl: string };
   url: string;
   image?: string | null;
+  /** Cuotas opcionales (VTEX, §V18). */
+  installments?: InstallmentsInfo | null;
   depth: number;
   sourceUrl: string;
 }

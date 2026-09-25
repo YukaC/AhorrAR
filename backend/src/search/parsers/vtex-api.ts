@@ -7,15 +7,49 @@ import { normalizeUrl } from '../../normalize/url.ts';
 import type { ExtractResult, RawItem } from '../types.ts';
 
 interface VtexProduct {
+  productId?: string;
   productName?: string;
   linkText?: string;
   link?: string;
   items?: Array<{
+    itemId?: string;
     images?: Array<{ imageUrl?: string }>;
     sellers?: Array<{
+      sellerId?: string;
       commertialOffer?: { Price?: number; ListPrice?: number; AvailableQuantity?: number };
     }>;
   }>;
+}
+
+function isFravegaHost(host: string): boolean {
+  const h = host.replace(/^www\./, '').toLowerCase();
+  return h === 'fravega.com' || h.endsWith('.fravega.com');
+}
+
+/**
+ * Frávega Next PDP: `/p/{slug}-{itemId}/`.
+ * GraphQL `sku(code:)` resolves VTEX **itemId**; trailing **productId** (legacy
+ * `link`/`linkText`) yields an empty shell. Keep double-hyphens; only swap the id.
+ */
+export function fravegaPdpUrl(
+  origin: string,
+  opts: { linkText?: string; productId?: string; itemId?: string },
+): string | null {
+  const itemId = opts.itemId?.trim();
+  if (!itemId) return null;
+  let slug = (opts.linkText ?? '').trim().replace(/^\/+|\/+$/g, '');
+  const productId = opts.productId?.trim() ?? '';
+  if (productId && slug.endsWith(`-${productId}`)) {
+    slug = `${slug.slice(0, -(productId.length + 1))}-${itemId}`;
+  } else if (slug.endsWith(`-${itemId}`)) {
+    // already storefront form
+  } else if (slug) {
+    slug = `${slug}-${itemId}`;
+  } else {
+    return null;
+  }
+  const raw = `${origin.replace(/\/$/, '')}/p/${slug}/`;
+  return normalizeUrl(raw) ?? raw;
 }
 
 export function isVtexCatalogApiUrl(url: string): boolean {
@@ -66,12 +100,18 @@ export function parseVtexCatalogApi(url: string, body: string, _params: SearchPa
     if (typeof offer?.AvailableQuantity === 'number' && offer.AvailableQuantity <= 0) continue;
 
     const slug = product.linkText;
-    const productUrl =
-      (typeof product.link === 'string' && product.link.startsWith('http')
-        ? product.link
-        : slug
-          ? `${origin}/${slug}/p`
-          : null) ?? null;
+    let productUrl: string | null = null;
+    if (isFravegaHost(storeHost)) {
+      productUrl = fravegaPdpUrl(origin, {
+        linkText: slug,
+        productId: product.productId,
+        itemId: item?.itemId,
+      });
+    } else if (typeof product.link === 'string' && product.link.startsWith('http')) {
+      productUrl = product.link;
+    } else if (slug) {
+      productUrl = `${origin}/${slug}/p`;
+    }
     if (productUrl === null) continue;
     const norm = normalizeUrl(productUrl) ?? productUrl;
     if (seen.has(norm)) continue;

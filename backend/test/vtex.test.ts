@@ -23,7 +23,7 @@ describe('VTEX parser (live AR stores)', () => {
     expect(done!.shipping.confirmed).toBe(true);
   });
 
-  it('extrae shelf Frávega (title + BestPrice + /p)', () => {
+  it('Frávega HTML shelf se omite (§V22 — necesita catalog itemId)', () => {
     const html = `<ul><li>
       <a title="Bensimon Sunset Edp 100ml" href="https://www.fravega.com/bensimon-sunset-edp-100ml-990419518/p">
         <img src="https://fravega.vteximg.com.br/arquivos/ids/1.jpg" width="280">
@@ -31,6 +31,17 @@ describe('VTEX parser (live AR stores)', () => {
       <span class="prodPrice"><em class="ListPrice">$ 39.989</em><em class="BestPrice">$ 31.991</em></span>
     </li></ul>`;
     const out = parsePage('https://www.fravega.com/bensimon?_q=bensimon&map=ft', html, AR);
+    expect(out.results).toHaveLength(0);
+  });
+
+  it('extrae shelf VTEX clásico (title + BestPrice + /p) en host no-Frávega', () => {
+    const html = `<ul><li>
+      <a title="Bensimon Sunset Edp 100ml" href="https://www.farmacity.com/bensimon-sunset-edp-100ml-990419518/p">
+        <img src="https://farmacity.vteximg.com.br/arquivos/ids/1.jpg" width="280">
+      </a>
+      <span class="prodPrice"><em class="ListPrice">$ 39.989</em><em class="BestPrice">$ 31.991</em></span>
+    </li></ul>`;
+    const out = parsePage('https://www.farmacity.com/perfume?_q=perfume&map=ft', html, AR);
     expect(out.results).toHaveLength(1);
     expect(out.results[0]!.name).toMatch(/Bensimon Sunset/);
     expect(out.results[0]!.priceRaw).toMatch(/31/);

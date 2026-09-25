@@ -1,22 +1,104 @@
 /**
- * AR discovery (§C, §V13): reputation by heuristic (not a closed shop list).
- * Seeds are discovery HUBS + marketplace search — BFS expands to any AR host
- * found in links, then procedurally guesses that host's search URL.
+ * AR discovery (§C, §V13, §V19): reputation by heuristic + curated index.
+ * Seeds are discovery HUBS + curated AR shop index + procedural guesses.
+ * BFS expands to any AR host found in links; curated/discovered shops get
+ * their search URL crawled via guess URLs (never index results directly).
  */
 
+import { readFileSync, writeFileSync, renameSync } from 'node:fs';
 import type { SearchParams } from '../../../shared/contract.ts';
 
-export type CategoryId = 'pc' | 'perfume' | 'moda' | 'bazar' | 'electro' | 'general';
+export type ShopPlatform = 'vtex' | 'shopify' | 'woo' | 'tiendanube' | 'oscommerce' | 'unknown';
+
+export interface ArShopEntry {
+  host: string;
+  category: string;
+  curated: boolean;
+  /** Optional canonical search template with {q} placeholder (VTEX API etc). */
+  entry: string | null;
+  /** Ecommerce platform fingerprint (optional; absent ⇒ unknown). */
+  platform?: ShopPlatform;
+  /** false ⇒ skip in buildSeedUrls; absent ⇒ treat as alive (compat). */
+  alive?: boolean;
+}
+
+export type CategoryId = 'gaming' | 'perfumeria' | 'moda' | 'bazar' | 'electro' | 'general';
+
+const INDEX_VERSION = 3;
+
+/** Shared curated/discovered AR shop index (Node↔Python, §V19). Overridable for tests. */
+function arShopsPath(): string {
+  const env = process.env['AR_SHOPS_JSON'];
+  if (env) return env;
+  return new URL('../../../shared/ar-shops.json', import.meta.url).pathname;
+}
+
+let _arShopsCache: ArShopEntry[] | null = null;
+
+/** Test-only: clear the in-memory index cache after rewriting AR_SHOPS_JSON. */
+export function resetArShopsCacheForTests(): void {
+  _arShopsCache = null;
+}
+
+function loadArShops(): ArShopEntry[] {
+  if (_arShopsCache !== null) return _arShopsCache;
+  try {
+    const raw = readFileSync(arShopsPath(), 'utf8');
+    const parsed = JSON.parse(raw) as { shops?: ArShopEntry[] };
+    _arShopsCache = Array.isArray(parsed.shops) ? parsed.shops : [];
+  } catch {
+    _arShopsCache = [];
+  }
+  return _arShopsCache;
+}
+
+/** Read-modify-write atomically (tmp+rename); safe for concurrent Node/Python adds. */
+export function registerDiscoveredShop(host: string, category: string = 'general'): void {
+  const clean = host.replace(/^www\./, '').toLowerCase();
+  if (clean === '') return;
+  const shops = loadArShops();
+  if (shops.some((s) => s.host === clean)) return;
+  _arShopsCache = [
+    ...shops,
+    { host: clean, category, curated: false, entry: null, platform: 'unknown', alive: true },
+  ];
+  const tmp = `${arShopsPath()}.tmp`;
+  const data = JSON.stringify({ version: INDEX_VERSION, shops: _arShopsCache }, null, 2);
+  try {
+    writeFileSync(tmp, data, 'utf8');
+    renameSync(tmp, arShopsPath());
+  } catch (err) {
+    // Non-fatal: index is advisory.
+  }
+}
+
+export function isCuratedHost(hostRaw: string): boolean {
+  const host = hostRaw.replace(/^www\./, '').toLowerCase();
+  return loadArShops().some((s) => s.host === host && s.curated);
+}
+
+/** Canonical search URL for a curated host with an entry template; else null.
+ * Mirrors the Python `curated_search_url` so both engines skip generic guesses
+ * on hosts whose search endpoint is known (VTEX API, resultado-busqueda…). */
+export function curatedSearchUrl(hostRaw: string, product: string): string | null {
+  const host = hostRaw.replace(/^www\./, '').toLowerCase();
+  for (const s of loadArShops()) {
+    if (s.host !== host || !s.curated) continue;
+    if (typeof s.entry !== 'string' || !s.entry.includes('{q}')) return null;
+    return s.entry.replaceAll('{q}', encodeURIComponent(product.trim()));
+  }
+  return null;
+}
+
+export function isKnownShopHost(hostRaw: string): boolean {
+  const host = hostRaw.replace(/^www\./, '').toLowerCase();
+  return loadArShops().some((s) => s.host === host);
+}
 
 /** Non-.ar hosts that still sell primarily in Argentina (reputation bootstrap). */
-const AR_COM_BOOTSTRAP = new Set([
-  'fravega.com',
-  'farmacity.com',
-  'compragamer.com',
-  'musimundo.com',
-  'garbarino.com',
-  'cetrogar.com',
-]);
+function arShopTrustedHosts(): Set<string> {
+  return new Set(loadArShops().map((s) => s.host));
+}
 
 /** SERP hubs — robots bypass under STEALTH; never published as offers. */
 const SERP_HUBS = new Set([
@@ -51,7 +133,7 @@ const BLOCKED_HOST_SUFFIXES = [
   'play.google.com',
 ];
 
-function hostOf(url: string): string {
+export function hostOf(url: string): string {
   try {
     return new URL(url).hostname.replace(/^www\./, '');
   } catch {
@@ -80,14 +162,13 @@ export function isSerpHub(url: string): boolean {
   return hostMatches(host, SERP_HUBS);
 }
 
-/** AR reputation: ccTLD .ar, or known AR .com retailers. */
+/** AR reputation: ccTLD .ar, trusted curated/discovered index, or known AR .com retailer. */
 export function isArHost(hostRaw: string): boolean {
   const host = hostRaw.replace(/^www\./, '').toLowerCase();
   if (host === '') return false;
   if (BLOCKED_HOST_SUFFIXES.some((b) => host === b || host.endsWith(`.${b}`))) return false;
   if (host === 'ar' || host.endsWith('.ar')) return true;
-  if (AR_COM_BOOTSTRAP.has(host)) return true;
-  return false;
+  return arShopTrustedHosts().has(host);
 }
 
 export function isAllowed(url: string): boolean {
@@ -185,11 +266,26 @@ export function productSlug(product: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+/** Lookup platform from the shared index; default unknown (§V19). */
+export function platformForHost(hostRaw: string): ShopPlatform {
+  const host = hostRaw.replace(/^www\./, '').toLowerCase();
+  for (const s of loadArShops()) {
+    if (s.host !== host) continue;
+    if (s.platform) return s.platform;
+    break;
+  }
+  return 'unknown';
+}
+
 /**
- * Procedural search-URL guesses for a newly discovered AR shop origin.
- * VTEX JSON API first (HTTP-fast), then HTML search templates.
+ * Platform-aware search-URL guesses (§V19).
+ * Known platform → 1–2 URLs; unknown → max 4 (VTEX API, Woo store, /?s=, /search).
  */
-export function guessSearchUrls(originOrUrl: string, product: string): string[] {
+export function guessSearchUrls(
+  originOrUrl: string,
+  product: string,
+  platform?: ShopPlatform | null,
+): string[] {
   let origin: string;
   try {
     origin = new URL(originOrUrl).origin;
@@ -197,23 +293,47 @@ export function guessSearchUrls(originOrUrl: string, product: string): string[] 
     return [];
   }
   const q = encodeURIComponent(product.trim());
-  const slug = productSlug(product);
   const base = origin.replace(/\/$/, '');
+  const resolved = platform ?? platformForHost(hostOf(origin));
+
+  if (resolved === 'vtex') {
+    return [
+      `${base}/api/catalog_system/pub/products/search?ft=${q}&_from=0&_to=11`,
+      `${base}/busca?ft=${q}`,
+    ];
+  }
+  if (resolved === 'shopify') {
+    return [
+      `${base}/search/suggest.json?q=${q}&resources[type]=product`,
+      `${base}/products.json?limit=12`,
+    ];
+  }
+  if (resolved === 'woo') {
+    return [
+      `${base}/wp-json/wc/store/v1/products?search=${q}&per_page=12`,
+      `${base}/?s=${q}`,
+    ];
+  }
+  if (resolved === 'tiendanube') {
+    return [`${base}/products_search/?q=${q}`, `${base}/search?q=${q}`];
+  }
+  if (resolved === 'oscommerce') {
+    return [`${base}/resultado-busqueda.htm?keywords=${q}`, `${base}/?s=${q}`];
+  }
   return [
     `${base}/api/catalog_system/pub/products/search?ft=${q}&_from=0&_to=11`,
-    `${base}/${slug}?_q=${q}&map=ft`,
-    `${base}/search?q=${q}`,
-    `${base}/buscar?q=${q}`,
+    `${base}/wp-json/wc/store/v1/products?search=${q}&per_page=12`,
     `${base}/?s=${q}`,
+    `${base}/search?q=${q}`,
   ];
 }
 
-/** Category hint — only used for logging / optional ranking, not seed lists. */
+/** Category hint — used for curated-index seeding priority, not seed lists. */
 export function categoryFor(product: string): CategoryId {
   const text = ` ${product} `;
-  if (/perfume|fragancia|colonia|makeup|cosmetic|bensimon/i.test(text)) return 'perfume';
+  if (/perfume|fragancia|colonia|makeup|cosmetic|bensimon|julie|bellamar/i.test(text)) return 'perfumeria';
   if (/zapatilla|zapatos|remera|campera|jean|ropa|nike|adidas/i.test(text)) return 'moda';
-  if (/motherboard|procesador|cpu|ryzen|gpu|rtx|rx\s*\d|notebook/i.test(text)) return 'pc';
+  if (/motherboard|procesador|cpu|ryzen|gpu|rtx|rx\s*\d|notebook|gaming|teclado|mouse|monitor/i.test(text)) return 'gaming';
   if (/bazar|vajilla|cacerola|cubiertos/i.test(text)) return 'bazar';
   if (/tv\b|televisor|heladera|lavarropas|smart tv/i.test(text)) return 'electro';
   return 'general';
@@ -222,7 +342,8 @@ export function categoryFor(product: string): CategoryId {
 /**
  * Procedural seeds:
  * 1) SERP hubs (discover unknown .com.ar)
- * 2) Bootstrap VTEX APIs for known AR .com (HTTP-fast, not a shop crawl list)
+ * 2) Curated AR shop index (gaming/perfumeria/electro/moda/bazar) — crawls
+ *    each shop's search URL via entry template or guess URLs (⊥ direct results).
  * 3) ML listado last (often challenge-blocked)
  */
 export function buildSeedUrls(params: SearchParams): string[] {
@@ -241,13 +362,32 @@ export function buildSeedUrls(params: SearchParams): string[] {
     `https://www.bing.com/search?q=${bingBuy}&setlang=es-AR&cc=AR`,
   ];
 
-  const bootstrapApis = [...AR_COM_BOOTSTRAP].map(
-    (host) => `https://www.${host}/api/catalog_system/pub/products/search?ft=${enc}&_from=0&_to=11`,
-  );
+  const cat = categoryFor(q);
+  // Category priority (§V19, mirrors Python build_seed_urls): same-category
+  // shops first; within each block, entry shops before entry-null guesses
+  // (a known-good entry beats 7 speculative guesses under the 20 cap).
+  const sameEntry: string[] = [];
+  const sameNull: string[] = [];
+  const otherEntry: string[] = [];
+  const otherNull: string[] = [];
+  for (const shop of loadArShops()) {
+    if (!shop.curated) continue; // discovered shops: reached via BFS, not seeded
+    if (shop.alive === false) continue;
+    const sameCategory = shop.category === cat;
+    if (typeof shop.entry === 'string') {
+      const url = shop.entry.replaceAll('{q}', enc);
+      (sameCategory ? sameEntry : otherEntry).push(url);
+    } else {
+      const urls = guessSearchUrls(`https://www.${shop.host}`, q, shop.platform ?? null);
+      (sameCategory ? sameNull : otherNull).push(...urls);
+    }
+  }
+
+  const indexSeeds = [...sameEntry, ...sameNull, ...otherEntry, ...otherNull].slice(0, 20);
 
   return [
     ...hubs,
-    ...bootstrapApis,
+    ...indexSeeds,
     `https://api.mercadolibre.com/sites/MLA/search?q=${enc}&limit=20`,
     `https://listado.mercadolibre.com.ar/${slug}`,
   ];
@@ -277,9 +417,3 @@ export function extractDiscoveryLinks(pageUrl: string, html: string): string[] {
 
   return [...new Set(out)];
 }
-
-/** @deprecated kept for tests — now equals hosts matching AR heuristic samples. */
-export const ALLOWED_DOMAINS = [
-  'mercadolibre.com.ar',
-  ...AR_COM_BOOTSTRAP,
-];

@@ -65,4 +65,44 @@ describe('rankByPriority', () => {
     const ranked = rankByPriority([result({ price: 3 }), result({ price: 1 }), result({ price: 2 })], AR);
     expect(ranked.map((r) => r.rank)).toEqual([1, 2, 3]);
   });
+
+  it('curated reputation wins the tie at equal price (§V18)', () => {
+    const curated = result({ price: 1000, store: { name: 'Fravega', local: true, siteUrl: 'https://www.fravega.com' } });
+    const unknown = result({ price: 1000, store: { name: 'tienda-desconocida.com.ar', local: true, siteUrl: 'https://tienda-desconocida.com.ar' } });
+    const ranked = rankByPriority([unknown, curated], AR);
+    expect(ranked[0]!.store.name).toBe('Fravega');
+  });
+
+  it('cuotas sin interés bonifican el ranking (§V18)', () => {
+    const cuotas = result({
+      price: 1000,
+      store: { name: 'A', local: true, siteUrl: 'https://a.com.ar' },
+      installments: { count: 12, interestFree: true },
+    });
+    const sinCuotas = result({ price: 1000, store: { name: 'B', local: true, siteUrl: 'https://b.com.ar' } });
+    const ranked = rankByPriority([sinCuotas, cuotas], AR);
+    expect(ranked[0]!.store.name).toBe('A');
+  });
+
+  it('ML share capped at 50% of top-N (§V17)', () => {
+    const mk = (n: string, price: number, ml: boolean): ProductResult =>
+      result({
+        price,
+        store: {
+          name: ml ? `ML · ${n}` : n,
+          local: true,
+          siteUrl: ml ? 'https://www.mercadolibre.com.ar' : `https://${n}.com.ar`,
+        },
+      });
+    const results = [
+      mk('ml1', 1, true), mk('ml2', 2, true), mk('ml3', 3, true),
+      mk('ml4', 4, true), mk('ml5', 5, true), mk('ml6', 6, true),
+      mk('tienda1', 7, false), mk('tienda2', 8, false),
+    ];
+    const ranked = rankByPriority(results, AR, 8);
+    expect(ranked.length).toBeLessThanOrEqual(8);
+    const ml = ranked.filter((r) => r.store.name.startsWith('ML ·')).length;
+    expect(ml).toBeLessThanOrEqual(4); // 50% de 8
+    expect(ranked.some((r) => r.store.name === 'tienda2')).toBe(true);
+  });
 });

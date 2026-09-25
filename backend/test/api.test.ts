@@ -43,6 +43,23 @@ describe('AhorrAR API (live, hermético)', () => {
     expect(typeof res.body.uptime).toBe('number');
   });
 
+  it('POST /webhooks/ml acks ML notifications (stub)', async () => {
+    const notif = {
+      _id: '652...',
+      resource: '/items/MLA123456789',
+      user_id: 1134148467,
+      topic: 'item_competition',
+      application_id: 8567113374842839,
+      sent: '2026-09-23T20:00:00.000-04:00',
+      attempts: 1,
+      received: '2026-09-23T20:00:01.000-04:00',
+    };
+    const res = await request(app).post('/webhooks/ml').send(notif);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ received: true });
+    expect((await request(app).get('/webhooks/ml')).status).toBe(200);
+  });
+
   it('POST /api/search → 202 queued job; polling ends in a valid response (§V8)', async () => {
     const post = await request(app).post(`${base}/search`).send({ product: 'perfume', country: 'AR', maxResults: 5 });
     expect(post.status).toBe(202);

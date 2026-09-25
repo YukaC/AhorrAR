@@ -4,7 +4,7 @@
  * SECONDARY: Node BFS legacy (Playwright/HTTP) when CRAWLER=legacy|auto fallback.
  */
 
-import type { SearchParams, SearchResponse, SearchStats } from '../../../shared/contract.ts';
+import type { SearchParams, SearchResponse, SearchStats, ProductResult } from '../../../shared/contract.ts';
 import { buildEventInfo } from '../calendar/events.ts';
 import { getCountry } from '../calendar/countries.ts';
 import { rankByPriority } from '../scoring/score.ts';
@@ -13,15 +13,17 @@ import { bfsSearch } from './bfs.ts';
 import { extractPage } from './extractor.ts';
 import { LiveFetcher } from './fetcher.ts';
 import { buildResponse } from './pipeline.ts';
-import { crawlViaScrapling, scraplingAvailable } from './scrapling-client.ts';
+import { crawlViaScraplingStream, scraplingAvailable } from './scrapling-client.ts';
 import {
   buildSeedUrls,
+  curatedSearchUrl,
   extractDiscoveryLinks,
   guessSearchUrls,
   isCrawlWorthy,
   isMarketplaceSeedHost,
   isPublishableResult,
   isSerpHub,
+  registerDiscoveredShop,
 } from './seeds.ts';
 import type { CrawlDeps, CrawlProgress, FetchResult } from './types.ts';
 import { logger } from '../utils/logger.ts';
@@ -42,6 +44,11 @@ function expandNewOrigins(urls: string[], product: string, knownOrigins: Set<str
     const origin = originOf(url);
     if (origin === null || knownOrigins.has(origin)) continue;
     knownOrigins.add(origin);
+    const canonical = curatedSearchUrl(new URL(origin).hostname, product);
+    if (canonical !== null) {
+      extra.push(canonical);
+      continue;
+    }
     extra.push(...guessSearchUrls(origin, product));
   }
   return extra.filter((u) => isCrawlWorthy(u));
@@ -96,7 +103,18 @@ export function runLegacySearch(
         onProgress,
       );
       const usable = outcome.results.filter((r) => isPublishableResult(r.url));
-      const ranked = rankByPriority(usable, country).slice(0, params.maxResults ?? cfg.maxResults);
+      // Auto-expansión índice: tiendas nuevas con results se persisten (§V19).
+      for (const r of usable) {
+        const host = originOf(r.url);
+        if (host === null) continue;
+        if (isMarketplaceSeedHost(r.url)) continue;
+        try {
+          registerDiscoveredShop(new URL(host).hostname);
+        } catch {
+          /* ignore */
+        }
+      }
+      const ranked = rankByPriority(usable, country, params.maxResults ?? cfg.maxResults);
       const event = buildEventInfo(new Date(), params.country);
       const stats: SearchStats = {
         source: 'live',
@@ -115,6 +133,7 @@ export async function runLiveSearch(
   cfg: AppConfig,
   onProgress?: (progress: CrawlProgress) => void,
   deps?: Partial<CrawlDeps>,
+  onPartials?: (partial: ProductResult[]) => void,
 ): Promise<SearchResponse> {
   // Hermetic tests inject deps → always legacy path (no Scrapling network).
   if (deps !== undefined) {
@@ -129,7 +148,7 @@ export async function runLiveSearch(
     onProgress?.({ depth: 0, nodesVisited: 0, resultsFound: 0, message: 'Scrapling primary…' });
     const up = await scraplingAvailable(cfg.scraplingUrl);
     if (up) {
-      const via = await crawlViaScrapling(params, cfg);
+      const via = await crawlViaScraplingStream(params, cfg, onPartials ?? (() => undefined), onProgress);
       if (via !== null && via.results.length > 0) {
         logger.info(`scrapling ok: ${via.results.length} results in ${via.stats.elapsedMs}ms`);
         return via;

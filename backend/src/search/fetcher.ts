@@ -4,7 +4,7 @@
  * Challenge pages blacklist the host for the rest of the session (ML).
  */
 
-import { RobotsFile } from 'crawlee';
+import { RobotsResolver } from '../robots.ts';
 import type { Browser, BrowserContext, Page } from 'playwright';
 import { chromium } from 'playwright';
 import { normalizeUrl } from '../normalize/url.ts';
@@ -88,14 +88,18 @@ export class LiveFetcher {
   private readonly opts: FetcherOptions;
   private browser: Browser | null = null;
   private context: BrowserContext | null = null;
-  private robotsFiles = new Map<string, { isAllowed(url: string, userAgent?: string): boolean } | 'open'>();
   private lastHostAt = new Map<string, number>();
   private readonly blockedHosts = new Set<string>();
   private readonly sem: Semaphore;
+  private readonly robots: RobotsResolver;
 
   constructor(opts: FetcherOptions) {
     this.opts = opts;
     this.sem = new Semaphore(Math.max(1, opts.maxConcurrency));
+    this.robots = new RobotsResolver({
+      userAgent: opts.userAgent,
+      bypass: (url) => opts.stealth && (isSerpHub(url) || looksLikeMlApi(url)),
+    });
   }
 
   private async ensureContext(): Promise<BrowserContext> {
@@ -118,27 +122,7 @@ export class LiveFetcher {
   }
 
   private async robotsAllow(url: string): Promise<boolean> {
-    if (this.opts.stealth && (isSerpHub(url) || looksLikeMlApi(url))) return true;
-    let host: string;
-    try {
-      host = new URL(url).hostname;
-    } catch {
-      return false;
-    }
-    const cached = this.robotsFiles.get(host);
-    if (cached === 'open') return true;
-    if (cached !== undefined) return cached.isAllowed(url, this.opts.userAgent);
-    try {
-      const loader = (RobotsFile as unknown as {
-        load: (url: string, proxyUrl?: string, options?: { useragent?: string }) => Promise<{ isAllowed(url: string, userAgent?: string): boolean }>;
-      }).load;
-      const robots = await loader(`https://${host}/robots.txt`, undefined, { useragent: this.opts.userAgent });
-      this.robotsFiles.set(host, robots);
-      return robots.isAllowed(url, this.opts.userAgent);
-    } catch {
-      this.robotsFiles.set(host, 'open');
-      return true;
-    }
+    return this.robots.allow(url);
   }
 
   private async hostDelay(url: string): Promise<void> {

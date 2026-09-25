@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { isSearchResponse } from '../../shared/contract.ts';
 import { runLiveSearch } from '../src/search/service.ts';
 import { isAllowed } from '../src/search/seeds.ts';
+import { parseScraplingLine } from '../src/search/scrapling-client.ts';
 import { LISTING_URL, PRODUCT_URL, TEST_CFG, fetchFixture } from './fixtures/live.ts';
 
 const deps = {
@@ -29,6 +30,16 @@ describe('live search hermético (T10, ⊥ red en tests)', () => {
       expect(r.image).toBeTruthy();
       expect(r.image).not.toBeNull();
     }
+  });
+});
+
+describe('ndjson stream (T20)', () => {
+  it('parsea eventos offer/progress/done y descarta líneas basura', () => {
+    const offer = parseScraplingLine('{"type":"offer","offer":{"name":"X","price":1}}');
+    expect(offer).not.toBeNull();
+    expect(offer?.type).toBe('offer');
+    expect(parseScraplingLine('{mal json')).toBeNull();
+    expect(parseScraplingLine('   ')).toBeNull();
   });
 });
 

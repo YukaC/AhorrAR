@@ -39,9 +39,12 @@ describe('JSON API parsers (T13)', () => {
     const body = JSON.stringify([
       {
         productName: 'Bensimon Sunset Edp 100ml',
-        linkText: 'bensimon-sunset-edp-100ml',
+        productId: '100200',
+        linkText: 'bensimon-sunset-edp-100ml-100200',
+        link: 'https://www.fravega.com/bensimon-sunset-edp-100ml-100200/p',
         items: [
           {
+            itemId: '778899',
             images: [{ imageUrl: 'https://cdn.example/a.jpg' }],
             sellers: [{ commertialOffer: { Price: 45990, AvailableQuantity: 3 } }],
           },
@@ -55,7 +58,41 @@ describe('JSON API parsers (T13)', () => {
     );
     expect(out.results).toHaveLength(1);
     expect(out.results[0]!.priceRaw).toBe('45990');
-    expect(out.results[0]!.url).toContain('/bensimon-sunset-edp-100ml/p');
+    // Frávega Next PDP uses itemId (swap productId trailer), not /{linkText}/p.
+    expect(out.results[0]!.url).toBe('https://www.fravega.com/p/bensimon-sunset-edp-100ml-778899/');
+  });
+
+  it('fravegaPdpUrl preserves double hyphens and swaps productId→itemId', async () => {
+    const { fravegaPdpUrl } = await import('../src/search/parsers/vtex-api.ts');
+    expect(
+      fravegaPdpUrl('https://www.fravega.com', {
+        linkText: 'smart-tv-55--philco---vidaa-990707360',
+        productId: '990707360',
+        itemId: '990292666',
+      }),
+    ).toBe('https://www.fravega.com/p/smart-tv-55--philco---vidaa-990292666/');
+  });
+
+  it('parseVtexCatalogApi builds classic /slug/p for non-Frávega VTEX', () => {
+    const body = JSON.stringify([
+      {
+        productName: 'Notebook Gamer 15',
+        linkText: 'notebook-gamer-15',
+        items: [
+          {
+            itemId: '1',
+            images: [{ imageUrl: 'https://cdn.example/n.jpg' }],
+            sellers: [{ commertialOffer: { Price: 999999, AvailableQuantity: 2 } }],
+          },
+        ],
+      },
+    ]);
+    const out = parseVtexCatalogApi(
+      'https://www.compumundo.com.ar/api/catalog_system/pub/products/search/?ft=notebook',
+      body,
+      { product: 'notebook', country: 'AR' },
+    );
+    expect(out.results[0]!.url).toContain('/notebook-gamer-15/p');
   });
 
   it('parseMercadoLibreApi maps shipping + permalink', () => {

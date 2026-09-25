@@ -15,9 +15,12 @@ import type {
 import { normalizePrice } from '../normalize/price.ts';
 import { normalizeUrl } from '../normalize/url.ts';
 import { validateShipping } from '../shipping/shipping.ts';
+import { titleMatchesQuery } from './relevance.ts';
 import type { RawItem } from './types.ts';
 
-export function finalizeRawItem(raw: RawItem, _params: SearchParams, country: CountryConfig): ProductResult | null {
+export function finalizeRawItem(raw: RawItem, params: SearchParams, country: CountryConfig): ProductResult | null {
+  if (!titleMatchesQuery(raw.name, params.product)) return null;
+
   const price = normalizePrice(raw.priceRaw, country);
   if (price === null) return null;
 
@@ -37,6 +40,7 @@ export function finalizeRawItem(raw: RawItem, _params: SearchParams, country: Co
     url,
     image: raw.image ?? null,
     shipping,
+    installments: raw.installments ?? null,
     depth: raw.depth,
     sourceUrl: normalizeUrl(raw.sourceUrl) ?? raw.sourceUrl,
   };

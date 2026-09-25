@@ -6,6 +6,7 @@
  * - GET  /api/search/:id/events         → SSE progress stream
  * - GET  /api/calendar/:country         → country trade calendar
  * - GET  /api/health                    → ok / mode / uptime
+ * - POST /webhooks/ml                   → MercadoLibre notifications (ack stub)
  *
  * Errors are always JSON `{error}`; never stack traces to the client.
  */
@@ -18,11 +19,17 @@ import { buildEventInfo, describeCountryEvents, upcomingEvents } from './calenda
 import { getCountry, getAllCountries } from './calendar/countries.ts';
 import { config } from './config.ts';
 import { executeJob, isLiveRunner, jobStore, toErrorMessage } from './jobs.ts';
+import { JobsDb } from './persistence/jobs-db.ts';
 import { browserAvailable } from './search/fetcher.ts';
 import { logger } from './utils/logger.ts';
 
 export const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: config.corsOrigins.length > 0 ? config.corsOrigins : true,
+    credentials: false,
+  }),
+);
 app.use(express.json());
 
 /* ------------------------------------------------------------------------ */
@@ -222,6 +229,26 @@ app.get('/api/countries', (_req, res) => {
 });
 
 /* ------------------------------------------------------------------------ */
+/* MercadoLibre notifications webhook (stub)                                 */
+/* ------------------------------------------------------------------------ */
+
+/**
+ * Acknowledge MercadoLibre notification deliveries. DevCenter callback URL
+ * points here (https://ahorrar-api.fly.dev/webhooks/ml). The price scraper
+ * polls the catalog API, so we only need a 200 ack; payloads are logged.
+ */
+app.all('/webhooks/ml', (req, res) => {
+  const topic = typeof req.body?.topic === 'string' ? (req.body as { topic: string }).topic : null;
+  const resource = typeof req.body?.resource === 'string' ? (req.body as { resource: string }).resource : null;
+  if (topic === 'item_competition' || topic === 'item_price') {
+    logger.info(`ML notif ${topic}`, { topic, resource, user_id: req.body?.user_id ?? null });
+  } else {
+    logger.info(`ML notif (ignorada)`, { topic, resource });
+  }
+  res.status(200).json({ received: true });
+});
+
+/* ------------------------------------------------------------------------ */
 /* Error handling                                                           */
 /* ------------------------------------------------------------------------ */
 
@@ -247,8 +274,11 @@ app.use((req, res) => {
 /* ------------------------------------------------------------------------ */
 
 export function startServer(): void {
-  const server = app.listen(config.port, () => {
-    logger.info(`AhorrAR backend en http://localhost:${config.port} (live)`);
+  if (config.jobsDbPath !== '') {
+    jobStore.attachDb(new JobsDb(config.jobsDbPath));
+  }
+  const server = app.listen(config.port, config.host, () => {
+    logger.info(`AhorrAR backend en http://${config.host}:${config.port} (live, crawler=${config.crawler})`);
   });
   server.on('close', () => jobStore.dispose());
 }

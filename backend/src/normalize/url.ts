@@ -19,6 +19,8 @@ const TRACKING_KEYS = new Set([
   'tag',
   'linkCode',
   'psc',
+  // Venex (and similar) append listing search leftovers on PDP hrefs.
+  'keywords',
 ]);
 
 export function normalizeUrl(raw: string): string | null {

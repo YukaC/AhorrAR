@@ -11,6 +11,11 @@ import { extractImage } from './images.ts';
 
 const URL_RE = /href="([^"]+)"/g;
 
+function isFravegaHost(host: string): boolean {
+  const h = host.replace(/^www\./, '').toLowerCase();
+  return h === 'fravega.com' || h.endsWith('.fravega.com');
+}
+
 /** ML / anti-bot interstitial — do not crawl further. */
 export function isChallengePage(html: string): boolean {
   return /negative_traffic|suspicious-traffic|account-verification/i.test(html);
@@ -55,6 +60,19 @@ function decodeJsonString(raw: string): string {
 
 /** Pull product cards from VTEX JSON blobs embedded in the HTML. */
 function vtexJsonItems(pageUrl: string, content: string): RawItem[] {
+  let host = '';
+  let origin = '';
+  try {
+    const u = new URL(pageUrl);
+    origin = u.origin;
+    host = u.hostname.replace(/^www\./, '');
+  } catch {
+    return [];
+  }
+  // Frávega Next PDPs need itemId from the catalog API — HTML linkText often
+  // ends in productId and yields empty shells (§V22). Skip this path.
+  if (isFravegaHost(host)) return [];
+
   const names = [...content.matchAll(/"productName":"([^"\\]{4,120})"/g)].map((m) => m[1]!);
   const prices = [...content.matchAll(/"lowPrice":(\d+(?:\.\d+)?)/g)].map((m) => m[1]!);
   const slugs = [...content.matchAll(/"linkText":"([^"\\]+)"/g)].map((m) => m[1]!);
@@ -62,13 +80,6 @@ function vtexJsonItems(pageUrl: string, content: string): RawItem[] {
 
   const n = Math.min(names.length, prices.length, slugs.length);
   if (n === 0) return [];
-
-  let origin = '';
-  try {
-    origin = new URL(pageUrl).origin;
-  } catch {
-    return [];
-  }
 
   const items: RawItem[] = [];
   const seen = new Set<string>();
@@ -92,9 +103,16 @@ function vtexJsonItems(pageUrl: string, content: string): RawItem[] {
 }
 
 /**
- * Legacy VTEX shelf (Frávega): <li>…<a title href=…/p>…<em class="BestPrice">$ x
+ * Legacy VTEX shelf: <li>…<a title href=…/p>…<em class="BestPrice">$ x
+ * Frávega shelves skipped — need catalog itemId (§V22).
  */
 function shelfItems(pageUrl: string, content: string): RawItem[] {
+  try {
+    const host = new URL(pageUrl).hostname.replace(/^www\./, '');
+    if (isFravegaHost(host)) return [];
+  } catch {
+    return [];
+  }
   const blocks = content.split(/<li\b[^>]*>/i).slice(1);
   const items: RawItem[] = [];
   const seen = new Set<string>();

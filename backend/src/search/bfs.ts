@@ -15,7 +15,7 @@ import { normalizeUrl } from '../normalize/url.ts';
 import { finalizeRawItem } from './pipeline.ts';
 import { PriorityQueue } from './priorityQueue.ts';
 import { isSerpHub } from './seeds.ts';
-import type { CrawlBatch, CrawlDeps, CrawlOutcome, CrawlProgress, CrawlStats, FetchResult } from './types.ts';
+import type { CrawlBatch, CrawlDeps, CrawlOutcome, CrawlProgress, FetchResult } from './types.ts';
 
 interface QueueItem {
   url: string;

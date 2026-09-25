@@ -3,8 +3,10 @@
  * Lifecycle: queued → running → done | error.
  */
 
-import type { SearchParams, SearchProgress, SearchResponse, SearchStatus } from '../../shared/contract.ts';
+import type { SearchParams, SearchProgress, SearchResponse, SearchStatus, ProductResult } from '../../shared/contract.ts';
 import type { AppConfig } from './config.ts';
+import { normalizeQueryKey, SearchCache } from './cache/search-cache.ts';
+import { JobsDb } from './persistence/jobs-db.ts';
 import { runLiveSearch } from './search/service.ts';
 import type { CrawlDeps } from './search/types.ts';
 import { logger } from './utils/logger.ts';
@@ -29,10 +31,24 @@ export class JobStore {
   private readonly jobs = new Map<string, JobRecord>();
   private readonly listeners = new Map<string, Set<ProgressListener>>();
   private readonly sweepTimer: NodeJS.Timeout;
+  private db: JobsDb | null = null;
 
   constructor() {
     this.sweepTimer = setInterval(() => this.sweep(), SWEEP_MS);
     this.sweepTimer.unref();
+  }
+
+  /** Activa persistencia SQLite (§V20): restaura los jobs del disco al arranque. */
+  attachDb(db: JobsDb | null): void {
+    this.db = db;
+    if (db === null) return;
+    let restored = 0;
+    for (const persisted of db.list()) {
+      const job: JobRecord = { ...persisted };
+      this.jobs.set(job.searchId, job);
+      restored++;
+    }
+    if (restored > 0) logger.info(`jobs restaurados de SQLite: ${restored}`);
   }
 
   create(params: SearchParams): JobRecord {
@@ -45,6 +61,7 @@ export class JobStore {
       progress: { searchId, status: 'queued', depth: 0, nodesVisited: 0, resultsFound: 0 },
     };
     this.jobs.set(searchId, job);
+    this.persist(job);
     return job;
   }
 
@@ -52,14 +69,19 @@ export class JobStore {
     return this.jobs.get(id);
   }
 
+  private persist(job: JobRecord): void {
+    this.db?.upsert(job);
+  }
+
   updateProgress(
     id: string,
-    patch: { status?: SearchStatus; depth?: number; nodesVisited?: number; resultsFound?: number; message?: string },
+    patch: { status?: SearchStatus; depth?: number; nodesVisited?: number; resultsFound?: number; message?: string; results?: ProductResult[] },
   ): void {
     const job = this.jobs.get(id);
     if (job === undefined) return;
     job.progress = { ...job.progress, ...patch, status: patch.status ?? job.progress.status, searchId: id };
     if (patch.status !== undefined) job.status = patch.status;
+    this.persist(job);
     this.emit(id, job.progress);
   }
 
@@ -110,6 +132,7 @@ export class JobStore {
       if (now - Date.parse(job.createdAt) > TTL_MS) {
         this.jobs.delete(id);
         this.listeners.delete(id);
+        this.db?.remove(id);
         logger.info(`job expirado y purgado: ${id}`);
       }
     }
@@ -117,10 +140,15 @@ export class JobStore {
 
   dispose(): void {
     clearInterval(this.sweepTimer);
+    this.db?.close();
+    this.db = null;
   }
 }
 
 export const jobStore = new JobStore();
+
+/** Caché compartido de resultados rankeados (§V21); TTL se ajusta con cfg. */
+export const searchCache = new SearchCache(15 * 60_000);
 
 /* ------------------------------------------------------------------------ */
 /* Executors — run off the event loop; SSE stays responsive.                */
@@ -140,15 +168,48 @@ export function isLiveRunner(): boolean {
   return currentRunner === runLiveJob;
 }
 
+/** Refresh en background para SWR: repuebla el caché sin bloquear el job (ya sirvió stale). */
+async function refreshCache(params: SearchParams, cfg: AppConfig, deps?: Partial<CrawlDeps>): Promise<void> {
+  try {
+    const response = await runLiveSearch(params, cfg, undefined, deps);
+    searchCache.set(normalizeQueryKey(params.product), response);
+    logger.debug(`caché refrescada (SWR): ${params.product}`);
+  } catch (err) {
+    logger.warn(`refresh SWR falló (se mantiene stale): ${params.product} — ${toErrorMessage(err)}`);
+  }
+}
+
 export async function runLiveJob(id: string, cfg: AppConfig, deps?: Partial<CrawlDeps>): Promise<void> {
   const job = jobStore.get(id);
   if (job === undefined) return;
 
+  searchCache.setTtl(cfg.cacheTtlMs);
+  const cacheKey = normalizeQueryKey(job.params.product);
+  const hit = searchCache.get(cacheKey);
+
+  if (hit !== undefined) {
+    // Hit fresca → respuesta al instante, sin tocar el crawler (§V21).
+    if (searchCache.isFresh(hit)) {
+      jobStore.complete(id, hit.data);
+      logger.info(`caché hit (fresh): ${job.params.product}`);
+      return;
+    }
+    // Hit vencida → SWR: sirve stale y refresca en background.
+    jobStore.complete(id, hit.data);
+    logger.info(`caché hit (stale, SWR): ${job.params.product}`);
+    void refreshCache(job.params, cfg, deps);
+    return;
+  }
+
   jobStore.updateProgress(id, { status: 'running', message: 'Iniciando crawler en vivo' });
-  const response = await runLiveSearch(job.params, cfg, (p) =>
-    jobStore.updateProgress(id, { depth: p.depth, nodesVisited: p.nodesVisited, resultsFound: p.resultsFound, message: p.message }),
-      deps,
+  const response = await runLiveSearch(
+    job.params,
+    cfg,
+    (p) => jobStore.updateProgress(id, { depth: p.depth, nodesVisited: p.nodesVisited, resultsFound: p.resultsFound, message: p.message }),
+    deps,
+    (partial) => jobStore.updateProgress(id, { resultsFound: partial.length, results: partial }),
   );
+  searchCache.set(cacheKey, response);
   jobStore.complete(id, response);
 }
 

@@ -5,6 +5,7 @@
 
 export interface AppConfig {
   port: number;
+  host: string;
   stealth: boolean;
   maxDepth: number;
   maxNodes: number;
@@ -15,6 +16,12 @@ export interface AppConfig {
   crawler: 'scrapling' | 'legacy' | 'auto';
   scraplingUrl: string;
   includeMl: boolean;
+  /** Comma-separated browser origins allowed by CORS (empty = reflect all, dev-friendly). */
+  corsOrigins: string[];
+  /** Caché de resultados rankeados (TTL + SWR, Fase 1). */
+  cacheTtlMs: number;
+  /** Ruta del archivo SQLite de jobs persistidos (Fase 3); vacío = en-memoria. */
+  jobsDbPath: string;
 }
 
 function intFromEnv(name: string, fallback: number, min?: number, max?: number): number {
@@ -39,11 +46,21 @@ function crawlerFromEnv(): 'scrapling' | 'legacy' | 'auto' {
   return 'auto';
 }
 
+function corsOriginsFromEnv(): string[] {
+  const raw = process.env.CORS_ORIGINS?.trim();
+  if (raw === undefined || raw === '') return [];
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+}
+
 const DEFAULT_UA =
   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
 export const config: AppConfig = {
   port: intFromEnv('PORT', 4000, 1, 65_535),
+  host: process.env.HOST?.trim() || '0.0.0.0',
   stealth: boolFromEnv('STEALTH', false),
   maxDepth: intFromEnv('MAX_DEPTH', 2, 0, 4),
   maxNodes: intFromEnv('MAX_NODES', 60, 1, 10_000),
@@ -53,4 +70,7 @@ export const config: AppConfig = {
   crawler: crawlerFromEnv(),
   scraplingUrl: process.env.SCRAPLING_URL?.trim() || 'http://127.0.0.1:4100',
   includeMl: boolFromEnv('INCLUDE_ML', false),
+  corsOrigins: corsOriginsFromEnv(),
+  cacheTtlMs: intFromEnv('CACHE_TTL_MS', 15 * 60_000, 1_000, 24 * 60 * 60_000),
+  jobsDbPath: process.env.JOBS_DB?.trim() || '',
 };

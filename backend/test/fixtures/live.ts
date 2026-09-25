@@ -3,6 +3,7 @@ import type { FetchResult } from '../../src/search/types.ts';
 
 export const TEST_CFG: AppConfig = {
   port: 0,
+  host: '127.0.0.1',
   stealth: false,
   maxDepth: 2,
   maxNodes: 10,
@@ -12,6 +13,9 @@ export const TEST_CFG: AppConfig = {
   crawler: 'legacy',
   scraplingUrl: 'http://127.0.0.1:4100',
   includeMl: false,
+  corsOrigins: [],
+  cacheTtlMs: 15 * 60_000,
+  jobsDbPath: '',
 };
 
 export const LISTING_URL = 'https://listado.mercadolibre.com.ar/perfume';
