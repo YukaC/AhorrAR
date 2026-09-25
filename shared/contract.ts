@@ -36,6 +36,8 @@ export interface SearchProgress {
   nodesVisited: number;
   resultsFound: number;
   message?: string;
+  /** Parciales en vivo (SSE streaming, §V16). Solo presente mientras corre el job. */
+  results?: ProductResult[];
 }
 
 export interface ShippingInfo {
@@ -44,6 +46,12 @@ export interface ShippingInfo {
   type: 'local' | 'international';
   free?: boolean;
   eta?: string;
+  note?: string;
+}
+
+export interface InstallmentsInfo {
+  count: number;
+  interestFree: boolean;
   note?: string;
 }
 
@@ -61,6 +69,8 @@ export interface ProductResult {
   url: string;
   image?: string | null;
   shipping: ShippingInfo;
+  /** Cuotas — solo presente cuando la fuente lo expone (VTEX, §V18). */
+  installments?: InstallmentsInfo | null;
   depth: number;
   sourceUrl: string;
 }

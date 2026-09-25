@@ -1,0 +1,26 @@
+{
+  "resources": {
+    "results": {
+      "products": [
+        {
+          "title": "Notebook Dell Inspiron 15",
+          "url": "/products/notebook-dell-inspiron-15",
+          "price": "1250999.00",
+          "image": "https://cdn.shopify.com/s/files/1/notebook-dell.jpg"
+        },
+        {
+          "title": "Auriculares Sony WH-1000XM5",
+          "url": "/products/sony-wh-1000xm5",
+          "price": "499999.00",
+          "image": "https://cdn.shopify.com/s/files/1/sony.jpg"
+        },
+        {
+          "title": "Cable HDMI 2m",
+          "url": "/products/cable-hdmi-2m",
+          "price": "8999.00",
+          "image": "https://cdn.shopify.com/s/files/1/hdmi.jpg"
+        }
+      ]
+    }
+  }
+}

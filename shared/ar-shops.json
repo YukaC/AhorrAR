@@ -1,0 +1,717 @@
+{
+  "version": 3,
+  "shops": [
+    {
+      "host": "fravega.com",
+      "category": "electro",
+      "curated": true,
+      "entry": "https://www.fravega.com/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "garbarino.com",
+      "category": "electro",
+      "curated": true,
+      "entry": "https://www.garbarino.com/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": false,
+      "platform": "unknown"
+    },
+    {
+      "host": "musimundo.com",
+      "category": "electro",
+      "curated": true,
+      "entry": "https://www.musimundo.com/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "cetrogar.com",
+      "category": "electro",
+      "curated": true,
+      "entry": "https://www.cetrogar.com/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "farmacity.com",
+      "category": "perfumeria",
+      "curated": true,
+      "entry": "https://www.farmacity.com/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "compragamer.com",
+      "category": "gaming",
+      "curated": true,
+      "entry": "https://www.compragamer.com/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "venex.com.ar",
+      "category": "gaming",
+      "curated": true,
+      "entry": "https://www.venex.com.ar/resultado-busqueda.htm?keywords={q}",
+      "alive": true,
+      "platform": "oscommerce"
+    },
+    {
+      "host": "fullh4rd.com.ar",
+      "category": "gaming",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "woo"
+    },
+    {
+      "host": "maximus.com.ar",
+      "category": "gaming",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "unknown"
+    },
+    {
+      "host": "gezatek.com.ar",
+      "category": "gaming",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "unknown"
+    },
+    {
+      "host": "logg.com.ar",
+      "category": "gaming",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "unknown"
+    },
+    {
+      "host": "perfumeriasjulie.com.ar",
+      "category": "perfumeria",
+      "curated": true,
+      "entry": null,
+      "alive": false,
+      "platform": "unknown"
+    },
+    {
+      "host": "perfumeriasbellamar.com.ar",
+      "category": "perfumeria",
+      "curated": true,
+      "entry": null,
+      "alive": false,
+      "platform": "unknown"
+    },
+    {
+      "host": "megatone.net",
+      "category": "electro",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "unknown"
+    },
+    {
+      "host": "bgh.com.ar",
+      "category": "electro",
+      "curated": true,
+      "entry": "https://www.bgh.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "liliana.com.ar",
+      "category": "electro",
+      "curated": true,
+      "entry": "https://www.liliana.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "shop.lg.com.ar",
+      "category": "electro",
+      "curated": true,
+      "entry": "https://shop.lg.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": false,
+      "platform": "unknown"
+    },
+    {
+      "host": "store.sony.com.ar",
+      "category": "electro",
+      "curated": true,
+      "entry": "https://store.sony.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": false,
+      "platform": "unknown"
+    },
+    {
+      "host": "tienda.electrolux.com.ar",
+      "category": "electro",
+      "curated": true,
+      "entry": "https://www.tienda.electrolux.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "grid.com.ar",
+      "category": "electro",
+      "curated": true,
+      "entry": "https://www.grid.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "motorola.com.ar",
+      "category": "electro",
+      "curated": true,
+      "entry": "https://www.motorola.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "tienda.philips.com.ar",
+      "category": "electro",
+      "curated": true,
+      "entry": "https://www.tienda.philips.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "diaonline.supermercadosdia.com.ar",
+      "category": "general",
+      "curated": true,
+      "entry": "https://diaonline.supermercadosdia.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": false,
+      "platform": "unknown"
+    },
+    {
+      "host": "simplicity.com.ar",
+      "category": "general",
+      "curated": true,
+      "entry": "https://www.simplicity.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "fila.com.ar",
+      "category": "moda",
+      "curated": true,
+      "entry": "https://fila.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "47street.com.ar",
+      "category": "moda",
+      "curated": true,
+      "entry": "https://www.47street.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "belmo.com.ar",
+      "category": "moda",
+      "curated": true,
+      "entry": "https://www.belmo.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "getthelook.com.ar",
+      "category": "moda",
+      "curated": true,
+      "entry": "https://www.getthelook.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "lamartina.com.ar",
+      "category": "moda",
+      "curated": true,
+      "entry": "https://www.lamartina.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "levi.com.ar",
+      "category": "moda",
+      "curated": true,
+      "entry": "https://www.levi.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "puntodeportivo.com.ar",
+      "category": "moda",
+      "curated": true,
+      "entry": "https://www.puntodeportivo.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "rougemaison.com.ar",
+      "category": "moda",
+      "curated": true,
+      "entry": "https://www.rougemaison.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "sevensport.com.ar",
+      "category": "moda",
+      "curated": true,
+      "entry": "https://www.sevensport.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "showsport.com.ar",
+      "category": "moda",
+      "curated": true,
+      "entry": "https://www.showsport.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "sporting.com.ar",
+      "category": "moda",
+      "curated": true,
+      "entry": "https://www.sporting.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "farmaciadelpueblo.com.ar",
+      "category": "perfumeria",
+      "curated": true,
+      "entry": "https://www.farmaciadelpueblo.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "farmaciasvilela.com.ar",
+      "category": "perfumeria",
+      "curated": true,
+      "entry": "https://www.farmaciasvilela.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "farmaonline.com",
+      "category": "perfumeria",
+      "curated": true,
+      "entry": "https://www.farmaonline.com/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "farmaplus.com.ar",
+      "category": "perfumeria",
+      "curated": true,
+      "entry": "https://www.farmaplus.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "perfumeriaspigmento.com.ar",
+      "category": "perfumeria",
+      "curated": true,
+      "entry": "https://www.perfumeriaspigmento.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "colorshop.com.ar",
+      "category": "bazar",
+      "curated": true,
+      "entry": "https://www.colorshop.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "desiderata.com.ar",
+      "category": "bazar",
+      "curated": true,
+      "entry": "https://www.desiderata.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "easy.com.ar",
+      "category": "bazar",
+      "curated": true,
+      "entry": "https://www.easy.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "juleriaque.com.ar",
+      "category": "bazar",
+      "curated": true,
+      "entry": "https://www.juleriaque.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "simmons.com.ar",
+      "category": "bazar",
+      "curated": true,
+      "entry": "https://www.simmons.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "tramontina.com.ar",
+      "category": "bazar",
+      "curated": true,
+      "entry": "https://www.tramontina.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "clickgaming.com.ar",
+      "category": "gaming",
+      "curated": true,
+      "entry": "https://www.clickgaming.com.ar/wp-json/wc/store/v1/products?search={q}&per_page=12",
+      "alive": true,
+      "platform": "woo"
+    },
+    {
+      "host": "dinobyte.ar",
+      "category": "gaming",
+      "curated": true,
+      "entry": "https://www.dinobyte.ar/wp-json/wc/store/v1/products?search={q}&per_page=12",
+      "alive": true,
+      "platform": "woo"
+    },
+    {
+      "host": "katech.com.ar",
+      "category": "gaming",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "woo"
+    },
+    {
+      "host": "rockethard.com.ar",
+      "category": "gaming",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "unknown"
+    },
+    {
+      "host": "spacegamer.com.ar",
+      "category": "gaming",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "unknown"
+    },
+    {
+      "host": "goldentechstore.com.ar",
+      "category": "gaming",
+      "curated": true,
+      "entry": "https://www.goldentechstore.com.ar/wp-json/wc/store/v1/products?search={q}&per_page=12",
+      "alive": true,
+      "platform": "woo"
+    },
+    {
+      "host": "hftecnologia.com.ar",
+      "category": "gaming",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "unknown"
+    },
+    {
+      "host": "hypergaming.com.ar",
+      "category": "gaming",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "unknown"
+    },
+    {
+      "host": "megasoftargentina.com.ar",
+      "category": "gaming",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "unknown"
+    },
+    {
+      "host": "scphardstore.com",
+      "category": "gaming",
+      "curated": true,
+      "entry": "https://www.scphardstore.com/wp-json/wc/store/v1/products?search={q}&per_page=12",
+      "alive": true,
+      "platform": "woo"
+    },
+    {
+      "host": "thegamershop.com.ar",
+      "category": "gaming",
+      "curated": true,
+      "entry": "https://www.thegamershop.com.ar/wp-json/wc/store/v1/products?search={q}&per_page=12",
+      "alive": true,
+      "platform": "woo"
+    },
+    {
+      "host": "casadelaudio.com",
+      "category": "electro",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "unknown"
+    },
+    {
+      "host": "oncity.com.ar",
+      "category": "electro",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "unknown"
+    },
+    {
+      "host": "tiendanewsan.com.ar",
+      "category": "electro",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "unknown"
+    },
+    {
+      "host": "bangho.com.ar",
+      "category": "electro",
+      "curated": true,
+      "entry": "https://www.bangho.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "dricco.com.ar",
+      "category": "electro",
+      "curated": true,
+      "entry": "https://www.dricco.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "maxtecno.com.ar",
+      "category": "electro",
+      "curated": true,
+      "entry": "https://www.maxtecno.com.ar/wp-json/wc/store/v1/products?search={q}&per_page=12",
+      "alive": true,
+      "platform": "woo"
+    },
+    {
+      "host": "naldo.com.ar",
+      "category": "electro",
+      "curated": true,
+      "entry": "https://www.naldo.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "nuevashogar.com.ar",
+      "category": "electro",
+      "curated": true,
+      "entry": "https://www.nuevashogar.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "pardo.com.ar",
+      "category": "electro",
+      "curated": true,
+      "entry": "https://www.pardo.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "rodo.com.ar",
+      "category": "electro",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "unknown"
+    },
+    {
+      "host": "tidi.com.ar",
+      "category": "electro",
+      "curated": true,
+      "entry": "https://www.tidi.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "shop.samsung.com",
+      "category": "electro",
+      "curated": true,
+      "entry": null,
+      "alive": false,
+      "platform": "unknown"
+    },
+    {
+      "host": "insumosacuario.com.ar",
+      "category": "general",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "unknown"
+    },
+    {
+      "host": "carrefour.com.ar",
+      "category": "general",
+      "curated": true,
+      "entry": "https://www.carrefour.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "compracierta.com.ar",
+      "category": "general",
+      "curated": true,
+      "entry": "https://www.compracierta.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "coppel.com.ar",
+      "category": "general",
+      "curated": true,
+      "entry": "https://www.coppel.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "disco.com.ar",
+      "category": "general",
+      "curated": true,
+      "entry": "https://www.disco.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "hiperlibertad.com.ar",
+      "category": "general",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "unknown"
+    },
+    {
+      "host": "jumbo.com.ar",
+      "category": "general",
+      "curated": true,
+      "entry": "https://www.jumbo.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "masonline.com.ar",
+      "category": "general",
+      "curated": true,
+      "entry": "https://www.masonline.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "dashdeportes.com",
+      "category": "moda",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "unknown"
+    },
+    {
+      "host": "noxiestore.com",
+      "category": "moda",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "unknown"
+    },
+    {
+      "host": "beings.com.ar",
+      "category": "moda",
+      "curated": true,
+      "entry": "https://www.beings.com.ar/wp-json/wc/store/v1/products?search={q}&per_page=12",
+      "alive": true,
+      "platform": "woo"
+    },
+    {
+      "host": "carters.com.ar",
+      "category": "moda",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "furzai.com",
+      "category": "moda",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "mateusports.com.ar",
+      "category": "moda",
+      "curated": true,
+      "entry": "https://www.mateusports.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "opensports.com.ar",
+      "category": "moda",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "unknown"
+    },
+    {
+      "host": "universo.com.ar",
+      "category": "perfumeria",
+      "curated": true,
+      "entry": null,
+      "alive": true,
+      "platform": "unknown"
+    },
+    {
+      "host": "authogar.com",
+      "category": "bazar",
+      "curated": true,
+      "entry": "https://www.authogar.com/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "bringeri.com.ar",
+      "category": "bazar",
+      "curated": true,
+      "entry": "https://www.bringeri.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "scandinavian.com.ar",
+      "category": "bazar",
+      "curated": true,
+      "entry": "https://www.scandinavian.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "alive": true,
+      "platform": "vtex"
+    },
+    {
+      "host": "tienda.fila.com.ar",
+      "category": "general",
+      "curated": false,
+      "entry": null,
+      "platform": "unknown",
+      "alive": true
+    }
+  ]
+}

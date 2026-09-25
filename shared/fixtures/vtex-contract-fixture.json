@@ -1,0 +1,82 @@
+{
+  "meta": {
+    "description": "Fixture compartido del contrato de parsers VTEX (Fase 4). Lo consumen el motor Node (backend test) y el motor Python (scraper script). Cualquier refactor de schema de tienda curada debe mantener estos makers: name, price, url, installments. Frávega PDP = /p/{slug}-{itemId}/ (itemId ≠ productId).",
+    "url": "https://www.fravega.com/api/catalog_system/pub/products/search/?ft=bensimon%20sunset&_from=0&_to=11"
+  },
+  "products": [
+    {
+      "productName": "Bensimon Sunset EDP 100ml",
+      "productId": "100200",
+      "linkText": "bensimon-sunset-edp-100ml-100200",
+      "link": "https://www.fravega.com/bensimon-sunset-edp-100ml-100200/p",
+      "items": [
+        {
+          "itemId": "778899",
+          "images": [{ "imageUrl": "https://http2.mlstatic.com/bensimon-sunset-100ml.jpg" }],
+          "sellers": [
+            {
+              "commertialOffer": {
+                "Price": 45990,
+                "ListPrice": 52990,
+                "AvailableQuantity": 7,
+                "Installments": [
+                  {
+                    "Name": "Tarjeta crédito",
+                    "PaymentSystemName": "Visa",
+                    "Value": 3832.5,
+                    "InterestRate": 0,
+                    "NumberOfInstallments": 12
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "productName": "Bensimon Bold Deodorant 150ml",
+      "productId": "100201",
+      "linkText": "bensimon-bold-deodorant-150ml-100201",
+      "link": "https://www.fravega.com/bensimon-bold-deodorant-150ml-100201/p",
+      "items": [
+        {
+          "itemId": "778900",
+          "images": [{ "imageUrl": "https://http2.mlstatic.com/bensimon-bold-150ml.jpg" }],
+          "sellers": [
+            {
+              "commertialOffer": {
+                "Price": 8990,
+                "ListPrice": 10990,
+                "AvailableQuantity": 3,
+                "Installments": [
+                  {
+                    "PaymentSystemName": "Mercado Pago",
+                    "Value": 1123.75,
+                    "InterestRate": 0,
+                    "NumberOfInstallments": 8
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "productName": "Bensimon Dog Lata (agotado)",
+      "productId": "100202",
+      "linkText": "bensimon-dog-lata-100202",
+      "link": "https://www.fravega.com/bensimon-dog-lata-100202/p",
+      "items": [
+        {
+          "itemId": "778901",
+          "images": [{ "imageUrl": "https://http2.mlstatic.com/bensimon-dog-lata.jpg" }],
+          "sellers": [
+            { "commertialOffer": { "Price": 3500, "AvailableQuantity": 0, "Installments": [] } }
+          ]
+        }
+      ]
+    }
+  ]
+}

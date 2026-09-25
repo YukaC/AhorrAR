@@ -1,0 +1,40 @@
+[
+  {
+    "id": 101,
+    "name": "Notebook Lenovo IdeaPad 15 Ryzen 5",
+    "permalink": "https://www.ejemplo-woo.com.ar/producto/notebook-lenovo-ideapad-15/",
+    "prices": {
+      "price": "89999000",
+      "regular_price": "99999000",
+      "currency_code": "ARS",
+      "currency_minor_unit": 2
+    },
+    "images": [
+      { "src": "https://www.ejemplo-woo.com.ar/wp-content/uploads/notebook.jpg" }
+    ]
+  },
+  {
+    "id": 102,
+    "name": "Mouse Logitech G203",
+    "permalink": "https://www.ejemplo-woo.com.ar/producto/mouse-logitech-g203/",
+    "prices": {
+      "price": "2499000",
+      "regular_price": "2499000",
+      "currency_code": "ARS",
+      "currency_minor_unit": 2
+    },
+    "images": [
+      { "src": "https://www.ejemplo-woo.com.ar/wp-content/uploads/mouse.jpg" }
+    ]
+  },
+  {
+    "id": 103,
+    "name": "X",
+    "permalink": "https://www.ejemplo-woo.com.ar/producto/x/",
+    "prices": {
+      "price": "100",
+      "currency_minor_unit": 2
+    },
+    "images": []
+  }
+]
