@@ -29,6 +29,10 @@
   /* Vocabulario de motion compartido: una sola curva para toda la app. */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 
+  /* Spinner más rápido que el default (1s): la percepción de velocidad
+     hace que la carga se sienta más rápida aunque el tiempo sea igual. */
+  --animate-spin: spin 0.7s linear infinite;
+
   /* Entrada de vistas de estado (idle/running/error/done) sobre montaje. */
   --animate-view-in: view-in 200ms var(--ease-out) both;
   @keyframes view-in {

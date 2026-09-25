@@ -33,7 +33,7 @@ export default function EmptyState({ params, filtered, onRetry }: EmptyStateProp
       <button
         type="button"
         onClick={onRetry}
-        className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-neutral-300 bg-white px-4 text-sm font-medium text-neutral-800 transition-colors hover:border-accent-400 dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:border-accent-500"
+        className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-neutral-300 bg-white px-4 text-sm font-medium text-neutral-800 transition-[background-color,border-color,color,transform] hover:border-accent-400 active:scale-[0.97] dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:border-accent-500"
       >
         <RotateCcw aria-hidden="true" size={16} />
         Reintentar

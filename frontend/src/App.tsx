@@ -112,13 +112,13 @@ export default function App() {
               <span className="relative block size-[18px]" aria-hidden="true">
                 <Sun
                   size={18}
-                  className={`absolute inset-0 transition-all duration-300 ${
+                  className={`absolute inset-0 transition-[transform,opacity] duration-300 ${
                     theme === 'dark' ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-50 opacity-0'
                   }`}
                 />
                 <Moon
                   size={18}
-                  className={`absolute inset-0 transition-all duration-300 ${
+                  className={`absolute inset-0 transition-[transform,opacity] duration-300 ${
                     theme === 'dark' ? 'rotate-90 scale-50 opacity-0' : 'rotate-0 scale-100 opacity-100'
                   }`}
                 />
