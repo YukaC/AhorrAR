@@ -14,6 +14,7 @@ import { extractPage } from './extractor.ts';
 import { LiveFetcher } from './fetcher.ts';
 import { buildResponse } from './pipeline.ts';
 import { crawlViaScraplingStream, scraplingAvailable } from './scrapling-client.ts';
+import { nodesBudgetFor } from './nodes-budget.ts';
 import {
   buildSeedUrls,
   curatedSearchUrl,
@@ -97,7 +98,7 @@ export function runLegacySearch(
         crawlDeps,
         {
           maxDepth: params.maxDepth ?? cfg.maxDepth,
-          maxNodes: Math.min(cfg.maxNodes, Math.max(24, (params.maxResults ?? cfg.maxResults) * 5 + 16)),
+          maxNodes: nodesBudgetFor(params.maxResults ?? cfg.maxResults, cfg.maxNodes),
           concurrency: cfg.concurrency,
         },
         onProgress,
@@ -114,7 +115,7 @@ export function runLegacySearch(
           /* ignore */
         }
       }
-      const ranked = rankByPriority(usable, country, params.maxResults ?? cfg.maxResults);
+      const ranked = rankByPriority(usable, country, params.maxResults ?? cfg.maxResults, params.product);
       const event = buildEventInfo(new Date(), params.country);
       const stats: SearchStats = {
         source: 'live',

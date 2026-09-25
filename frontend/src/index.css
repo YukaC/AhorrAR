@@ -3,14 +3,27 @@
 /* Dark mode por clase (.dark en <html>), controlado por toggle + persistencia. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Usuarios que piden menos translucidez: superficies sólidas, sin blur.
-   Soporte: Safari 18+/Firefox; Chrome/Edge aún no lo implementan → en esos
-   navegadores el header queda translúcido (comportamiento actual, degradación
-   elegante, sin romper nada). */
+/* Usuarios que piden menos translucidez: superficies sólidas, sin blur. */
 @custom-variant reduced-transparency (@media (prefers-reduced-transparency: reduce));
 
+/* Geist Variable self-hosted (public/fonts) - sin Google Fonts CDN. */
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/geist-latin-wght-normal.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
+  Token hierarchy (Tailwind v4 / design-system):
+    Brand (accent-*) → Semantic (background, primary, …) → Components (utilities)
+  Dark mode: override CSS vars on .dark so utilities flip without dark:* pairs.
+*/
 @theme {
-  /* AhorrAR accent = emerald (dinero/ahorro) + teal secundario */
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+
+  /* --- Brand ramp (emerald / ahorro) --- */
   --color-accent-50: oklch(0.979 0.021 166.113);
   --color-accent-100: oklch(0.95 0.052 163.051);
   --color-accent-200: oklch(0.905 0.093 164.15);
@@ -22,18 +35,64 @@
   --color-accent-800: oklch(0.432 0.095 166.913);
   --color-accent-900: oklch(0.378 0.077 168.94);
 
-  --color-warm-50: oklch(0.985 0.002 85);
+  /* --- Semantic (light defaults; .dark overrides below) --- */
+  --color-background: oklch(0.985 0.006 180);
+  --color-foreground: oklch(0.21 0.006 260);
 
-  --shadow-card: 0 1px 2px oklch(0 0 0 / 0.05), 0 4px 16px -4px oklch(0 0 0 / 0.08);
+  --color-card: oklch(1 0 0);
+  --color-card-foreground: oklch(0.21 0.006 260);
 
-  /* Vocabulario de motion compartido: una sola curva para toda la app. */
+  --color-popover: oklch(1 0 0);
+  --color-popover-foreground: oklch(0.21 0.006 260);
+
+  --color-muted: oklch(0.97 0.005 180);
+  --color-muted-foreground: oklch(0.45 0.02 260);
+
+  --color-border: oklch(0.9 0.01 260);
+  --color-input: oklch(0.88 0.012 260);
+  --color-ring: var(--color-accent-500);
+  --color-ring-offset: var(--color-background);
+
+  --color-primary: var(--color-accent-700);
+  --color-primary-foreground: oklch(0.99 0.01 165);
+  --color-primary-soft: var(--color-accent-100);
+  --color-primary-soft-foreground: var(--color-accent-900);
+
+  /* Wordmark / inline brand emphasis */
+  --color-brand: var(--color-accent-700);
+
+  --color-secondary: oklch(0.96 0.01 180);
+  --color-secondary-foreground: oklch(0.28 0.02 260);
+
+  --color-destructive: oklch(0.55 0.2 25);
+  --color-destructive-foreground: oklch(0.99 0.01 25);
+  --color-destructive-soft: oklch(0.97 0.02 25);
+  --color-destructive-soft-foreground: oklch(0.45 0.16 25);
+  --color-destructive-border: oklch(0.9 0.06 25);
+
+  /* Event banner (activo = urgency, próximo = brand) */
+  --color-event-active-from: oklch(0.5 0.18 25);
+  --color-event-active-to: oklch(0.55 0.16 45);
+  --color-event-upcoming-from: var(--color-accent-700);
+  --color-event-upcoming-to: oklch(0.48 0.1 185);
+
+  /* Compat aliases */
+  --color-surface: var(--color-background);
+  --color-warm-50: var(--color-background);
+
+  /* Radius scale (shape lock: xl controls, 2xl cards) */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+
+  --shadow-card: 0 1px 2px oklch(0.45 0.04 165 / 0.06), 0 4px 16px -4px oklch(0.45 0.04 165 / 0.1);
+
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 
-  /* Spinner más rápido que el default (1s): la percepción de velocidad
-     hace que la carga se sienta más rápida aunque el tiempo sea igual. */
   --animate-spin: spin 0.7s linear infinite;
 
-  /* Entrada de vistas de estado (idle/running/error/done) sobre montaje. */
   --animate-view-in: view-in 200ms var(--ease-out) both;
   @keyframes view-in {
     from {
@@ -42,7 +101,6 @@
     }
   }
 
-  /* Entrada escalonada de las cards del grid (solo en búsqueda nueva). */
   --animate-card-in: card-in 180ms var(--ease-out) backwards;
   @keyframes card-in {
     from {
@@ -52,9 +110,56 @@
   }
 }
 
+/* Semantic dark overrides - utilities (bg-background, text-foreground, …) flip alone. */
+.dark {
+  --color-background: oklch(0.14 0.01 260);
+  --color-foreground: oklch(0.96 0.01 260);
+
+  --color-card: oklch(0.18 0.012 260);
+  --color-card-foreground: oklch(0.96 0.01 260);
+
+  --color-popover: oklch(0.18 0.012 260);
+  --color-popover-foreground: oklch(0.96 0.01 260);
+
+  --color-muted: oklch(0.22 0.015 260);
+  --color-muted-foreground: oklch(0.7 0.02 260);
+
+  --color-border: oklch(0.28 0.015 260);
+  --color-input: oklch(0.32 0.015 260);
+  --color-ring: var(--color-accent-400);
+  --color-ring-offset: var(--color-background);
+
+  --color-primary: var(--color-accent-600);
+  --color-primary-foreground: oklch(0.99 0.01 165);
+  --color-primary-soft: oklch(0.696 0.17 162.48 / 0.2);
+  --color-primary-soft-foreground: var(--color-accent-200);
+
+  --color-brand: var(--color-accent-400);
+
+  --color-secondary: oklch(0.22 0.015 260);
+  --color-secondary-foreground: oklch(0.96 0.01 260);
+
+  --color-destructive: oklch(0.65 0.18 25);
+  --color-destructive-foreground: oklch(0.99 0.01 25);
+  --color-destructive-soft: oklch(0.55 0.2 25 / 0.12);
+  --color-destructive-soft-foreground: oklch(0.85 0.08 25);
+  --color-destructive-border: oklch(0.45 0.12 25 / 0.55);
+
+  --color-event-active-from: oklch(0.48 0.17 25);
+  --color-event-active-to: oklch(0.5 0.15 45);
+  --color-event-upcoming-from: var(--color-accent-700);
+  --color-event-upcoming-to: oklch(0.45 0.09 185);
+
+  --shadow-card: 0 1px 2px oklch(0 0 0 / 0.2), 0 4px 16px -4px oklch(0 0 0 / 0.35);
+}
+
 @layer base {
+  * {
+    @apply border-border;
+  }
+
   html {
-    @apply antialiased;
+    @apply antialiased font-sans;
     scroll-behavior: smooth;
     color-scheme: light;
   }
@@ -62,26 +167,49 @@
     color-scheme: dark;
   }
   body {
-    @apply bg-warm-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100;
+    @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, oklch(0.9 0.06 165 / 0.45), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 100% 0%, oklch(0.92 0.03 180 / 0.35), transparent 50%);
+    background-attachment: fixed;
   }
-  /* Crossfade suave al alternar tema: :where() (especificidad 0) para que
-     cualquier utilidad de transition de un componente tenga la última palabra. */
-  :where(body, header, main, section, article, div, li, p, h1, h2, h3, span, label, a, button, input, select)
-    {
-    transition:
-      background-color 250ms var(--ease-out),
-      border-color 250ms var(--ease-out),
-      color 250ms var(--ease-out);
+  html.dark body {
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, oklch(0.35 0.06 165 / 0.35), transparent 55%),
+      radial-gradient(ellipse 50% 35% at 100% 0%, oklch(0.3 0.04 180 / 0.25), transparent 50%);
   }
+  /* Hover/active motion vive en classes de cada control. */
   :focus-visible {
-    @apply outline-none ring-2 ring-accent-500 ring-offset-2 ring-offset-warm-50 dark:ring-offset-neutral-950;
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
   }
-  /* Alto Contraste (Windows): el ring (box-shadow) no se renderiza → outline nativo. */
   @media (forced-colors: active) {
     :focus-visible {
       outline: 2px solid;
     }
   }
+}
+
+/*
+  Theme toggle (View Transitions) - FUERA de @layer para no perder contra UA.
+  Old arriba + fade-out: dark→light se ve (sin esto el light “lava” el crossfade).
+*/
+@keyframes theme-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+  animation: theme-fade-out 320ms var(--ease-out) both;
+}
+
+::view-transition-new(root) {
+  animation: none;
+  opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -92,5 +220,10 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
   }
 }

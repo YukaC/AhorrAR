@@ -17,7 +17,7 @@ function formatDayMonth(isoDate: string): string {
 
 export function formatDateRange(start: string, end?: string): string {
   if (!end) return formatDayMonth(start);
-  return `${formatDayMonth(start)} – ${formatDayMonth(end)}`;
+  return `${formatDayMonth(start)} - ${formatDayMonth(end)}`;
 }
 
 /** Copia para el banner según si el evento está activo hoy o es próximo. */

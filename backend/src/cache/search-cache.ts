@@ -23,6 +23,11 @@ export function normalizeQueryKey(q: string): string {
     .join(' ');
 }
 
+/** Cache key includes result cap so "mostrar más" (25→50→100) does not reuse a smaller hit (§V17/V21). */
+export function cacheKeyFor(product: string, maxResults: number): string {
+  return `${normalizeQueryKey(product)}:n${maxResults}`;
+}
+
 export class SearchCache {
   private readonly entries = new Map<string, CacheEntry>();
   private ttlMs: number;

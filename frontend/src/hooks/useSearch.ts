@@ -67,7 +67,11 @@ export function useSearch() {
   const run = useCallback((rawParams: SearchParams) => {
     abortRef.current?.abort();
     cleanupRef.current?.close();
-    const params: SearchParams = { ...rawParams, maxDepth: 2, maxResults: 20 };
+    const params: SearchParams = {
+      ...rawParams,
+      maxDepth: rawParams.maxDepth ?? 2,
+      maxResults: rawParams.maxResults ?? 25,
+    };
     lastParamsRef.current = params;
     setState({
       status: 'running',

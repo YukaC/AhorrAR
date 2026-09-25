@@ -31,7 +31,7 @@ describe('formatPrice', () => {
   });
 
   it('soporta valores no finitos', () => {
-    expect(formatPrice(Number.NaN, 'ARS', 'es-AR')).toBe('—');
+    expect(formatPrice(Number.NaN, 'ARS', 'es-AR')).toBe('N/D');
   });
 });
 
@@ -55,7 +55,7 @@ describe('storeInitials', () => {
     expect(storeInitials('Amazon')).toBe('AM');
   });
   it('vacío', () => {
-    expect(storeInitials('   ')).toBe('🏪');
+    expect(storeInitials('   ')).toBe('?');
   });
 });
 

@@ -27,16 +27,16 @@ export default function EventBanner({ event }: EventBannerProps) {
       <div
         role="status"
         aria-live="polite"
-        className="flex items-start gap-3.5 rounded-2xl bg-gradient-to-r from-rose-600 to-orange-500 p-5 text-white"
+        className="flex items-start gap-3.5 rounded-2xl bg-gradient-to-r from-event-active-from to-event-active-to p-5 text-white"
       >
         <Flame aria-hidden="true" size={22} className="mt-0.5 shrink-0" />
         <div className="flex flex-col gap-0.5">
-          <p className="flex items-center gap-2 text-xs font-semibold tracking-wide uppercase opacity-90">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold tracking-widest">
+          <p className="flex flex-wrap items-center gap-2 text-sm font-medium opacity-90">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold">
               <LiveDot />
-              LIVE
+              En curso
             </span>
-            Evento activo hoy
+            <span>Hoy</span>
           </p>
           <p className="text-lg leading-tight font-bold">{copy.title}</p>
           {copy.description ? (
@@ -55,11 +55,11 @@ export default function EventBanner({ event }: EventBannerProps) {
     <div
       role="status"
       aria-live="polite"
-      className="flex items-start gap-3.5 rounded-2xl bg-gradient-to-r from-accent-700 to-teal-600 p-5 text-white"
+      className="flex items-start gap-3.5 rounded-2xl bg-gradient-to-r from-event-upcoming-from to-event-upcoming-to p-5 text-white"
     >
       <CalendarClock aria-hidden="true" size={22} className="mt-0.5 shrink-0" />
       <div className="flex flex-col gap-0.5">
-        <p className="text-xs font-semibold tracking-wide uppercase opacity-90">Próximo evento</p>
+        <p className="text-sm font-medium opacity-90">Próximo evento</p>
         <p className="text-lg leading-tight font-bold">{copy.title}</p>
         <p className="inline-flex items-center gap-1.5 text-sm font-medium opacity-90">
           <CalendarDays aria-hidden="true" size={14} />

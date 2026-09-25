@@ -5,7 +5,7 @@
 
 import type { SearchParams, SearchProgress, SearchResponse, SearchStatus, ProductResult } from '../../shared/contract.ts';
 import type { AppConfig } from './config.ts';
-import { normalizeQueryKey, SearchCache } from './cache/search-cache.ts';
+import { cacheKeyFor, SearchCache } from './cache/search-cache.ts';
 import { JobsDb } from './persistence/jobs-db.ts';
 import { runLiveSearch } from './search/service.ts';
 import type { CrawlDeps } from './search/types.ts';
@@ -172,7 +172,7 @@ export function isLiveRunner(): boolean {
 async function refreshCache(params: SearchParams, cfg: AppConfig, deps?: Partial<CrawlDeps>): Promise<void> {
   try {
     const response = await runLiveSearch(params, cfg, undefined, deps);
-    searchCache.set(normalizeQueryKey(params.product), response);
+    searchCache.set(cacheKeyFor(params.product, params.maxResults ?? cfg.maxResults), response);
     logger.debug(`caché refrescada (SWR): ${params.product}`);
   } catch (err) {
     logger.warn(`refresh SWR falló (se mantiene stale): ${params.product} — ${toErrorMessage(err)}`);
@@ -184,7 +184,7 @@ export async function runLiveJob(id: string, cfg: AppConfig, deps?: Partial<Craw
   if (job === undefined) return;
 
   searchCache.setTtl(cfg.cacheTtlMs);
-  const cacheKey = normalizeQueryKey(job.params.product);
+  const cacheKey = cacheKeyFor(job.params.product, job.params.maxResults ?? cfg.maxResults);
   const hit = searchCache.get(cacheKey);
 
   if (hit !== undefined) {

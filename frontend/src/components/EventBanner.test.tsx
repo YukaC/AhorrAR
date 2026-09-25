@@ -31,6 +31,6 @@ describe('EventBanner', () => {
     render(<EventBanner event={active} />);
     expect(screen.getByText('Cyber Monday AR')).toBeInTheDocument();
     expect(screen.getByText('Descuentos en tecnología')).toBeInTheDocument();
-    expect(screen.getByText('Evento activo hoy')).toBeInTheDocument();
+    expect(screen.getByText('Hoy')).toBeInTheDocument();
   });
 });

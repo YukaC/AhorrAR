@@ -60,8 +60,8 @@ def start_warm_cache() -> None:
 
 class CrawlRequest(BaseModel):
     product: str = Field(min_length=1, max_length=120)
-    maxResults: int = Field(default=10, ge=1, le=30)
-    maxNodes: int = Field(default=40, ge=1, le=200)
+    maxResults: int = Field(default=25, ge=1, le=100)
+    maxNodes: int = Field(default=120, ge=1, le=400)
     maxDepth: int = Field(default=2, ge=0, le=4)
     includeMl: bool = False
 

@@ -11,20 +11,19 @@ interface SortBarProps {
 }
 
 const pillBase =
-  'inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white px-4 text-sm font-medium ' +
-  'transition-[background-color,border-color,color,transform] duration-150 hover:border-accent-400 active:scale-[0.97] dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:border-accent-500 ' +
+  'inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-input bg-card px-4 text-sm font-medium text-foreground ' +
+  'transition-[border-color,transform] duration-150 hover:border-accent-400 active:scale-[0.97] ' +
   'sm:flex-none sm:justify-start';
 
 function pillPressed(pressed: boolean): string {
   return pressed
-    ? 'border-accent-600 bg-accent-100 text-accent-900 shadow-sm dark:border-accent-400 dark:bg-accent-500/20 dark:text-accent-100'
-    : 'text-neutral-800 dark:text-neutral-100';
+    ? 'border-primary bg-primary-soft text-primary-soft-foreground shadow-sm'
+    : '';
 }
 
 const inputClass =
-  'min-h-11 w-full min-w-0 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-500 ' +
-  'focus:border-accent-500 focus:outline-none dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-100 ' +
-  'dark:placeholder:text-neutral-400';
+  'min-h-11 w-full min-w-0 rounded-xl border border-input bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground ' +
+  'focus:border-ring focus:outline-none';
 
 export default function SortBar({
   total,
@@ -48,25 +47,17 @@ export default function SortBar({
 
   return (
     <div className="flex flex-col gap-4" role="group" aria-labelledby="filters-heading">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p
-          id="filters-heading"
-          className="text-sm font-medium text-neutral-700 dark:text-neutral-200"
-          aria-live="polite"
-        >
-          {shown} de {total} ofertas
-        </p>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-100 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-accent-900 dark:bg-accent-500/20 dark:text-accent-200">
-          <span aria-hidden="true" className="size-1.5 rounded-full bg-accent-700 dark:bg-accent-300" />
-          live
-        </span>
-      </div>
+      <p
+        id="filters-heading"
+        className="text-sm font-medium text-foreground"
+        aria-live="polite"
+      >
+        {shown} de {total} ofertas
+      </p>
 
-      <div className="flex flex-col gap-4 rounded-2xl border border-neutral-200 bg-neutral-50/80 p-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3 dark:border-neutral-700 dark:bg-neutral-900/60">
+      <div className="flex flex-col gap-4 rounded-2xl border border-border bg-muted/80 p-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3">
         <label className="block min-w-[9rem] flex-1 sm:max-w-[11rem]">
-          <span className="mb-1.5 block text-xs font-semibold text-neutral-700 dark:text-neutral-200">
-            Precio mín (ARS)
-          </span>
+          <span className="mb-1.5 block text-xs font-semibold text-foreground">Precio mín (ARS)</span>
           <input
             type="number"
             inputMode="numeric"
@@ -80,9 +71,7 @@ export default function SortBar({
         </label>
 
         <label className="block min-w-[9rem] flex-1 sm:max-w-[11rem]">
-          <span className="mb-1.5 block text-xs font-semibold text-neutral-700 dark:text-neutral-200">
-            Precio máx (ARS)
-          </span>
+          <span className="mb-1.5 block text-xs font-semibold text-foreground">Precio máx (ARS)</span>
           <input
             type="number"
             inputMode="numeric"
@@ -118,7 +107,7 @@ export default function SortBar({
                 : 'Ordenar por precio: mayor a menor. Activar menor a mayor'
             }
             onClick={() => onSortChange(sort === 'price-asc' ? 'price-desc' : 'price-asc')}
-            className={`${pillBase} ${pillPressed(false)}`}
+            className={pillBase}
           >
             {priceLabel}
           </button>

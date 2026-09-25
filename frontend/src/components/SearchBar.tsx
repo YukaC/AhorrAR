@@ -1,22 +1,28 @@
-import { useId, useState } from 'react';
+import { useId } from 'react';
 import type { FormEvent } from 'react';
 import { Loader2, MapPin, Search } from 'lucide-react';
 import type { SearchParams } from '../../../shared/contract';
 
 interface SearchBarProps {
   busy: boolean;
+  product: string;
+  onProductChange: (product: string) => void;
+  maxResults: number;
   onSearch: (params: SearchParams) => void;
 }
 
 const inputBase =
-  'min-h-11 w-full rounded-xl border border-neutral-300 bg-white text-neutral-900 shadow-sm ' +
-  'placeholder:text-neutral-500 transition-[border-color,box-shadow] duration-200 disabled:cursor-not-allowed disabled:bg-neutral-100 ' +
-  'hover:border-accent-400 focus-visible:border-accent-500 focus-visible:ring-4 focus-visible:ring-accent-500/20 ' +
-  'dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder:text-neutral-400 ' +
-  'dark:disabled:bg-neutral-800 dark:hover:border-accent-500';
+  'min-h-11 w-full rounded-xl border border-input bg-card text-foreground shadow-sm ' +
+  'placeholder:text-muted-foreground transition-[border-color,box-shadow] duration-200 disabled:cursor-not-allowed disabled:bg-muted ' +
+  'hover:border-accent-400 focus-visible:border-ring focus-visible:ring-4 focus-visible:ring-ring/20';
 
-export default function SearchBar({ busy, onSearch }: SearchBarProps) {
-  const [product, setProduct] = useState('');
+export default function SearchBar({
+  busy,
+  product,
+  onProductChange,
+  maxResults,
+  onSearch,
+}: SearchBarProps) {
   const productId = useId();
   const countryId = useId();
 
@@ -24,8 +30,7 @@ export default function SearchBar({ busy, onSearch }: SearchBarProps) {
     event.preventDefault();
     const trimmed = product.trim();
     if (!trimmed || busy) return;
-    // AR-only live search — shallow crawl, fast.
-    onSearch({ product: trimmed, country: 'AR', maxDepth: 1, maxResults: 10 });
+    onSearch({ product: trimmed, country: 'AR', maxDepth: 2, maxResults });
   }
 
   return (
@@ -36,13 +41,13 @@ export default function SearchBar({ busy, onSearch }: SearchBarProps) {
       aria-label="Buscar producto"
     >
       <div className="relative min-w-0 flex-1">
-        <label htmlFor={productId} className="mb-1.5 block text-xs font-semibold text-neutral-700 dark:text-neutral-200">
+        <label htmlFor={productId} className="mb-1.5 block text-xs font-semibold text-foreground">
           Producto
         </label>
         <div className="relative">
           <Search
             aria-hidden="true"
-            className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-neutral-500 dark:text-neutral-400"
+            className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-muted-foreground"
             size={18}
           />
           <input
@@ -53,7 +58,7 @@ export default function SearchBar({ busy, onSearch }: SearchBarProps) {
             required
             maxLength={120}
             value={product}
-            onChange={(e) => setProduct(e.target.value)}
+            onChange={(e) => onProductChange(e.target.value)}
             autoComplete="off"
             placeholder="Ej: bensimon, iPhone 16, placa de video…"
             className={`${inputBase} pl-11 pr-4`}
@@ -62,10 +67,7 @@ export default function SearchBar({ busy, onSearch }: SearchBarProps) {
       </div>
 
       <div className="w-full sm:w-40 sm:shrink-0">
-        <span
-          id={countryId}
-          className="mb-1.5 block text-xs font-semibold text-neutral-700 dark:text-neutral-200"
-        >
+        <span id={countryId} className="mb-1.5 block text-xs font-semibold text-foreground">
           País
         </span>
         <span
@@ -73,7 +75,7 @@ export default function SearchBar({ busy, onSearch }: SearchBarProps) {
           aria-labelledby={countryId}
           title="Búsqueda solo en Argentina"
         >
-          <MapPin aria-hidden="true" size={16} className="shrink-0 text-neutral-500 dark:text-neutral-400" />
+          <MapPin aria-hidden="true" size={16} className="shrink-0 text-muted-foreground" />
           Argentina
         </span>
       </div>
@@ -81,7 +83,7 @@ export default function SearchBar({ busy, onSearch }: SearchBarProps) {
       <button
         type="submit"
         disabled={busy}
-        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-accent-600 px-6 font-semibold text-white transition-[background-color,transform] duration-150 hover:bg-accent-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:mb-0"
+        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-6 font-semibold text-primary-foreground transition-[background-color,transform] duration-150 hover:bg-primary/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:mb-0"
       >
         {busy ? (
           <Loader2 aria-hidden="true" className="animate-spin motion-reduce:hidden" size={18} />

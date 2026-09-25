@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SearchResponse } from '../../shared/contract.ts';
 import { jobStore, runLiveJob, searchCache } from '../src/jobs.ts';
-import { normalizeQueryKey, SearchCache } from '../src/cache/search-cache.ts';
+import { normalizeQueryKey, cacheKeyFor, SearchCache } from '../src/cache/search-cache.ts';
 import { LISTING_URL, TEST_CFG, fetchFixture } from './fixtures/live.ts';
 
 /** Fixture mínimo válido (§V8) para seed del caché. */
@@ -29,6 +29,14 @@ describe('normalizeQueryKey (§V21)', () => {
     expect(normalizeQueryKey('  iphone   16 pro  ')).toBe('16 iphone pro');
     expect(normalizeQueryKey('   ')).toBe('');
     expect(normalizeQueryKey('')).toBe('');
+  });
+});
+
+describe('cacheKeyFor (§V17/V21)', () => {
+  it('incluye el cap de resultados para no reusar hits más chicos', () => {
+    expect(cacheKeyFor('perfume', 25)).toBe('perfume:n25');
+    expect(cacheKeyFor('perfume', 25)).not.toBe(cacheKeyFor('perfume', 50));
+    expect(cacheKeyFor('SAMSUNG s24', 100)).toBe('s24 samsung:n100');
   });
 });
 
@@ -84,12 +92,12 @@ describe('Integración caché en runLiveJob (§V21)', () => {
     await runLiveJob(job.searchId, TEST_CFG, deps);
     const done = jobStore.get(job.searchId)!;
     expect(done.status).toBe('done');
-    expect(searchCache.get(normalizeQueryKey('perfume'))).toBeDefined();
+    expect(searchCache.get(cacheKeyFor('perfume', 5))).toBeDefined();
   });
 
   it('hit fresco → no crawlea y devuelve la respuesta cacheada', async () => {
     const job = jobStore.create({ product: 'perfume', country: 'AR', maxResults: 5 });
-    searchCache.set(normalizeQueryKey('perfume'), RESPONSE);
+    searchCache.set(cacheKeyFor('perfume', 5), RESPONSE);
     const fetchSpy = vi.fn(fetchFixture);
     const deps = { seedUrls: () => [LISTING_URL], fetch: fetchSpy };
     await runLiveJob(job.searchId, TEST_CFG, deps);
@@ -99,10 +107,10 @@ describe('Integración caché en runLiveJob (§V21)', () => {
 
   it('hit stale → sirve stale al instante y refresca en background (SWR)', async () => {
     const job = jobStore.create({ product: 'perfume', country: 'AR', maxResults: 5 });
-    searchCache.set(normalizeQueryKey('perfume'), RESPONSE);
+    searchCache.set(cacheKeyFor('perfume', 5), RESPONSE);
     // Envejecer la entrada de verdad: el correr del tiempo es el único mecanismo
     // real de SWR (el TTL de la caché no se toca, lo re-setea runLiveJob con cfg).
-    const entryBefore = searchCache.get(normalizeQueryKey('perfume'))!;
+    const entryBefore = searchCache.get(cacheKeyFor('perfume', 5))!;
     entryBefore.ts -= TEST_CFG.cacheTtlMs + 1;
     expect(searchCache.isFresh(entryBefore)).toBe(false);
 
@@ -111,7 +119,7 @@ describe('Integración caché en runLiveJob (§V21)', () => {
     expect(jobStore.get(job.searchId)!.result).toBe(RESPONSE); // stale servido sin crawlear
 
     await vi.waitFor(() => {
-      const entryAfter = searchCache.get(normalizeQueryKey('perfume'))!;
+      const entryAfter = searchCache.get(cacheKeyFor('perfume', 5))!;
       expect(entryAfter.ts).toBeGreaterThan(entryBefore.ts); // el refresh repobló con ts nuevo
     }, { timeout: 2000 });
   });

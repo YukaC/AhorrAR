@@ -100,6 +100,8 @@ describe('AhorrAR API (live, hermético)', () => {
     expect((await request(app).post(`${base}/search`).send({ product: 'x', country: 'MX' })).status).toBe(400);
     expect((await request(app).post(`${base}/search`).send({ product: 'x', country: 'AR', maxDepth: 7 })).status).toBe(400);
     expect((await request(app).post(`${base}/search`).send({ product: 'x', country: 'AR', maxResults: 0 })).status).toBe(400);
+    expect((await request(app).post(`${base}/search`).send({ product: 'x', country: 'AR', maxResults: 101 })).status).toBe(400);
+    expect((await request(app).post(`${base}/search`).send({ product: 'x', country: 'AR', maxResults: 100 })).status).toBe(202);
   });
 
   it('GET /api/search/:id non-terminal omits optional result/error keys (V10)', async () => {

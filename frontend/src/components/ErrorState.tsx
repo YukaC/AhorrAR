@@ -22,18 +22,18 @@ export default function ErrorState({ message, code, onRetry }: ErrorStateProps) 
   return (
     <div
       role="alert"
-      className="animate-view-in flex flex-col items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-8 text-center dark:border-rose-900/60 dark:bg-rose-500/10"
+      className="animate-view-in flex flex-col items-center gap-3 rounded-2xl border border-destructive-border bg-destructive-soft p-8 text-center"
     >
-      <AlertTriangle aria-hidden="true" size={36} className="text-rose-400 dark:text-rose-500" />
-      <h2 className="text-lg font-bold text-rose-800 dark:text-rose-300">
+      <AlertTriangle aria-hidden="true" size={36} className="text-destructive" />
+      <h2 className="text-lg font-bold text-destructive-soft-foreground">
         {codeClass ?? 'Algo salió mal'}
         {code !== null ? <span className="ml-2 text-sm font-normal">({code})</span> : null}
       </h2>
-      <p className="max-w-md text-sm text-rose-700 dark:text-rose-200/90">{message}</p>
+      <p className="max-w-md text-sm text-destructive-soft-foreground/90">{message}</p>
       <button
         type="button"
         onClick={onRetry}
-        className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-accent-600 px-4 text-sm font-semibold text-white transition-[background-color,transform] hover:bg-accent-700 active:scale-[0.97]"
+        className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-[background-color,transform] hover:bg-primary/90 active:scale-[0.97]"
       >
         <RotateCcw aria-hidden="true" size={16} />
         Reintentar

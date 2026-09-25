@@ -13,6 +13,7 @@ import type { RawItem, CrawlProgress } from './types.ts';
 import { hostOf, isMarketplaceSeedHost, isSerpHub, registerDiscoveredShop } from './seeds.ts';
 import type { SearchResponse } from '../../../shared/contract.ts';
 import { logger } from '../utils/logger.ts';
+import { nodesBudgetFor } from './nodes-budget.ts';
 
 export interface ScraplingOffer {
   name: string;
@@ -73,7 +74,7 @@ export async function crawlViaScrapling(
       body: JSON.stringify({
         product: params.product,
         maxResults: params.maxResults ?? cfg.maxResults,
-        maxNodes: cfg.maxNodes,
+        maxNodes: nodesBudgetFor(params.maxResults ?? cfg.maxResults, cfg.maxNodes),
         maxDepth: params.maxDepth ?? cfg.maxDepth,
         includeMl: cfg.includeMl,
       }),
@@ -107,7 +108,7 @@ export async function crawlViaScrapling(
     if (done !== null) usable.push(done);
   }
 
-  const ranked = rankByPriority(usable, country, params.maxResults ?? cfg.maxResults);
+  const ranked = rankByPriority(usable, country, params.maxResults ?? cfg.maxResults, params.product);
   const stats: SearchStats = {
     source: 'live',
     nodesVisited: payload.stats.nodesVisited,
@@ -182,7 +183,7 @@ export async function crawlViaScraplingStream(
     }
     // Re-rank on every offer so SSE parciales llegan ordenados (§V16/§V18).
     const cap = params.maxResults ?? cfg.maxResults;
-    onPartials(rankByPriority([...usable], country, cap));
+    onPartials(rankByPriority([...usable], country, cap, params.product));
   };
 
   try {
@@ -193,7 +194,7 @@ export async function crawlViaScraplingStream(
       body: JSON.stringify({
         product: params.product,
         maxResults: params.maxResults ?? cfg.maxResults,
-        maxNodes: cfg.maxNodes,
+        maxNodes: nodesBudgetFor(params.maxResults ?? cfg.maxResults, cfg.maxNodes),
         maxDepth: params.maxDepth ?? cfg.maxDepth,
         includeMl: cfg.includeMl,
       }),
@@ -240,7 +241,7 @@ export async function crawlViaScraplingStream(
     return null;
   }
 
-  const ranked = rankByPriority(usable, country, params.maxResults ?? cfg.maxResults);
+  const ranked = rankByPriority(usable, country, params.maxResults ?? cfg.maxResults, params.product);
   const stats: SearchStats = {
     source: 'live',
     nodesVisited: statsIn?.nodesVisited ?? usable.length,

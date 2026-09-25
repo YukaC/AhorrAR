@@ -25,7 +25,7 @@ from scrapling.fetchers import FetcherSession
 from ahorrar_scraper.parsers import looks_like_challenge, parse_page
 from ahorrar_scraper.meli_api import meli_token_configured, search_mla
 from ahorrar_scraper.offer_cache import OfferCache
-from ahorrar_scraper.relevance import title_matches_query
+from ahorrar_scraper.relevance import is_relevant_result
 from ahorrar_scraper.seeds import (
     ar_shop_hosts,
     build_seed_urls,
@@ -455,7 +455,7 @@ def crawl(
                 continue
             if "mercadolibre" in host_of(u):
                 continue
-            if not isinstance(name, str) or not title_matches_query(name, product):
+            if not isinstance(name, str) or not is_relevant_result(name, product):
                 continue
             seen_urls.add(u)
             results.append(offer)
@@ -569,7 +569,7 @@ def crawl(
             name = offer.get("name")
             if not isinstance(u, str) or u in seen_urls:
                 continue
-            if isinstance(name, str) and not title_matches_query(name, product):
+            if isinstance(name, str) and not is_relevant_result(name, product):
                 continue
             if ml_count >= ml_cap:  # §V17: cap ML es por oferta ML, no total
                 break
@@ -632,7 +632,7 @@ def crawl(
                     continue
                 if "mercadolibre" in host_of(u):
                     continue
-                if not isinstance(name, str) or not title_matches_query(name, product):
+                if not isinstance(name, str) or not is_relevant_result(name, product):
                     continue
                 offer["depth"] = depth
                 candidates.append(offer)
@@ -705,7 +705,7 @@ def crawl(
             # A3: enough diverse offers + queue is only HTML guesses for expanded hosts
             # → one more api-only batch, then exit (ML absorb unchanged at end).
             if (
-                len(results) >= min(max_results, 8)
+                len(results) >= max_results
                 and _distinct_offer_hosts(results) >= 4
                 and _queue_only_html_for_expanded(crawl_queue, known_origins)
             ):

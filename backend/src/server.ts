@@ -64,8 +64,8 @@ function validateSearchBody(body: unknown): Validated | { error: string } {
 
   let maxResults: number | undefined;
   if (b.maxResults !== undefined) {
-    if (typeof b.maxResults !== 'number' || !Number.isInteger(b.maxResults) || b.maxResults < 1 || b.maxResults > 30) {
-      return { error: 'maxResults debe ser un entero entre 1 y 30.' };
+    if (typeof b.maxResults !== 'number' || !Number.isInteger(b.maxResults) || b.maxResults < 1 || b.maxResults > 100) {
+      return { error: 'maxResults debe ser un entero entre 1 y 100.' };
     }
     maxResults = b.maxResults;
   }
