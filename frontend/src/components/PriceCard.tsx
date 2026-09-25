@@ -21,7 +21,7 @@ export default function PriceCard({ result }: PriceCardProps) {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className={`group flex h-full flex-col gap-4 rounded-2xl border bg-white p-5 transition-all duration-150 hover:-translate-y-0.5 hover:scale-[1.01] hover:shadow-lg focus-visible:ring-accent-500 sm:p-6 dark:bg-neutral-900 dark:hover:shadow-none ${
+      className={`group flex h-full flex-col gap-4 rounded-2xl border bg-white p-5 transition-[transform,box-shadow,border-color,background-color,color] duration-200 ease-out hover:-translate-y-0.5 hover:scale-[1.01] hover:shadow-lg active:translate-y-0 active:scale-[0.98] active:shadow-none focus-visible:ring-accent-500 sm:p-6 dark:bg-neutral-900 dark:hover:shadow-none ${
         isTop
           ? 'border-accent-500 shadow-lg ring-2 ring-accent-500/25 dark:border-accent-500'
           : 'border-neutral-200 shadow-card hover:border-accent-300 dark:border-neutral-700 dark:hover:border-accent-700'

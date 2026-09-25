@@ -3,6 +3,12 @@
 /* Dark mode por clase (.dark en <html>), controlado por toggle + persistencia. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Usuarios que piden menos translucidez: superficies sólidas, sin blur.
+   Soporte: Safari 18+/Firefox; Chrome/Edge aún no lo implementan → en esos
+   navegadores el header queda translúcido (comportamiento actual, degradación
+   elegante, sin romper nada). */
+@custom-variant reduced-transparency (@media (prefers-reduced-transparency: reduce));
+
 @theme {
   /* AhorrAR accent = emerald (dinero/ahorro) + teal secundario */
   --color-accent-50: oklch(0.979 0.021 166.113);
@@ -65,6 +71,12 @@
   }
   :focus-visible {
     @apply outline-none ring-2 ring-accent-500 ring-offset-2 ring-offset-warm-50 dark:ring-offset-neutral-950;
+  }
+  /* Alto Contraste (Windows): el ring (box-shadow) no se renderiza → outline nativo. */
+  @media (forced-colors: active) {
+    :focus-visible {
+      outline: 2px solid;
+    }
   }
 }
 

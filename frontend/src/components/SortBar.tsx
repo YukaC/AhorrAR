@@ -12,7 +12,7 @@ interface SortBarProps {
 
 const pillBase =
   'inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white px-4 text-sm font-medium ' +
-  'transition-colors duration-150 hover:border-accent-400 dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:border-accent-500 ' +
+  'transition-[background-color,border-color,color,transform] duration-150 hover:border-accent-400 active:scale-[0.97] dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:border-accent-500 ' +
   'sm:flex-none sm:justify-start';
 
 function pillPressed(pressed: boolean): string {

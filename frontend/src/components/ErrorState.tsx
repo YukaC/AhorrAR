@@ -33,7 +33,7 @@ export default function ErrorState({ message, code, onRetry }: ErrorStateProps) 
       <button
         type="button"
         onClick={onRetry}
-        className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-accent-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-accent-700"
+        className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-accent-600 px-4 text-sm font-semibold text-white transition-[background-color,transform] hover:bg-accent-700 active:scale-[0.97]"
       >
         <RotateCcw aria-hidden="true" size={16} />
         Reintentar
