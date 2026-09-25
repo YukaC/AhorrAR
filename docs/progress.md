@@ -7,7 +7,7 @@
 
 ## En una línea
 
-v0.2 en **prod** (https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev) · T1–T43 hechos; T17 descartado (ToS ML) · ML ON prod + circuit breaker · Scrapling + índice AR · 0 bugs §B.
+v0.2 en **prod** (https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev) · T1–T46 hechos; T17 descartado (ToS ML) · ML ON prod + circuit breaker · Scrapling + índice AR · UI caps 25/50/100 · 0 bugs §B abiertos.
 
 ## Hecho
 
@@ -37,6 +37,9 @@ v0.2 en **prod** (https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev) · 
 - [x] **Filtro Envío gratis con señal real**: `shipping.free` desde VTEX `ShippingSLA[].Price==0` y ML `free_shipping` (gana sobre regex del hint) + pill SortBar re-activado + paridad Node↔Python (fixture contrato con ShippingSLA) — §T37 / §V25
 - [x] **ML circuit breaker**: `_CircuitBreaker` en `search_mla` (threshold 3, cooldown 300s, half-open) — 401/403/429/≥400/network/shape cuentan; éxito resetea; skip rápido mientras abierto — §T43 / §V26 · tests unittest 7
 - [x] **Warm cache ON en prod**: `WARM_CACHE=1` en `fly.toml` (pre-calienta 5 búsquedas populares cada 300s) — §T42
+- [x] **Relevance anti-accesorio / class evidence** (Node+Python): categoría sola exige sinónimo; reject funda/RAM/crema/para X; relevance tier en ranking — §T44–T45 / §V27/§V28
+- [x] **UI result caps 25→50→100** + SearchBar sync chips/query + early-stop scraper al cap + caché por cap — §T46 / §V17/§V18
+- [x] **Design system Tailwind v4** (tokens semánticos + Geist + theme View Transition) — polish UI
 
 ## En curso
 

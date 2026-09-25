@@ -90,15 +90,17 @@ frontend/src/
   `runLiveSearch` → `crawlViaScraplingStream` (lee ndjson del scraper) →
   `rankByPriority` → job `done` + SSE. Las cards parciales se emiten por
   `SearchProgress.results` mientras el crawler corre (§V16).
-- **Ranking (§V17/V18)**: `scoreFor` = tier local/intl + precio efectivo con
-  descuento reputación (índice curado/discovered) + bonus cuotas sin interés;
-  `rankByPriority` clampa ML a ≤50% del top-N y ranks contiguos 1..n.
+- **Ranking (§V17/V18/V28)**: `scoreFor` = tier local/intl + relevance tier + precio
+  efectivo (reputación índice + bonus cuotas); `rankByPriority` clampa ML a ≤50% del
+  top-N (N∈{25,50,100}, default 25, max 100) y ranks contiguos 1..n.
 - **Seeds compartidas (§V19)**: `buildSeedUrls` = hubs SERP + índice curado
   (entry VTEX o guessSearchUrls) + ML (solo si token). Descubrimiento nuevo →
   `registerDiscoveredShop` persiste en `ar-shops.json` (tmp+rename atómico) desde
   Node y Python indistintamente.
 - **ML (§C.12/§V17)**: solo API oficial (`products/search` + `products/{id}/items`),
   nunca el HTML de listado; `installments` no existe en la API → solo VTEX.
+- **Frontend**: tokens semánticos Tailwind v4 + Geist; theme View Transitions;
+  SearchBar controlado (chips sync); “Mostrar más” 25→50→100.
 
 ## Decisiones pasadas
 
@@ -116,7 +118,6 @@ Push a `main` redeploya Vercel + Fly. Detalle: `docs/DEPLOY.md`.
 
 ## Deuda / notas
 
-- Caché de resultados: TTL 15 min + SWR (§T25); hosts del índice no re-descubren URL scheme.
-- `crawl/stream` con `maxResults=10` y `maxDepth=3` tarda ~24 s en "samsung s24",
-  pero los primeros partials llegan en ~2–3 s (SSE en vivo).
-- ML ON en prod (`INCLUDE_ML=1` + secrets `MELI_*`). Token ~6h → refresh + re-set Fly secrets (`docs/ML.md`).
+- Caché de resultados: TTL 15 min + SWR (§T25); clave incluye cap (`:n25`); hosts del índice no re-descubren URL scheme.
+- `crawl/stream` con `maxResults=25` (default UI) y `maxDepth=2`; partials SSE en ~0.5–3 s.
+- ML ON en prod (`INCLUDE_ML=1` + secrets `MELI_*`). Token ~6h → auto-refresh on 401 + volume (`docs/ML.md`).

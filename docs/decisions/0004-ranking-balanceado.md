@@ -8,15 +8,16 @@
 ## Contexto
 Ordenar solo por precio favorecía a MercadoLibre (tiene siempre ofertas baratas) y
 ahogaba tiendas locales curadas. El usuario pidió: ponderar **siempre** la reputación
-del sitio y el precio, más **financiación en cuotas sin interés**, con tope de 20
-mejores y cupo para ML.
+del sitio y el precio, más **financiación en cuotas sin interés**, con tope de top-N
+(UI 25/50/100, max 100) y cupo para ML.
 
 ## Decisión
-`score.ts`: `scoreFor = tier local/intl (gap 1e6, precio nunca cruza tier) + precio
-efectivo con descuentos` — reputación: curado en índice −8%, descubierto −4%,
-desconocido 0% · bonus cuotas sin interés −3% (solo `interestFree`, llegado de VTEX).
-`rankByPriority` clampa la cuota de ML a ≤50% del top-N (N = `maxResults`, hasta 20) y
-renumbera ranks contiguos 1..n.
+`score.ts`: `scoreFor = tier local/intl (gap 1e6, precio nunca cruza tier) + relevance
+tier (§V28) + precio efectivo con descuentos` — reputación: curado en índice −8%,
+descubierto −4%, desconocido 0% · bonus cuotas sin interés −3% (solo `interestFree`,
+llegado de VTEX).
+`rankByPriority` clampa la cuota de ML a ≤50% del top-N (N = `maxResults`, UI steps
+25/50/100, max 100 — §V17/§T46) y renumbera ranks contiguos 1..n.
 
 ## Consecuencias
 Positivas:

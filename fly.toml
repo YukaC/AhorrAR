@@ -18,8 +18,8 @@ primary_region = 'gru'
   WARM_CACHE = '1'
   MELI_TOKEN_FILE = '/data/meli_tokens.json'
   MAX_DEPTH = '2'
-  MAX_NODES = '40'
-  MAX_RESULTS = '10'
+  MAX_NODES = '120'
+  MAX_RESULTS = '25'
   CONCURRENCY = '3'
 
 [mounts]

@@ -23,6 +23,17 @@ curl -s -X POST http://localhost:4000/api/search \
 Body: `SearchParams` (`product` required, `country` must be `AR` for live seeds;
 `MX`/`ES` quedan en el contrato/calendario pero el índice de seeds es AR-only).
 
+| Campo | Tipo | Default | Rango / notas |
+|---|---|---|---|
+| `product` | string | — | 1–120 chars |
+| `country` | `"AR"` | `"AR"` | live solo AR |
+| `maxDepth` | int | config (`MAX_DEPTH`, 2) | 0–4 |
+| `maxResults` | int | **25** (`MAX_RESULTS`) | **1–100** · UI steps 25 → 50 → 100 (§V17) |
+
+La UI pide 25 por defecto y ofrece “Mostrar más” (re-crawl con cap mayor). La
+caché de resultados incluye el cap en la clave (`producto:n25`) para no reusar
+un hit más chico (§V21).
+
 ## GET /api/search/:id
 
 Poll job state. Keys opcionales `result` / `error` solo presentes si existen (§V10).

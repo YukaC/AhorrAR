@@ -17,7 +17,9 @@ Env: `SCRAPER_HOST`, `SCRAPER_PORT` (default 4100).
 ## API
 
 - `GET /health` → `{ ok, engine: scrapling }`
-- `POST /crawl` `{ product, maxResults?, maxNodes?, maxDepth?, includeMl? }`
+- `POST /crawl` / `POST /crawl/stream` `{ product, maxResults?, maxNodes?, maxDepth?, includeMl? }`
+  - `maxResults` default **25**, rango **1–100** (paridad API Node §V17)
+  - `maxNodes` default **120**, rango **1–400** (budget escala con el cap)
   → `{ results[], stats, mlBlocked }`
 
 ## Notes

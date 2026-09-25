@@ -12,6 +12,8 @@
 - [x] ML auto-refresh on 401 + Fly volume token file — §T38
 - [x] Señal real de envío gratis + pill UI — §T37
 - [x] ML circuit breaker (degradación con gracia) — §T43 · fallback HTML **descartado por ToS ML** — §T17
+- [x] Relevance anti-accesorio + class evidence — §T44–T45 / §V27/§V28
+- [x] UI result caps 25→50→100 + SearchBar sync — §T46
 
 ## Luego (v0.3)
 

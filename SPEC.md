@@ -8,8 +8,8 @@ Comparador de precios AR: [PRODUCTO] → crawler LIVE rankea ofertas REALES (pre
 - monorepo: backend/ + frontend/ + scraper/ + shared/contract.ts
 - crawl PRIMARY: Scrapling `FetcherSession` per worker (TLS impersonate rotativo) · fetch kinds `hub|api|html` · SERP + VTEX/Woo/Shopify JSON · early-stop agresivo · `STEALTH_FETCH` gated (default off prod; browser cascade solo local/opt-in) · ⊥ `capture_xhr`/Spiders (ROADMAP)
 - discovery AR: hubs SERP + VTEX + guessSearchUrls platform-aware (índice `platform`+`entry` → 1 URL; `alive:false` ⊥ seed) + **índice curado v3 `shared/ar-shops.json`** (gaming/perfumeria/electro/moda/bazar · `platform`/`alive`/`entry`) · probe offline `scripts/probe_ar_shops.py` · auto-expansión: tienda nueva con results se agrega al índice (persistida) · ⊥ indexar resultados directos del índice (siempre crawlear via guess URLs)
-- **streaming SSE**: `POST :4100/crawl/stream` → ndjson eventos (offer/progress/done) · backend reenvía `SearchProgress.results` (parciales) por SSE · frontend renderiza cards a medida llegan (skeleton real) · top-N cap 20 · ML share ≤50% on balance con resto
-- ranking: reputación tienda (curated) + precio + bonus financiación cuotas sin interés `installments` · VTEX `Installments` parse
+- **streaming SSE**: `POST :4100/crawl/stream` → ndjson eventos (offer/progress/done) · backend reenvía `SearchProgress.results` (parciales) por SSE · frontend renderiza cards a medida llegan (skeleton real) · top-N caps UI 25→50→100 · ML share ≤50% on balance con resto
+- ranking: reputación tienda (curated) + precio + bonus financiación cuotas sin interés `installments` · VTEX `Installments` parse · **title relevance tier** (primario > débil/secundario, §V28)
 - crawl SECONDARY: Node BFS legacy (HTTP-fast + Playwright) si `CRAWLER=legacy` o auto-fallback
 - **ML PRIMARY (implementado):** API oficial catálogo OAuth: `products/search` → `products/{id}` → `products/{id}/items` (precio del item competidor más barato por producto, ARS + §V1) con permiso funcional app "Publicación y sincronización" r/w + re-consent OK (2026-09-23) · buy box NOT GATE: precios vía `/items` aunque `buy_box_winner` `null` · **cuenta token YUCA no vendedora** (`billing.allow=false address_pending`, list=false, kyc imposible — error ML) → `sale_price`/`/items/{id}`/`/sites/MLA/search` 403 por mejoramiento + items sin competencia ⊥ (404 "No winners found" por diseño, no compensable) · `sites/{site}/search` ⊥ (muerto 403 desde 2025) · ⊥ HTML listado · fallback HTML ⊥ (ToS ML — scraping no autorizado; API oficial único camino legal) · **circuit breaker** degrada con gracia (T43/V26) · ML ON en prod (`INCLUDE_ML=1` + secrets Fly; local default OFF `.env.example`) · auto-refresh OAuth on 401 → persist `/data/meli_tokens.json` (Fly volume) · docs/ML.md
 - KISS/DRY: normalize/shipping/scoring en Node; Scrapling entrega offers crudas → finalize §V1
@@ -52,8 +52,8 @@ V13: ∀ host crawlable → reputación AR (ccTLD .ar ∨ bootstrap .com AR ∨ 
 V14: CRAWLER=auto|scrapling → intentar Scrapling primero; legacy solo fallback o CRAWLER=legacy
 V15: ML PRIMARY → só catálogo: `/products/search` + `/products/{id}/items` (precio del competidor más barato por PDP, ARS ∧ shipping §V1), gate MELI_ACCESS_TOKEN ∧ permiso funcional "Publicación y sincronización" r/w activo en app DevCenter (verificado `GET /applications/{id}` + re-consent) → precios ⊆ app r/w (⊥ `not_certified`/grant vencido); `/sites/{site}/search` ⊥; buy box/sale_price/items ⊥ cuenta vendedora validada (no gate del camino precio)
 V16: ∀ streaming SSE → `SearchProgress.results` = ProductResult[] parciales (guard frontend acepta optional results) · job terminal sigue siendo V10 (result solo en done)
-V17: ∀ comprobación con ML on → ML share ≤ 50% de top-N (N≤20 max) · el resto lo llena discovery (⊥ que ML ocupe todo el grid)
-V18: ranking = reputación tienda (índice curado/auto-discovered tier) + precio (menor mejor) + bonus cuotas sin interés (`installments` sin tasa) · cap top-N con N=MAX_RESULTS≤20
+V17: ∀ comprobación con ML on → ML share ≤ 50% de top-N (N∈{25,50,100}, default 25, max 100) · el resto lo llena discovery (⊥ que ML ocupe todo el grid)
+V18: ranking = reputación tienda (índice curado/auto-discovered tier) + precio (menor mejor) + bonus cuotas sin interés (`installments` sin tasa) · cap top-N con N=MAX_RESULTS≤100 (UI steps 25/50/100)
 V19: ∀ tienda curada/discovered → reputación tier + `platform`/`alive`/`entry` coherentes Node↔Python (mismo `shared/ar-shops.json` v3 + tier por hotness de discovery) · `alive:false` ⊥ seedea · seeds platform-aware paridad ambos motores · ⊥ skip index sin crawlear
 V20: ∀ GET job → id overvive restart backend si `JOBS_DB` set (SQLite persistencia) → job créer en start restore
 V21: ∀ caché hit (TTL vivo) → respuesta de vuelta sin crawlear; hit vencido → respuesta stale + refresh background (SWR); miss → crawlea + pobla
@@ -62,6 +62,9 @@ V23: ∀ build frontend → `dist/index.html` contiene home prerenderizado (root
 V24: ∀ result publicado → title matchea query (filtro relevancia pipeline Node+Python) · tests integración usan fixtures que pasan el pipeline completo (⊥ nombres que no matchean la query)
 V25: ∀ shipping.free → señal estructurada (VTEX ShippingSLA Price 0 / ML free_shipping) gana sobre regex del hint · paridad Node↔Python (fixture contrato VTEX con ShippingSLA)
 V26: ∀ fallo ML API (401/403/429/≥400/network/shape) → circuit breaker cuenta; tras N consecutivos skip ML por cooldown (⊥ golpear API caída) · éxito resetea · búsqueda degrada sin ML, nunca falla
+V27: ∀ query categoría primaria sola → title exige evidencia de clase (sinónimo ∨ señales dominio: perfume→EDP/ml≠beauty-adjacent) ∧ ⊥ listing secundario estructural (lead funda/crema/RAM… ∨ "para X") salvo query pida secundario · paridad Node↔Python
+V28: ranking ! title relevance tier (gap ≫ precio): match primario fuerte antes que débil/secundario · gate binario universal · `rankByPriority(..., product)` · paridad score Node↔Python
+V29: ∀ result publicado → `isRelevantResult` (gate ∧ score≥RELEVANCE_PUBLISH) · ⊥ publicar match débil · cross-class conflict (query familia A ∧ title lead familia B⇒drop) · token whole-word · paridad Node↔Python
 
 §T
 id|status|task|cites
@@ -85,7 +88,7 @@ T17|⊥|ML fallback HTML StealthyFetcher+proxy residencial — DESCARTADO por To
 T18|x|Deploy: Vercel frontend + Fly Docker API/Scrapling + DEPLOY.md|§I
 T19|x|streaming scrapers: crawl() on_offer/on_progress callbacks + POST /crawl/stream ndjson (offer/progress/done/error) · /crawl intacto digo|V16,§I
 T20|x|backend stream: SearchProgress.results opcional (contract+guard) + scrapling stream client (ndjson→SSE) + jobStore push parciales por SSE|V16,V10,§I
-T21|x|frontend streaming: LoadingState→cards a medida llegan (skeleton real) + maxResults 20|V16,V17
+T21|x|frontend streaming: LoadingState→cards a medida llegan (skeleton real) + maxResults (histórico 20; hoy caps 25/50/100 §T46)|V16,V17
 T22|x|índice curado discovery: shared/ar-shops.json categorías + guessSearchUrls ampliado + auto-expansión tiendea nueva|V19,V13
 T23|x|ranking balance: reputación+precio+bonus cuotas sin interés + ML share≤50% + VTEX installments parse|V18,V17,V2
 T24|x|Fase 0 speed: ML N+1 paralelo (ThreadPool+client por thread+auth por arg) + BFS batches (url,depth) + timeouts por tipo + ML concurrente (worker) — s24: done 24.1s→1.6s, primer offer 2-3s→0.5s|V1,V17,V16
@@ -108,6 +111,10 @@ T40|x|sitemap discovery: sitemap_candidate_hosts (no-VTEX curado misma categorí
 T41|x|probes en paralelo: pipeline 2 etapas (launch_batch N+1 antes de process_batch N) + fix while (batch or crawl_queue)|V5,§C
 T42|x|warm cache populares: server.py _warm_loop gated WARM_CACHE=1 (5 queries, 300s, max_results 8/max_nodes 30) + start_warm_cache en main()|V21,§C
 T43|x|ML circuit breaker: _CircuitBreaker (threshold 3, cooldown 300s, half-open) en search_mla — 401/403/429/≥400/network/shape inesperado cuentan; éxito resetea; skip rápido mientras abierto (⊥ golpear API caída) · env ML_CIRCUIT_FAILURES/ML_CIRCUIT_COOLDOWN_S · tests unittest 7|V14,§C
+T44|x|relevancia anti-accesorio: categoría sola exige sinónimo + reject funda/RAM/soporte/para X (salvo query accesorio) · Node+Python + tests|V27,V24
+T45|x|relevancia universal: class evidence (perfume≠crema) + secondary lead estructural + tier ranking §V28 · Node score+Python gate|V28,V27,V18
+T46|x|UI result caps 25→50→100 + SearchBar sync chips/query + early-stop scraper al cap pedido · API maxResults≤100|V17,V18
+T47|x|buscador realista: isRelevantResult publish floor + cross-class family conflict + whole-word tokens · pipeline+crawl|V29,V28
 
 §B
 id|date|cause|fix
@@ -119,3 +126,7 @@ B5|2026-09-24|doble bug preexistente en seeds Node enmascarado por la suite: (1)
 B6|2026-09-24|Frávega Next resuelve SKU por trailing digits de `/p/{slug}-{id}/` vía GraphQL `sku(code:)`; el catalog VTEX emite `link`/`linkText` con **productId** y `/{linkText}/p` → redirect a shell vacío (og genérico, sku productId → Failed to fetch). Web search usa itemId → links vivos. Audit `scripts/audit_pdp_links.py` sobre 52 VTEX vivos: **solo Frávega** muestra FRAVEGA_PATTERN; resto CLASSIC_VTEX (`/slug/p` OK, `/p/…-itemId` 404)|V22: parsers Node+Python `fravegaPdpUrl`/`fravega_pdp_url` swap productId→itemId; HTML Frávega skip sin itemId; probe `_fravega_sku_alive`; tests http-fetch+parsers-contract+live GraphQL 6/6 OK
 B7|2026-09-24|`platformForHost` (nuevo, WIP seeds) comparaba `s.platform !== ''` contra tipo `ShopPlatform` sin `''` → `tsc --noEmit` fallaba (guard `typeof` muerto)|fix `if (s.platform)` (semántica idéntica: índice sin `""`, verificado 0 ocurrencias) · typecheck repo verde
 B8|2026-09-25|bfs.test.ts (agregado 5a97e0b) usaba nombres "Producto X" que no matchean `product:'test'`; c2014fb agregó titleMatchesQuery al pipeline sin actualizar el test → 3 tests integración devolvían results vacío (filtro relevancia correcto en prod)|V24: makeGraph genera "Test {name}" (matchea query) · bfs.test.ts 7/7 · backend 131/131
+B9|2026-09-25|query categoría sola ("notebook") era CATEGORY_OPTIONAL soft-pass → V24 aceptaba cualquier título; ranking por precio ponía fundas/RAM/soportes antes que notebooks reales|V27: presencia sinónimo + filtro accesorio Node↔Python · relevance.test.ts + test_relevance.py
+B10|2026-09-25|filtro anti-accesorio era category-specific; perfume soft-pass + ranking solo-precio → cremas/testers/SKUs baratos ganaban a fragancias reales|V28: evidencia de clase universal + secondary lead + relevance tier en rankByPriority(product)
+B11|2026-09-25|`hay.includes("perfume")` + soft OR titleHasCategory → "Protectores Diarios… Con Perfume" (Farmacity) pasaba gate; secondary lead solo `protector` singular ⊥ `protectores`|V28: fragrance evidence estricta (⊥ adjunct "con perfume", ⊥ hygiene) + protectores?/toallas en secondary lead
+B12|2026-09-25|matches débiles se demoteaban en ranking pero seguían publicándose → UI "sucia"; sin rechazo cross-class (perfume↔notebook/zapatilla)|V29: isRelevantResult publish floor + family conflict + whole-word
