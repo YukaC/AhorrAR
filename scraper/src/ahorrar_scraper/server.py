@@ -147,11 +147,16 @@ def main() -> None:
     start_warm_cache()
     host = os.environ.get("SCRAPER_HOST", "127.0.0.1")
     port = int(os.environ.get("SCRAPER_PORT", "4100"))
+    # Single worker — multiple uvicorn workers would multiply FetcherSession RAM.
+    limit = int(os.environ.get("UVICORN_LIMIT_CONCURRENCY", "4").strip() or "4")
     uvicorn.run(
         "ahorrar_scraper.server:app",
         host=host,
         port=port,
         log_level="info",
+        workers=1,
+        limit_concurrency=max(1, limit),
+        timeout_keep_alive=5,
     )
 
 

@@ -349,6 +349,25 @@ def unwrap_serp_hrefs(page_url: str, html: str) -> list[str]:
 # --- Sitemap discovery (Firecrawl-style URL discovery for non-VTEX shops) ---
 
 SITEMAP_TTL_S = 24 * 3600
+
+
+def _sitemap_max_urls() -> int:
+    raw = os.environ.get("SITEMAP_MAX_URLS", "8").strip()
+    try:
+        return max(1, min(32, int(raw or "8")))
+    except ValueError:
+        return 8
+
+
+def _sitemap_max_hosts() -> int:
+    raw = os.environ.get("SITEMAP_MAX_HOSTS", "5").strip()
+    try:
+        return max(1, min(20, int(raw or "5")))
+    except ValueError:
+        return 5
+
+
+# Back-compat aliases for tests that import the constants.
 SITEMAP_MAX_URLS = 8
 SITEMAP_MAX_HOSTS = 5
 _PRODUCT_PATH_RE = re.compile(
@@ -358,12 +377,14 @@ _sitemap_cache: dict[str, tuple[float, list[str]]] = {}
 _sitemap_lock = threading.Lock()
 
 
-def sitemap_candidate_hosts(product: str, limit: int = SITEMAP_MAX_HOSTS) -> list[str]:
+def sitemap_candidate_hosts(product: str, limit: int | None = None) -> list[str]:
     """Non-VTEX curated hosts in the product's category (sitemap discovery targets).
 
     VTEX shops already expose a catalog API; the sitemap adds the most value
     for shops that currently depend on SERP guesses (Woo/Shopify/unknown).
     """
+    if limit is None:
+        limit = _sitemap_max_hosts()
     cat = category_for(product)
     out: list[str] = []
     for s in _load_ar_shops():
@@ -421,10 +442,11 @@ def _fetch_sitemap(
 def _parse_sitemap_urls(body: str) -> list[str]:
     """Extract product-looking URLs from sitemap XML (regex, no XML deps)."""
     out: list[str] = []
+    cap = _sitemap_max_urls()
     for m in re.finditer(r"<loc>\s*([^<\s]+)\s*</loc>", body, re.I):
         url = m.group(1).strip()
         if _PRODUCT_PATH_RE.search(url) and is_ar_host(host_of(url)):
             out.append(url)
-        if len(out) >= SITEMAP_MAX_URLS:
+        if len(out) >= cap:
             break
     return out

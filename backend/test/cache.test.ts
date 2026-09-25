@@ -75,6 +75,18 @@ describe('SearchCache', () => {
     c.setTtl(1);
     expect(c.isFresh(c.get('k')!, c.get('k')!.ts + 2)).toBe(false); // con TTL 1ms, +2ms ya es stale
   });
+
+  it('evicts oldest when maxEntries exceeded', () => {
+    const c = new SearchCache(60_000, 2);
+    c.set('a', RESPONSE);
+    c.set('b', RESPONSE);
+    expect(c.size).toBe(2);
+    c.set('c', RESPONSE);
+    expect(c.size).toBe(2);
+    expect(c.get('a')).toBeUndefined();
+    expect(c.get('b')).toBeDefined();
+    expect(c.get('c')).toBeDefined();
+  });
 });
 
 describe('Integración caché en runLiveJob (§V21)', () => {

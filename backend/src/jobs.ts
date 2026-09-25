@@ -148,7 +148,10 @@ export class JobStore {
 export const jobStore = new JobStore();
 
 /** Caché compartido de resultados rankeados (§V21); TTL se ajusta con cfg. */
-export const searchCache = new SearchCache(15 * 60_000);
+export const searchCache = new SearchCache(
+  15 * 60_000,
+  Number.parseInt(process.env.CACHE_MAX_ENTRIES ?? '0', 10) || 0,
+);
 
 /* ------------------------------------------------------------------------ */
 /* Executors — run off the event loop; SSE stays responsive.                */

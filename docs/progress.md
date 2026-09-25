@@ -7,7 +7,7 @@
 
 ## En una línea
 
-v0.2 en **prod** (https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev) · T1–T46 hechos; T17 descartado (ToS ML) · ML ON prod + circuit breaker · Scrapling + índice AR · UI caps 25/50/100 · 0 bugs §B abiertos.
+v0.2 · UI Vercel + API **Render Free** (`render.yaml`) · T1–T48 hechos; T17 descartado · ML ON + circuit breaker · wake/keep-warm JS cold start · 0 bugs §B abiertos.
 
 ## Hecho
 
@@ -40,6 +40,7 @@ v0.2 en **prod** (https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev) · 
 - [x] **Relevance anti-accesorio / class evidence** (Node+Python): categoría sola exige sinónimo; reject funda/RAM/crema/para X; relevance tier en ranking — §T44–T45 / §V27/§V28
 - [x] **UI result caps 25→50→100** + SearchBar sync chips/query + early-stop scraper al cap + caché por cap — §T46 / §V17/§V18
 - [x] **Design system Tailwind v4** (tokens semánticos + Geist + theme View Transition) — polish UI
+- [x] **Render Free 512MB**: `render.yaml` (FETCH_WORKERS=2, MAX_NODES techo) + api-wake/focus + caps 25→50 — §T48
 
 ## En curso
 

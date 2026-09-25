@@ -99,7 +99,10 @@ async function request<T>(url: string, init: RequestInit, guard: (v: unknown) =>
     res = await fetch(url, init);
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') throw err;
-    throw new ApiError(0, 'No se pudo conectar con el servidor (¿está corriendo en :4000?).');
+    throw new ApiError(
+      0,
+      'No se pudo conectar con el servidor (¿API caída o cold start free aún en curso?).',
+    );
   }
   if (!res.ok) throw new ApiError(res.status, await readMessage(res));
   const data: unknown = await res.json().catch(() => undefined);

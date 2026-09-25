@@ -7,6 +7,7 @@ Unreleased = lo que aún no se desplegó. Los refs §T apuntan al plan en `SPEC.
 ## [WIP]
 
 ### Added
+- **Render Free deploy**: `render.yaml` perfil 512MB (`FETCH_WORKERS=2`, `MAX_NODES=80` techo, caches acotados) + front `api-wake.ts` (wake/keep-warm/focus) + caps UI 25→50 · entrypoint `/tmp` tokens — §T48
 - **Result caps UI 25 → 50 → 100**: default 25, botón "Mostrar más", API `maxResults` 1–100; caché claveada por cap (`producto:n25`) — §T46/§V17/§V18
 - **SearchBar sync**: chips populares / resume / retry escriben el query en el input
 - **Design system Tailwind v4**: tokens semánticos (`background`/`primary`/`muted`/…) + Geist self-hosted + dark vía CSS vars (sin pares `dark:*`) — theme toggle con View Transitions (fade 320ms)

@@ -20,6 +20,8 @@ export interface AppConfig {
   corsOrigins: string[];
   /** Caché de resultados rankeados (TTL + SWR, Fase 1). */
   cacheTtlMs: number;
+  /** Cap de entradas del SearchCache (0 = sin tope). Render Free: 32. */
+  cacheMaxEntries: number;
   /** Ruta del archivo SQLite de jobs persistidos (Fase 3); vacío = en-memoria. */
   jobsDbPath: string;
 }
@@ -72,5 +74,6 @@ export const config: AppConfig = {
   includeMl: boolFromEnv('INCLUDE_ML', false),
   corsOrigins: corsOriginsFromEnv(),
   cacheTtlMs: intFromEnv('CACHE_TTL_MS', 15 * 60_000, 1_000, 24 * 60 * 60_000),
+  cacheMaxEntries: intFromEnv('CACHE_MAX_ENTRIES', 0, 0, 10_000),
   jobsDbPath: process.env.JOBS_DB?.trim() || '',
 };

@@ -31,9 +31,12 @@ export function cacheKeyFor(product: string, maxResults: number): string {
 export class SearchCache {
   private readonly entries = new Map<string, CacheEntry>();
   private ttlMs: number;
+  /** 0 = unbounded. Render Free sets CACHE_MAX_ENTRIES to bound RAM. */
+  private readonly maxEntries: number;
 
-  constructor(ttlMs: number) {
+  constructor(ttlMs: number, maxEntries = 0) {
     this.ttlMs = ttlMs;
+    this.maxEntries = maxEntries > 0 ? maxEntries : 0;
   }
 
   get(key: string): CacheEntry | undefined {
@@ -48,6 +51,23 @@ export class SearchCache {
 
   set(key: string, data: SearchResponse): void {
     this.entries.set(key, { data, ts: Date.now() });
+    this.evictIfNeeded();
+  }
+
+  private evictIfNeeded(): void {
+    if (this.maxEntries <= 0) return;
+    while (this.entries.size > this.maxEntries) {
+      let oldestKey: string | undefined;
+      let oldestTs = Number.POSITIVE_INFINITY;
+      for (const [k, entry] of this.entries) {
+        if (entry.ts < oldestTs) {
+          oldestTs = entry.ts;
+          oldestKey = k;
+        }
+      }
+      if (oldestKey === undefined) break;
+      this.entries.delete(oldestKey);
+    }
   }
 
   /** Fresh si no venció el TTL; el runner usa esto para SWR. */

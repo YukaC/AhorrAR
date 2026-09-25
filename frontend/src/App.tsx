@@ -8,7 +8,8 @@ import SortBar from './components/SortBar';
 import type { SortMode } from './components/SortBar';
 import { EMPTY_FILTERS, filterAndSort, hasActiveFilters } from './lib/filterResults';
 import type { Filters } from './lib/filterResults';
-import { DEFAULT_RESULT_CAP, nextResultCap } from './lib/result-caps';
+import { DEFAULT_RESULT_CAP, hostResultCaps, nextResultCap } from './lib/result-caps';
+import { pingApiHealth, startApiKeepWarm } from './lib/api-wake';
 import ResultsGrid from './components/ResultsGrid';
 import EmptyState from './components/EmptyState';
 import ErrorState from './components/ErrorState';
@@ -18,6 +19,9 @@ import EventBanner from './components/EventBanner';
 const POPULAR_SEARCHES = ['iPhone 16', 'Notebook', 'PS5', 'Perfume', 'Zapatillas'];
 const DEFAULT_DOCUMENT_TITLE = 'AhorrAR - Comparador de precios en Argentina';
 const GITHUB_REPO_URL = 'https://github.com/YukaC/AhorrAR';
+/** Render Free: caps 25→50 (no 100). Set VITE_FREE_HOST=1 on Vercel. */
+const IS_FREE_HOST = import.meta.env.VITE_FREE_HOST === '1';
+const HOST_CAPS = hostResultCaps(IS_FREE_HOST);
 
 export default function App() {
   const { state, run, retry, cancel, goHome } = useSearch();
@@ -26,6 +30,9 @@ export default function App() {
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [product, setProduct] = useState('');
   const [resultCap, setResultCap] = useState<number>(DEFAULT_RESULT_CAP);
+
+  // Keep Render Free awake while the tab is visible (JS ping < 15m idle).
+  useEffect(() => startApiKeepWarm(), []);
 
   function handleGoHome() {
     setSort('price-asc');
@@ -68,7 +75,7 @@ export default function App() {
   }
 
   function handleShowMore() {
-    const next = nextResultCap(resultCap);
+    const next = nextResultCap(resultCap, HOST_CAPS);
     const base = state.params ?? state.response?.query;
     if (!next || !base) return;
     handleSearch({ ...base, maxResults: next });
@@ -87,7 +94,7 @@ export default function App() {
   }, [state.progress?.results, filters, sort]);
 
   const response = state.response;
-  const moreCap = state.status === 'done' ? nextResultCap(resultCap) : null;
+  const moreCap = state.status === 'done' ? nextResultCap(resultCap, HOST_CAPS) : null;
   const resultsHeading =
     state.status === 'running'
       ? 'Ofertas encontradas hasta ahora'
@@ -176,6 +183,9 @@ export default function App() {
           onProductChange={setProduct}
           maxResults={DEFAULT_RESULT_CAP}
           onSearch={(params) => handleSearch({ ...params, maxResults: DEFAULT_RESULT_CAP })}
+          onFocusProduct={() => {
+            void pingApiHealth().catch(() => undefined);
+          }}
         />
 
         {state.status === 'running' && state.params ? (

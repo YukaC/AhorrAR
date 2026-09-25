@@ -38,7 +38,9 @@ ENV NODE_ENV=production \
     SCRAPER_HOST=127.0.0.1 \
     SCRAPER_PORT=4100 \
     PORT=4000 \
-    HOST=0.0.0.0
+    HOST=0.0.0.0 \
+    MALLOC_ARENA_MAX=2 \
+    PYTHONUNBUFFERED=1
 
 EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \

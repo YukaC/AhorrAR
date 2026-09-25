@@ -45,7 +45,9 @@ export default function LoadingState({ params, progress, onCancel }: LoadingStat
             </span>
           </p>
           <p className="text-sm text-primary-soft-foreground">
-            Explorando: profundidad {depth}, {nodes} nodos, {results} ofertas
+            {progress?.message && (progress.searchId === 'waking' || results === 0)
+              ? progress.message
+              : `Explorando: profundidad ${depth}, ${nodes} nodos, ${results} ofertas`}
           </p>
         </div>
         <button

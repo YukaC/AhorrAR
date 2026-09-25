@@ -1,0 +1,91 @@
+# Render Blueprint — API + Scrapling on Free (512 MB).
+# Docs: docs/DEPLOY.md § Render free
+#
+# Memory profile: few FetcherSessions (FETCH_WORKERS=2) + MAX_NODES ceiling
+# so crawl still covers ML + several AR shops without OOM.
+# Front JS wakes + keep-warms while the tab is visible (api-wake.ts).
+
+services:
+  - type: web
+    name: ahorrar-api
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: PORT
+        value: '4000'
+      - key: HOST
+        value: '0.0.0.0'
+      - key: CRAWLER
+        value: scrapling
+      - key: SCRAPLING_URL
+        value: http://127.0.0.1:4100
+      - key: SCRAPER_HOST
+        value: '127.0.0.1'
+      - key: SCRAPER_PORT
+        value: '4100'
+      - key: INCLUDE_ML
+        value: '1'
+      - key: WARM_CACHE
+        value: '0'
+      # Ceiling for nodesBudgetFor (was ignored as floor before §T48 fix)
+      - key: MAX_DEPTH
+        value: '2'
+      - key: MAX_NODES
+        value: '80'
+      - key: MAX_RESULTS
+        value: '50'
+      - key: CONCURRENCY
+        value: '1'
+      - key: ML_MAX_WORKERS
+        value: '3'
+      - key: FETCH_WORKERS
+        value: '2'
+      - key: FETCH_LIMIT_HUB
+        value: '1'
+      - key: FETCH_LIMIT_API
+        value: '3'
+      - key: FETCH_LIMIT_HTML
+        value: '1'
+      - key: CRAWL_BATCH_SIZE
+        value: '3'
+      - key: PROBE_WORKERS
+        value: '2'
+      - key: OFFER_CACHE_MAX_HOSTS
+        value: '24'
+      - key: OFFER_CACHE_MAX_OFFERS
+        value: '12'
+      - key: SITEMAP_MAX_HOSTS
+        value: '3'
+      - key: SITEMAP_MAX_URLS
+        value: '4'
+      - key: CACHE_MAX_ENTRIES
+        value: '32'
+      - key: UVICORN_LIMIT_CONCURRENCY
+        value: '2'
+      - key: NODE_OPTIONS
+        value: '--max-old-space-size=160'
+      - key: MALLOC_ARENA_MAX
+        value: '2'
+      - key: PYTHONUNBUFFERED
+        value: '1'
+      - key: MELI_TOKEN_FILE
+        value: /tmp/meli_tokens.json
+      - key: MELI_SITE_ID
+        value: MLA
+      - key: CORS_ORIGINS
+        value: https://ahorrarg.vercel.app,http://localhost:5173
+      - key: MELI_ACCESS_TOKEN
+        sync: false
+      - key: MELI_REFRESH_TOKEN
+        sync: false
+      - key: MELI_APP_ID
+        sync: false
+      - key: MELI_CLIENT_SECRET
+        sync: false
+      - key: MELI_REDIRECT_URI
+        sync: false

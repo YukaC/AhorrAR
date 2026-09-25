@@ -50,17 +50,12 @@ UA = (
 
 IMPERSONATE_ROTATE: list[str] = ["chrome", "chrome_android", "edge"]
 
-# Concurrency and budget by source kind (APIs get more slots; HTML burns less).
-FETCH_LIMITS: dict[str, int] = {"hub": 2, "api": 8, "html": 3}
+# Defaults (full host). Override via env on Render Free — fewer FetcherSessions = less RAM.
 FETCH_TIMEOUT_S: dict[str, float] = {"hub": 3.5, "api": 6.0, "html": 8.0}
-BATCH_SIZE = 6
-FETCH_WORKERS = 8
 MAX_STEALTH_RETRIES = 3
 STEALTH_TIMEOUT_MS = 12_000
 CHALLENGE_BLACKLIST_AFTER = 2
-# PDP existence probe — short GET, fail-open on timeout/network.
 PROBE_TIMEOUT_S = 1.5
-PROBE_WORKERS = 6
 SOFT_404_RE = re.compile(
     r"p[aá]gina\s+no\s+encontrada|page\s+not\s+found|producto\s+no\s+(?:encontrado|disponible)|"
     r"no\s+encontramos|error\s*404|contenido\s+no\s+disponible",
@@ -69,15 +64,49 @@ SOFT_404_RE = re.compile(
 
 # Reuse fresh verified offers per host across searches (Firecrawl-style
 # index-cache). Global so the warm cache and live searches share it.
-_offer_cache = OfferCache()
-# Skip re-fetching a host when the cache already contributed this many
-# relevant offers for the current query.
 CACHE_SKIP_FETCH_THRESHOLD = 3
 SITEMAP_FETCH_TIMEOUT_S = 3.0
 
 
 def _env_flag(name: str, default: str = "0") -> bool:
     return os.environ.get(name, default).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _env_int(name: str, default: int, *, min_v: int = 1, max_v: int = 256) -> int:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    try:
+        n = int(raw)
+    except ValueError:
+        return default
+    return max(min_v, min(max_v, n))
+
+
+def fetch_limits() -> dict[str, int]:
+    return {
+        "hub": _env_int("FETCH_LIMIT_HUB", 2, min_v=1, max_v=8),
+        "api": _env_int("FETCH_LIMIT_API", 8, min_v=1, max_v=16),
+        "html": _env_int("FETCH_LIMIT_HTML", 3, min_v=1, max_v=8),
+    }
+
+
+def fetch_workers() -> int:
+    return _env_int("FETCH_WORKERS", 8, min_v=1, max_v=16)
+
+
+def batch_size() -> int:
+    return _env_int("CRAWL_BATCH_SIZE", 6, min_v=1, max_v=16)
+
+
+def probe_workers() -> int:
+    return _env_int("PROBE_WORKERS", 6, min_v=1, max_v=16)
+
+
+_offer_cache = OfferCache(
+    max_offers_per_host=_env_int("OFFER_CACHE_MAX_OFFERS", 30, min_v=4, max_v=60),
+    max_hosts=_env_int("OFFER_CACHE_MAX_HOSTS", 64, min_v=4, max_v=128),
+)
 
 
 def _fetch_kind(url: str) -> str:
@@ -143,14 +172,16 @@ def _queue_only_html_for_expanded(
 class _FetchPool:
     """Parallel fetches with per-worker FetcherSession and per-kind semaphores."""
 
-    def __init__(self, max_workers: int = FETCH_WORKERS) -> None:
+    def __init__(self, max_workers: int | None = None) -> None:
+        workers = max_workers if max_workers is not None else fetch_workers()
+        limits = fetch_limits()
         self._ex = ThreadPoolExecutor(
-            max_workers=max_workers, thread_name_prefix="crawl"
+            max_workers=workers, thread_name_prefix="crawl"
         )
-        self._sems = {kind: threading.Semaphore(n) for kind, n in FETCH_LIMITS.items()}
+        self._sems = {kind: threading.Semaphore(n) for kind, n in limits.items()}
         self._managers: list[FetcherSession] = []
         self._session_q: queue.Queue[Any] = queue.Queue()
-        for _ in range(max_workers):
+        for _ in range(workers):
             manager = FetcherSession(
                 impersonate=IMPERSONATE_ROTATE,  # type: ignore[arg-type]
                 stealthy_headers=True,
@@ -169,6 +200,7 @@ class _FetchPool:
         self._stealth_retries_left = MAX_STEALTH_RETRIES
         self._challenge_streak: dict[str, int] = {}
         self._blacklisted_hosts: set[str] = set()
+        self._worker_count = workers
 
     def submit(self, url: str) -> Any:
         kind = _fetch_kind(url)
@@ -223,7 +255,9 @@ class _FetchPool:
 
         # Cap fan-out so probes don't starve listing fetches.
         workers = min(
-            PROBE_WORKERS, len(unique), max(1, self._session_q.qsize() or FETCH_WORKERS)
+            probe_workers(),
+            len(unique),
+            max(1, self._session_q.qsize() or self._worker_count),
         )
         with ThreadPoolExecutor(
             max_workers=workers, thread_name_prefix="probe"
@@ -582,7 +616,8 @@ def crawl(
 
     def take_batch() -> list[tuple[str, int]]:
         batch: list[tuple[str, int]] = []
-        while crawl_queue and len(batch) < BATCH_SIZE and len(visited) < max_nodes:
+        size = batch_size()
+        while crawl_queue and len(batch) < size and len(visited) < max_nodes:
             url, d = crawl_queue.popleft()
             if url in visited:
                 continue
@@ -710,11 +745,12 @@ def crawl(
                 and _queue_only_html_for_expanded(crawl_queue, known_origins)
             ):
                 api_only: list[tuple[str, int]] = []
+                size = batch_size()
                 while crawl_queue:
                     url, d = crawl_queue.popleft()
                     if _fetch_kind(url) != "api" or url in visited:
                         continue
-                    if len(visited) >= max_nodes or len(api_only) >= BATCH_SIZE:
+                    if len(visited) >= max_nodes or len(api_only) >= size:
                         continue
                     visited.add(url)
                     api_only.append((url, d))

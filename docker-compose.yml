@@ -11,8 +11,19 @@ services:
       SCRAPLING_URL: http://127.0.0.1:4100
       CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
       INCLUDE_ML: '0'
-      MAX_NODES: '40'
-      CONCURRENCY: '3'
+      MAX_NODES: '80'
+      CONCURRENCY: '1'
+      FETCH_WORKERS: '2'
+      FETCH_LIMIT_API: '3'
+      FETCH_LIMIT_HTML: '1'
+      FETCH_LIMIT_HUB: '1'
+      CRAWL_BATCH_SIZE: '3'
+      PROBE_WORKERS: '2'
+      CACHE_MAX_ENTRIES: '32'
+      NODE_OPTIONS: '--max-old-space-size=160'
+      MALLOC_ARENA_MAX: '2'
+    mem_limit: 512m
+    memswap_limit: 512m
     healthcheck:
       test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:4000/api/health']
       interval: 30s

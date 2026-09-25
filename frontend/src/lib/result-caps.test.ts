@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_RESULT_CAP, nextResultCap, RESULT_CAPS } from './result-caps';
+import {
+  DEFAULT_RESULT_CAP,
+  FREE_HOST_RESULT_CAPS,
+  hostResultCaps,
+  nextResultCap,
+  RESULT_CAPS,
+} from './result-caps';
 
 describe('result-caps', () => {
   it('defaults to 25', () => {
@@ -17,5 +23,11 @@ describe('result-caps', () => {
     expect(nextResultCap(10)).toBe(25);
     expect(nextResultCap(20)).toBe(25);
     expect(nextResultCap(40)).toBe(50);
+  });
+
+  it('free host caps stop at 50', () => {
+    expect(hostResultCaps(true)).toEqual(FREE_HOST_RESULT_CAPS);
+    expect(nextResultCap(25, FREE_HOST_RESULT_CAPS)).toBe(50);
+    expect(nextResultCap(50, FREE_HOST_RESULT_CAPS)).toBeNull();
   });
 });

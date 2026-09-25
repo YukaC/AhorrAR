@@ -32,7 +32,7 @@ scraper: GET :4100/health · POST :4100/crawl {product,maxResults,maxNodes,maxDe
 cmd: `npm run dev` (scraper+backend+frontend) · `cd scraper && uv sync && uv run ahorrar-scraper`
 cmd: `npm --prefix frontend run build` → tsc --noEmit && vite build && node scripts/prerender-home.mjs (prerender+check)
 env: PORT · HOST · CORS_ORIGINS · CRAWLER · SCRAPLING_URL · INCLUDE_ML · MELI_* · STEALTH_FETCH · STEALTH_PROXY
-deploy: Vercel (frontend https://ahorrarg.vercel.app) + Fly.io Docker API/Scrapling (https://ahorrar-api.fly.dev) · GitHub main → auto-deploy · docs/DEPLOY.md
+deploy: Vercel (frontend https://ahorrarg.vercel.app) + **Render Free** Docker API/Scrapling (`render.yaml`, perfil acotado) · front JS wake/keep-warm cold start · Fly.io opcional · GitHub main → auto-deploy · docs/DEPLOY.md
 docs: `docs/ARCHITECTURE.md` (vista ampliada) · `docs/progress.md` (estado narrativo) · `docs/testing-strategy.md` (mapa test→§V) · `docs/decisions/*.md` (ADRs) · `docs/ATTRIBUTIONS.md` (inspiraciones/licencias terceros) · `AGENTS.md` (instrucciones de sesión) · `ROADMAP.md` · `CHANGELOG.md` · `DONT_DO.md` (decisiones no-repetición)
 
 §V
@@ -115,6 +115,7 @@ T44|x|relevancia anti-accesorio: categoría sola exige sinónimo + reject funda/
 T45|x|relevancia universal: class evidence (perfume≠crema) + secondary lead estructural + tier ranking §V28 · Node score+Python gate|V28,V27,V18
 T46|x|UI result caps 25→50→100 + SearchBar sync chips/query + early-stop scraper al cap pedido · API maxResults≤100|V17,V18
 T47|x|buscador realista: isRelevantResult publish floor + cross-class family conflict + whole-word tokens · pipeline+crawl|V29,V28
+T48|x|Render Free 512MB: render.yaml (FETCH_WORKERS=2, MAX_NODES techo) + nodesBudgetFor ceiling + caches acotados + api-wake/focus + caps 25→50|§I,V5,V16,V17
 
 §B
 id|date|cause|fix

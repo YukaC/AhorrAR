@@ -7,10 +7,18 @@ export SCRAPLING_URL="${SCRAPLING_URL:-http://127.0.0.1:${SCRAPER_PORT}}"
 export CRAWLER="${CRAWLER:-scrapling}"
 export PORT="${PORT:-4000}"
 export HOST="${HOST:-0.0.0.0}"
-export MELI_TOKEN_FILE="${MELI_TOKEN_FILE:-/data/meli_tokens.json}"
+# Fly: persistent /data volume. Render Free: ephemeral FS → /tmp (lost on spin-down).
+if [ -z "${MELI_TOKEN_FILE:-}" ]; then
+  if [ -d /data ]; then
+    export MELI_TOKEN_FILE=/data/meli_tokens.json
+  else
+    export MELI_TOKEN_FILE=/tmp/meli_tokens.json
+  fi
+fi
+mkdir -p "$(dirname "${MELI_TOKEN_FILE}")"
 
-# Seed volume token file from Fly secrets on first boot (file wins after refresh).
-if [ -n "${MELI_ACCESS_TOKEN:-}" ] && [ -d /data ] && [ ! -f "${MELI_TOKEN_FILE}" ]; then
+# Seed token file from env secrets on first boot (file wins after refresh when writable).
+if [ -n "${MELI_ACCESS_TOKEN:-}" ] && [ ! -f "${MELI_TOKEN_FILE}" ]; then
   echo "[entrypoint] seeding ${MELI_TOKEN_FILE} from env secrets"
   cd /app/scraper
   uv run python -c "from ahorrar_scraper.meli_auth import persist_tokens; persist_tokens()" || true

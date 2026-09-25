@@ -9,6 +9,8 @@ interface SearchBarProps {
   onProductChange: (product: string) => void;
   maxResults: number;
   onSearch: (params: SearchParams) => void;
+  /** Prefetch / wake API on focus (Render Free cold start). */
+  onFocusProduct?: () => void;
 }
 
 const inputBase =
@@ -22,6 +24,7 @@ export default function SearchBar({
   onProductChange,
   maxResults,
   onSearch,
+  onFocusProduct,
 }: SearchBarProps) {
   const productId = useId();
   const countryId = useId();
@@ -59,6 +62,7 @@ export default function SearchBar({
             maxLength={120}
             value={product}
             onChange={(e) => onProductChange(e.target.value)}
+            onFocus={() => onFocusProduct?.()}
             autoComplete="off"
             placeholder="Ej: bensimon, iPhone 16, placa de video…"
             className={`${inputBase} pl-11 pr-4`}

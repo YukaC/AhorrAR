@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SearchParams, SearchProgress, SearchResponse } from '../../../shared/contract';
 import { ApiError, createSearch, getJob, subscribeToEvents } from '../api/client';
 import type { EventsSub } from '../api/client';
+import { wakeApi } from '../lib/api-wake';
 
 export type SearchStatus = 'idle' | 'running' | 'done' | 'error';
 
@@ -94,6 +95,80 @@ export function useSearch() {
 
     void (async () => {
       try {
+        // Render Free cold start (~1m): wake via /api/health before POST/SSE.
+        setState((s) =>
+          s.status === 'running'
+            ? {
+                ...s,
+                progress: {
+                  searchId: 'waking',
+                  status: 'running',
+                  depth: 0,
+                  nodesVisited: 0,
+                  resultsFound: 0,
+                  message: 'Despertando el servidor (free tier)…',
+                },
+              }
+            : s,
+        );
+
+        const awake = await wakeApi(signal, (p) => {
+          if (signal.aborted || p.phase === 'ready') return;
+          const secs = Math.max(1, Math.round(p.elapsedMs / 1000));
+          setState((s) =>
+            s.status === 'running'
+              ? {
+                  ...s,
+                  progress: {
+                    searchId: 'waking',
+                    status: 'running',
+                    depth: 0,
+                    nodesVisited: 0,
+                    resultsFound: 0,
+                    message:
+                      p.phase === 'failed'
+                        ? 'No se pudo despertar el servidor.'
+                        : `Despertando el servidor… ${secs}s (cold start free)`,
+                  },
+                }
+              : s,
+          );
+        });
+        if (signal.aborted) return;
+        if (!awake) {
+          teardown();
+          setState((s) =>
+            s.status === 'running'
+              ? {
+                  status: 'error',
+                  params: s.params,
+                  progress: s.progress,
+                  response: null,
+                  error:
+                    'El servidor free está dormido o caído. Esperá ~1 minuto y reintentá.',
+                  errorCode: 0,
+                }
+              : s,
+          );
+          return;
+        }
+
+        setState((s) =>
+          s.status === 'running'
+            ? {
+                ...s,
+                progress: {
+                  searchId: 'waking',
+                  status: 'running',
+                  depth: 0,
+                  nodesVisited: 0,
+                  resultsFound: 0,
+                  message: 'Servidor listo — buscando…',
+                },
+              }
+            : s,
+        );
+
         const created = await createSearch(params, signal);
         if (signal.aborted) return;
         rememberSearch(created.searchId);

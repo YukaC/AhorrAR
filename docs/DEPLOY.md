@@ -1,101 +1,108 @@
-# Deploy — Vercel (UI) + Fly.io (API + Scrapling)
+# Deploy — Vercel (UI) + Render Free (API + Scrapling) · Fly opcional
 
 ## URLs canónicas
 
 | Qué | URL |
 |---|---|
 | UI (prod) | https://ahorrarg.vercel.app |
-| API health | https://ahorrar-api.fly.dev/api/health |
+| API health (Render) | `https://<servicio>.onrender.com/api/health` (tras Blueprint) |
+| API health (Fly, opcional) | https://ahorrar-api.fly.dev/api/health |
 | Repo | https://github.com/YukaC/AhorrAR |
 
-Otros aliases Vercel del proyecto (`ahorrar-wine.vercel.app`, `*-yukas-projects-*.vercel.app`, `ahorrar-git-main-…`) redirigen **308** → `ahorrarg.vercel.app`.
+Aliases Vercel (`ahorrar-wine.vercel.app`, `*-yukas-projects-*.vercel.app`, …) → **308** → `ahorrarg.vercel.app`.
 
 ## Arquitectura
 
 ```
-Browser → Vercel Hobby (frontend estático)  https://ahorrarg.vercel.app
-              │  VITE_API_BASE=https://ahorrar-api.fly.dev
+Browser → Vercel Hobby (frontend)  https://ahorrarg.vercel.app
+              │  VITE_API_BASE=https://<api>.onrender.com
+              │  VITE_FREE_HOST=1  (caps UI 25→50)
+              │  JS: wake /api/health + keep-warm 12m + focus ping
               ▼
-         Fly.io (Docker)  Node :4000 + Scrapling :4100 (mismo contenedor)
+         Render Free (Docker)  Node :4000 + Scrapling :4100
+              512MB profile — see render.yaml
 ```
 
-Vercel **no** corre el crawler. Fly corre API + Scrapling en una VM `shared-cpu-1x` / 1 GB (auto-stop en idle = ahorro free/trial).
+Vercel **no** corre el crawler. Render Free: spin-down ~15m idle, cold ~1m, **512 MB**, sin disco (tokens en env + `/tmp`).
+
+### Optimizaciones free (JS + perfil RAM 512MB)
+
+| Capa | Qué |
+|---|---|
+| Front JS | `api-wake.ts`: ping health antes de buscar + al focus del input; keep-warm cada 12m (tab visible) |
+| UX | LoadingState “Despertando…”; caps UI **25→50** (`VITE_FREE_HOST=1`, sin 100) |
+| Fetch RAM | `FETCH_WORKERS=2` (menos FetcherSession) · límites hub/api/html bajos · batch/probe chicos |
+| Crawl | `MAX_NODES=80` techo real (`nodesBudgetFor` ceiling) · ML workers 3 · sin warm cache |
+| Caches | offer_cache 24×12 · SearchCache max 32 · sitemap 3 hosts |
+| Runtime | `NODE_OPTIONS=160MB` · `MALLOC_ARENA_MAX=2` · uvicorn concurrency 2 |
+| Tokens | `MELI_*` secrets; archivo `/tmp` (efímero) |
+
+**No** cron 24/7: quema las 750 Free instance-hours. Dormido = $0 horas.
+
+## Deploy Render (primera vez)
+
+1. [Dashboard Render](https://dashboard.render.com/) → **New → Blueprint** → repo `YukaC/AhorrAR` → `render.yaml`
+2. Completar secrets `sync: false` (MELI_*)
+3. Esperar build Docker + health `/api/health`
+4. Vercel env Production:
+   - `VITE_API_BASE=https://<nombre>.onrender.com`
+   - `VITE_FREE_HOST=1`
+5. Redeploy frontend
 
 ## Deploy automático (GitHub)
 
-Ambos hosts están **conectados al repo** `YukaC/AhorrAR`:
-
-| Host | Qué redeploya | Señal en GitHub |
+| Host | Qué redeploya | Señal |
 |---|---|---|
-| **Vercel** | frontend (`vercel.json` → `frontend/`) | commit status `Vercel` |
-| **Fly** | imagen Docker API+Scrapling | Deployments / check `Fly.io` |
+| **Vercel** | frontend | check `Vercel` |
+| **Render** | Docker API (`render.yaml`) | Deployments Render |
+| **Fly** (opcional) | si seguís usando Fly | check `Fly.io` |
 
-Push a **`main`** → UI + API. No hace falta `vercel`/`fly` CLI en el día a día.
+Push a **`main`** → UI + API (Blueprint autoDeploy).
 
-> **Importante:** Vercel ≠ GitHub Releases. Los tags Releases no disparan deploy. El status de Vercel vive en el **check del commit**; Fly en **Deployments**.
-
-Env Vercel (Production / Preview):
+Env Vercel:
 
 | Key | Value |
 |---|---|
-| `VITE_API_BASE` | `https://ahorrar-api.fly.dev` |
+| `VITE_API_BASE` | `https://<api>.onrender.com` |
+| `VITE_FREE_HOST` | `1` |
 
-Secret Fly:
+Secrets Render: `MELI_ACCESS_TOKEN`, `MELI_REFRESH_TOKEN`, `MELI_APP_ID`, `MELI_CLIENT_SECRET`, `MELI_REDIRECT_URI`. `CORS_ORIGINS` en `render.yaml`.
 
-```bash
-fly secrets set CORS_ORIGINS=https://ahorrarg.vercel.app,http://localhost:5173 -a ahorrar-api
+ML access ~6h: auto-refresh on 401 → `/tmp`. Tras sleep, entrypoint re-siembra desde secrets. Si refresh falla (revoke): `cd scraper && uv run python scripts/ml_login.py refresh` y re-setear secrets.
 
-# ML ON (prod): tokens desde scraper/.env tras OAuth / refresh
-# set -a; . scraper/.env; set +a
-fly secrets set \
-  MELI_ACCESS_TOKEN="$MELI_ACCESS_TOKEN" \
-  MELI_REFRESH_TOKEN="$MELI_REFRESH_TOKEN" \
-  MELI_APP_ID="$MELI_APP_ID" \
-  MELI_CLIENT_SECRET="$MELI_CLIENT_SECRET" \
-  MELI_REDIRECT_URI="$MELI_REDIRECT_URI" \
-  MELI_SITE_ID=MLA \
-  INCLUDE_ML=1 \
-  -a ahorrar-api
-```
+### Warm cache
 
-`fly.toml` fija `INCLUDE_ML=1` + mount volume `meli_data` → `/data` (`MELI_TOKEN_FILE`).
-Access ~6h: **auto-refresh on 401** persiste tokens en el volume. Solo si el refresh
-falla (revoke): `cd scraper && uv run python scripts/ml_login.py refresh` y re-setear secrets.
-Crear volume (una vez): `fly volumes create meli_data --region gru --size 1 -a ahorrar-api`
-
-### Warm cache (prod ON)
-
-`fly.toml` fija `WARM_CACHE=1`: al arrancar, el scraper pre-calienta la caché de ofertas
-con las 5 búsquedas populares (cada 300s, presupuesto bajo `max_results=8`/`max_nodes=30`)
-→ las primeras búsquedas reales de esas queries responden desde caché (0 fetches).
-Apagar: quitar `WARM_CACHE` del `[env]` de `fly.toml` (default off).
+`WARM_CACHE=0` en Render free. Fly puede usar `1`.
 
 ## Deploy manual (emergencia)
 
-### 1) API en Fly.io
+### 1) API en Render
+
+```bash
+render blueprints validate render.yaml
+```
+
+Health: `https://<servicio>.onrender.com/api/health`
+
+### 1b) API en Fly (alternativa)
 
 ```bash
 curl -L https://fly.io/install.sh | sh
 fly auth login
 chmod +x scripts/deploy-api.sh
 FLY_APP=ahorrar-api ./scripts/deploy-api.sh
-# o: fly deploy -a ahorrar-api --ha=false
 ```
 
-Health: `https://ahorrar-api.fly.dev/api/health`
-
-`fly.toml` fija `CRAWLER=scrapling` (sin Playwright en la imagen).
+`fly.toml`: `CRAWLER=scrapling`, `MAX_NODES=400` (techo tras fix `nodesBudgetFor`). Volume: `fly volumes create meli_data --region gru --size 1 -a ahorrar-api`
 
 ### Stealth fetch (opcional, solo local)
-
-La cascada antibot `STEALTH_FETCH=1` usa Scrapling `StealthyFetcher` (browser). La imagen Fly/Docker sigue **HTTP-only** (`PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`).
 
 ```bash
 cd scraper && uv run scrapling install
 STEALTH_FETCH=1 npm run dev:scraper
 ```
 
-Prod: dejar `STEALTH_FETCH` unset/`0`.
+Imagen Docker = HTTP-only (`PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`). Prod: `STEALTH_FETCH` unset/`0`.
 
 ### 2) Frontend en Vercel
 
@@ -104,21 +111,20 @@ chmod +x scripts/deploy-frontend.sh
 ./scripts/deploy-frontend.sh --prod
 ```
 
-Root Directory: **repo root** (`vercel.json` → `frontend/dist`).
+Root: **repo root** (`vercel.json` → `frontend/dist`).
 
-## Orden recomendado (primera vez / recovery)
+## Orden recomendado (primera vez)
 
-1. `fly deploy` → health OK  
-2. Vercel env `VITE_API_BASE=https://ahorrar-api.fly.dev`  
-3. Push a `main` o `vercel --prod`  
-4. `fly secrets set CORS_ORIGINS=https://ahorrarg.vercel.app,http://localhost:5173 -a ahorrar-api`  
-5. Confirmar UI canónica: https://ahorrarg.vercel.app  
+1. Blueprint Render → health OK  
+2. Vercel `VITE_API_BASE` + `VITE_FREE_HOST=1`  
+3. Push `main` / redeploy Vercel  
+4. UI: https://ahorrarg.vercel.app  
 
-## Local con Docker
+## Local con Docker (simula 512MB)
 
 ```bash
 docker compose up --build
-# API http://localhost:4000
+# API http://localhost:4000  (mem_limit 512m)
 ```
 
 ## Costos / límites free
@@ -126,15 +132,15 @@ docker compose up --build
 | Host | Rol | Límites |
 |---|---|---|
 | Vercel Hobby | UI | Generoso para estático |
-| Fly free/trial | API+crawler | Pocas VMs; auto_stop ayuda; crawler concurrente limitado |
-| Railway free | — | Se agota rápido con crawlers |
-
-Para “muchos users”: rate-limit + cache de búsquedas + `min_machines_running=1` pago chico, o VPS.
+| **Render Free** | API+crawler | 512 MB · sleep 15m · 750 h/mes · sin disco |
+| Fly (card) | API+crawler | Mejor fit; volume ML |
+| Railway créditos | API | Se agota |
 
 ## Archivos
 
 - `Dockerfile` — imagen única API+Scrapling  
-- `fly.toml` — app `ahorrar-api`, región `gru`  
-- `docker-compose.yml` — smoke local  
-- `vercel.json` — build frontend desde monorepo  
-- `scripts/deploy-*.sh`
+- `render.yaml` — Blueprint Free 512MB  
+- `fly.toml` — app `ahorrar-api` (opcional)  
+- `docker-compose.yml` — smoke local con `mem_limit: 512m`  
+- `vercel.json` — build frontend  
+- `frontend/src/lib/api-wake.ts` — wake + keep-warm  
