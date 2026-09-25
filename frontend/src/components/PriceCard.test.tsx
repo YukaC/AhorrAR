@@ -30,15 +30,21 @@ describe('PriceCard', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
-  it('shows price, rank, store, shipping badges', () => {
+  it('shows price, best-price badge, store, shipping badges', () => {
     render(<PriceCard result={result} />);
     expect(screen.getAllByText(/1\.249\.999/).length).toBeGreaterThan(0);
-    expect(screen.getByText('#1')).toBeInTheDocument();
+    expect(screen.getByText('Mejor precio')).toBeInTheDocument();
     expect(screen.getByText('Mercado Libre')).toBeInTheDocument();
     expect(screen.getByText('Envío confirmado')).toBeInTheDocument();
     expect(screen.getByText('Envío gratis')).toBeInTheDocument();
     expect(screen.getByText('2-5 días')).toBeInTheDocument();
     expect(screen.getByText('Local')).toBeInTheDocument();
+  });
+
+  it('shows the rank number for non-top results', () => {
+    render(<PriceCard result={{ ...result, rank: 3 }} />);
+    expect(screen.getByText('#3')).toBeInTheDocument();
+    expect(screen.queryByText('Mejor precio')).not.toBeInTheDocument();
   });
 
   it('falls back to initials avatar when there is no logo', () => {

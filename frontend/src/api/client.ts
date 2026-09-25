@@ -6,7 +6,7 @@ import type {
   SearchResultJob,
   SearchStatus,
 } from '../../../shared/contract';
-import { isCountryCode, isSearchResponse } from '../../../shared/contract';
+import { isCountryCode, isProductResult as isProductResultJs, isSearchResponse } from '../../../shared/contract';
 
 /* ------------------------------------------------------------------ */
 /* Error model                                                        */
@@ -45,6 +45,7 @@ export function isSearchProgress(v: unknown): v is SearchProgress {
   if (typeof v.depth !== 'number') return false;
   if (typeof v.nodesVisited !== 'number') return false;
   if (typeof v.resultsFound !== 'number') return false;
+  if (v.results !== undefined && (!Array.isArray(v.results) || v.results.some((r) => !isProductResultJs(r)))) return false;
   return true;
 }
 

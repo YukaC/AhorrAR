@@ -93,4 +93,16 @@ describe('isSearchProgress', () => {
   it('accepts SSE progress frames', () => {
     expect(isSearchProgress(DONE_JOB.progress)).toBe(true);
   });
+
+  it('accepts live partial results (V16, T20)', () => {
+    const live: unknown = {
+      searchId: 'xp8RTK1s',
+      status: 'running',
+      depth: 1,
+      nodesVisited: 12,
+      resultsFound: 1,
+      results: [DONE_JOB.result.results[0]],
+    };
+    expect(isSearchProgress(live)).toBe(true);
+  });
 });

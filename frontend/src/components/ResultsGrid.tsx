@@ -8,14 +8,14 @@ interface ResultsGridProps {
 export default function ResultsGrid({ results }: ResultsGridProps) {
   return (
     <ul
-      className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+      className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
       aria-label="Resultados de la búsqueda"
     >
       {results.map((result, index) => (
         <li
-          key={`${result.rank}-${result.url}`}
+          key={`${result.url}-${result.rank}`}
           className="animate-card-in"
-          style={{ animationDelay: `${index * 20}ms` }}
+          style={{ animationDelay: `${index * 35}ms` }}
         >
           <PriceCard result={result} />
         </li>

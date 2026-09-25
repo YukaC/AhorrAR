@@ -25,6 +25,16 @@ const IDLE_STATE: SearchState = {
 
 const POLL_MS = 1000;
 
+const LAST_SEARCH_KEY = 'ahorrar:lastSearchId';
+
+function rememberSearch(searchId: string): void {
+  try {
+    localStorage.setItem(LAST_SEARCH_KEY, searchId);
+  } catch {
+    /* private mode / quota — best-effort */
+  }
+}
+
 function sleep(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
     const timer = window.setTimeout(() => {
@@ -57,7 +67,7 @@ export function useSearch() {
   const run = useCallback((rawParams: SearchParams) => {
     abortRef.current?.abort();
     cleanupRef.current?.close();
-    const params: SearchParams = { ...rawParams, maxDepth: 2, maxResults: 10 };
+    const params: SearchParams = { ...rawParams, maxDepth: 2, maxResults: 20 };
     lastParamsRef.current = params;
     setState({
       status: 'running',
@@ -82,6 +92,7 @@ export function useSearch() {
       try {
         const created = await createSearch(params, signal);
         if (signal.aborted) return;
+        rememberSearch(created.searchId);
 
         cleanupRef.current = subscribeToEvents(created.searchId, (progress) => {
           if (signal.aborted) return;
@@ -159,6 +170,47 @@ export function useSearch() {
   useEffect(() => () => {
     abortRef.current?.abort();
     cleanupRef.current?.close();
+  }, []);
+
+  // Re-conexión (§V20): si el backend persistió el último job (SQLite), el
+  // frontend lo retoma sin esperar una búsqueda nueva al recargar la página.
+  useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+    (async () => {
+      let last: string | null = null;
+      try {
+        last = localStorage.getItem(LAST_SEARCH_KEY);
+      } catch {
+        return;
+      }
+      if (last === null) return;
+      try {
+        const job = await getJob(last, controller.signal);
+        if (cancelled) return;
+        if (job.status === 'done' && job.result) {
+          setState({
+            status: 'done',
+            params: job.params,
+            progress: job.progress,
+            response: job.result,
+            error: null,
+            errorCode: null,
+          });
+        }
+      } catch (err) {
+        if (isAbortError(err)) return;
+        try {
+          localStorage.removeItem(LAST_SEARCH_KEY);
+        } catch {
+          /* ignore */
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
   }, []);
 
   return { state, run, retry, cancel };

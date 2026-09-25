@@ -20,11 +20,11 @@ const active: EventInfo = {
 };
 
 describe('EventBanner', () => {
-  it('announces the next event with days left', () => {
+  it('announces the next event with a live countdown', () => {
     render(<EventBanner event={upcoming} />);
     expect(screen.getByRole('status')).toBeInTheDocument();
     expect(screen.getByText('Black Friday')).toBeInTheDocument();
-    expect(screen.getByText(/en 68 días/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Cuenta regresiva para Black Friday')).toBeInTheDocument();
   });
 
   it('announces an active event with description', () => {

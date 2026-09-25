@@ -1,13 +1,56 @@
 <!doctype html>
-<html lang="es">
+<html lang="es-AR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AhorrAR — Comparador de precios en Argentina</title>
+    <meta
+      name="description"
+      content="Compará precios de productos en tiendas de Argentina con envío confirmado. Buscá notebooks, celulares, perfumes y más al mejor precio."
+    />
+    <meta name="keywords" content="comparador de precios, Argentina, ofertas, AhorrAR, envío" />
+    <meta name="author" content="AhorrAR" />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#059669" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
+
     <link rel="icon" type="image/png" href="/icon.png" />
     <link rel="apple-touch-icon" href="/icon.png" />
-    <meta name="description" content="Buscá tu producto, al mejor precio. Comparador de precios en Argentina con envío confirmado." />
-    <meta name="color-scheme" content="light dark" />
-    <title>AhorrAR — Buscá tu producto, al mejor precio</title>
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_AR" />
+    <meta property="og:site_name" content="AhorrAR" />
+    <meta property="og:title" content="AhorrAR — Comparador de precios en Argentina" />
+    <meta
+      property="og:description"
+      content="Buscá tu producto y compará ofertas reales de tiendas argentinas con envío confirmado."
+    />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="AhorrAR — Comparador de precios en Argentina" />
+    <meta
+      name="twitter:description"
+      content="Buscá tu producto y compará ofertas reales de tiendas argentinas con envío confirmado."
+    />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "AhorrAR",
+        "applicationCategory": "ShoppingApplication",
+        "operatingSystem": "Web",
+        "description": "Comparador de precios en Argentina con envío confirmado.",
+        "inLanguage": "es-AR",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "ARS"
+        }
+      }
+    </script>
+
     <script>
       // Aplica el tema antes del paint para evitar flash blanco/oscuro (FOUC).
       (function () {

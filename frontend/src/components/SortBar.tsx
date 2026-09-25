@@ -11,96 +11,107 @@ interface SortBarProps {
 }
 
 const pillBase =
-  'inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white px-4 text-sm font-medium ' +
-  'transition-colors hover:border-accent-400 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:border-accent-500 ' +
+  'inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white px-4 text-sm font-medium ' +
+  'transition-colors duration-150 hover:border-accent-400 dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:border-accent-500 ' +
   'sm:flex-none sm:justify-start';
 
 function pillPressed(pressed: boolean): string {
   return pressed
-    ? 'border-accent-500 bg-accent-50 text-accent-800 dark:bg-accent-500/15 dark:text-accent-300'
-    : '';
+    ? 'border-accent-600 bg-accent-100 text-accent-900 shadow-sm dark:border-accent-400 dark:bg-accent-500/20 dark:text-accent-100'
+    : 'text-neutral-800 dark:text-neutral-100';
 }
 
 const inputClass =
-  'h-10 w-full min-w-0 border border-neutral-300 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 ' +
-  'focus:border-accent-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 ' +
-  'dark:placeholder:text-neutral-500';
+  'min-h-11 w-full min-w-0 rounded-xl border border-neutral-300 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-500 ' +
+  'focus:border-accent-500 focus:outline-none dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-100 ' +
+  'dark:placeholder:text-neutral-400';
 
-export default function SortBar({ total, shown, source: _source, sort, filters, onSortChange, onFiltersChange }: SortBarProps) {
+export default function SortBar({
+  total,
+  shown,
+  source: _source,
+  sort,
+  filters,
+  onSortChange,
+  onFiltersChange,
+}: SortBarProps) {
   void _source;
   const priceLabel = sort === 'price-asc' ? 'Precio ↑' : 'Precio ↓';
 
   function setPrice(kind: 'priceMin' | 'priceMax', raw: string) {
     const parsed = raw.trim() === '' ? null : Number(raw);
-    onFiltersChange({ ...filters, [kind]: parsed !== null && Number.isFinite(parsed) && parsed >= 0 ? parsed : null });
+    onFiltersChange({
+      ...filters,
+      [kind]: parsed !== null && Number.isFinite(parsed) && parsed >= 0 ? parsed : null,
+    });
   }
 
   return (
-    <div className="flex flex-wrap items-end gap-3" aria-label="Filtrar y ordenar resultados">
-      <div className="flex w-full flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-neutral-500 dark:text-neutral-400" aria-live="polite">
+    <div className="flex flex-col gap-4" role="group" aria-labelledby="filters-heading">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p
+          id="filters-heading"
+          className="text-sm font-medium text-neutral-700 dark:text-neutral-200"
+          aria-live="polite"
+        >
           {shown} de {total} ofertas
         </p>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent-800 dark:bg-accent-500/15 dark:text-accent-300">
-          <span aria-hidden="true" className="size-1.5 rounded-full bg-accent-600" />
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-100 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-accent-900 dark:bg-accent-500/20 dark:text-accent-200">
+          <span aria-hidden="true" className="size-1.5 rounded-full bg-accent-700 dark:bg-accent-300" />
           live
         </span>
       </div>
 
-      <label className="block w-1/2 min-w-0 flex-1 sm:w-auto">
-        <span className="mb-1 block text-xs font-medium text-neutral-500 dark:text-neutral-400">Precio mín (ARS)</span>
-        <input
-          type="number"
-          inputMode="numeric"
-          min={0}
-          placeholder="Sin mínimo"
-          aria-label="Precio mínimo en pesos"
-          value={filters.priceMin === null ? '' : String(filters.priceMin)}
-          onChange={(e) => setPrice('priceMin', e.target.value)}
-          className={`${inputClass} rounded-xl`}
-        />
-      </label>
+      <div className="flex flex-col gap-4 rounded-2xl border border-neutral-200 bg-neutral-50/80 p-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3 dark:border-neutral-700 dark:bg-neutral-900/60">
+        <label className="block min-w-[9rem] flex-1 sm:max-w-[11rem]">
+          <span className="mb-1.5 block text-xs font-semibold text-neutral-700 dark:text-neutral-200">
+            Precio mín (ARS)
+          </span>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={0}
+            placeholder="Sin mínimo"
+            aria-label="Precio mínimo en pesos"
+            value={filters.priceMin === null ? '' : String(filters.priceMin)}
+            onChange={(e) => setPrice('priceMin', e.target.value)}
+            className={inputClass}
+          />
+        </label>
 
-      <label className="block w-1/2 min-w-0 flex-1 sm:w-auto">
-        <span className="mb-1 block text-xs font-medium text-neutral-500 dark:text-neutral-400">Precio máx (ARS)</span>
-        <input
-          type="number"
-          inputMode="numeric"
-          min={0}
-          placeholder="Sin máximo"
-          aria-label="Precio máximo en pesos"
-          value={filters.priceMax === null ? '' : String(filters.priceMax)}
-          onChange={(e) => setPrice('priceMax', e.target.value)}
-          className={`${inputClass} rounded-xl`}
-        />
-      </label>
+        <label className="block min-w-[9rem] flex-1 sm:max-w-[11rem]">
+          <span className="mb-1.5 block text-xs font-semibold text-neutral-700 dark:text-neutral-200">
+            Precio máx (ARS)
+          </span>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={0}
+            placeholder="Sin máximo"
+            aria-label="Precio máximo en pesos"
+            value={filters.priceMax === null ? '' : String(filters.priceMax)}
+            onChange={(e) => setPrice('priceMax', e.target.value)}
+            className={inputClass}
+          />
+        </label>
 
-      <button
-        type="button"
-        aria-pressed={sort === 'price-asc'}
-        onClick={() => onSortChange(sort === 'price-asc' ? 'price-desc' : 'price-asc')}
-        className={pillBase}
-      >
-        {priceLabel}
-      </button>
-
-      <button
-        type="button"
-        aria-pressed={filters.soloLocal}
-        onClick={() => onFiltersChange({ ...filters, soloLocal: !filters.soloLocal })}
-        className={`${pillBase} ${pillPressed(filters.soloLocal)}`}
-      >
-        Solo local
-      </button>
-
-      <button
-        type="button"
-        aria-pressed={filters.freeShipping}
-        onClick={() => onFiltersChange({ ...filters, freeShipping: !filters.freeShipping })}
-        className={`${pillBase} ${pillPressed(filters.freeShipping)}`}
-      >
-        Envío gratis
-      </button>
+        <div className="flex w-full flex-wrap gap-2.5 sm:w-auto sm:flex-1 sm:justify-end">
+          <button
+            type="button"
+            aria-pressed={sort === 'price-asc'}
+            aria-label={
+              sort === 'price-asc'
+                ? 'Ordenar por precio: menor a mayor. Activar mayor a menor'
+                : 'Ordenar por precio: mayor a menor. Activar menor a mayor'
+            }
+            onClick={() => onSortChange(sort === 'price-asc' ? 'price-desc' : 'price-asc')}
+            className={`${pillBase} ${pillPressed(false)}`}
+          >
+            {priceLabel}
+          </button>
+          {/* "Envío gratis" pill hidden until shipping.free is real (ROADMAP). Logic stays in filterResults. */}
+        </div>
+      </div>
     </div>
   );
 }

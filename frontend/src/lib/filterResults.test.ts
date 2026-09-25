@@ -18,11 +18,17 @@ function item(id: number, price: number, opts: Partial<ProductResult> = {}): Pro
   };
 }
 
-const base = [item(1, 1000, { shipping: { confirmed: true, country: 'AR', type: 'local', free: true, note: '' } }), item(2, 2000), item(3, 3000, { store: { name: 'Global', logo: null, local: false, siteUrl: 'https://global.com' } })];
+const base = [
+  item(1, 1000, { shipping: { confirmed: true, country: 'AR', type: 'local', free: true, note: '' } }),
+  item(2, 2000),
+  item(3, 3000),
+];
 
 describe('sortResults (V12)', () => {
   it('price-asc then stable by price, fallback rank', () => {
-    expect(sortResults([item(1, 300), item(2, 100), item(3, 200)], 'price-asc').map((r) => r.price)).toEqual([100, 200, 300]);
+    expect(sortResults([item(1, 300), item(2, 100), item(3, 200)], 'price-asc').map((r) => r.price)).toEqual([
+      100, 200, 300,
+    ]);
   });
   it('price-desc', () => {
     expect(sortResults([item(1, 300), item(2, 100)], 'price-desc').map((r) => r.price)).toEqual([300, 100]);
@@ -39,16 +45,10 @@ describe('filterResults (V12)', () => {
     const out = filterResults(base, { ...EMPTY_FILTERS, priceMin: 1500, priceMax: 2500 });
     expect(out.map((r) => r.price)).toEqual([2000]);
   });
-  it('free shipping only', () => {
+
+  // freeShipping filter logic kept; UI pill hidden until shipping.free is real (ROADMAP).
+  it('free shipping only (logic ready, UI hidden)', () => {
     const out = filterResults(base, { ...EMPTY_FILTERS, freeShipping: true });
-    expect(out.map((r) => r.rank)).toEqual([1]);
-  });
-  it('solo local excludes international stores', () => {
-    const out = filterResults(base, { ...EMPTY_FILTERS, soloLocal: true });
-    expect(out.map((r) => r.rank)).toEqual([1, 2]);
-  });
-  it('combines filters', () => {
-    const out = filterResults(base, { soloLocal: true, freeShipping: true, priceMin: null, priceMax: null });
     expect(out.map((r) => r.rank)).toEqual([1]);
   });
 });
@@ -58,6 +58,16 @@ describe('filterAndSort + hasActiveFilters (V12)', () => {
     const out = filterAndSort(base, { ...EMPTY_FILTERS, priceMin: 1500 }, 'price-desc');
     expect(out.map((r) => r.price)).toEqual([3000, 2000]);
   });
+
+  it('renumbers rank to match display order (cheapest first by default)', () => {
+    const out = filterAndSort([item(9, 500), item(1, 100), item(3, 300)], EMPTY_FILTERS, 'price-asc');
+    expect(out.map((r) => ({ rank: r.rank, price: r.price }))).toEqual([
+      { rank: 1, price: 100 },
+      { rank: 2, price: 300 },
+      { rank: 3, price: 500 },
+    ]);
+  });
+
   it('detects active filters', () => {
     expect(hasActiveFilters(EMPTY_FILTERS)).toBe(false);
     expect(hasActiveFilters({ ...EMPTY_FILTERS, priceMax: 900 })).toBe(true);

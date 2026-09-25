@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { formatDaysLeft, formatPrice, storeHost, storeInitials } from './format';
+import {
+  displayName,
+  formatCountdown,
+  formatDaysLeft,
+  formatPrice,
+  storeHost,
+  storeInitials,
+} from './format';
 
 // Intl.NumberFormat inserta NBSP/espacios finos según ICU: los asserts
 // validan símbolo + agrupación, no la cadena exacta con espacio.
@@ -58,5 +65,41 @@ describe('storeHost', () => {
   });
   it('URL inválida', () => {
     expect(storeHost('no-es-url')).toBe('no-es-url');
+  });
+});
+
+describe('displayName', () => {
+  it('deja intactos los nombres ya mixtos (marcas)', () => {
+    expect(displayName('Apple iPhone 16 128GB Negro')).toBe('Apple iPhone 16 128GB Negro');
+  });
+  it('normaliza TODO MAYÚSCULAS a title-case', () => {
+    expect(displayName('NOTEBOOK LENOVO IDEAPAD 15 RYZEN 5')).toBe(
+      'Notebook Lenovo Ideapad 15 Ryzen 5',
+    );
+  });
+  it('preserva el casing de marcas conocidas', () => {
+    expect(displayName('PLAYSTATION 5')).toBe('PlayStation 5');
+    expect(displayName('RTX 4060')).toBe('RTX 4060');
+    expect(displayName('FRÁVEGA')).toBe('Frávega');
+  });
+  it('maneja tokens cortos y numéricos', () => {
+    expect(displayName('X')).toBe('X');
+    expect(displayName('G203')).toBe('G203');
+  });
+});
+
+describe('formatCountdown', () => {
+  it('formatea días, horas, minutos y segundos', () => {
+    expect(formatCountdown({ days: 2, hours: 14, minutes: 3, seconds: 12, total: 1 })).toBe(
+      '2d 14h 03m 12s',
+    );
+  });
+  it('omite los días cuando no quedan', () => {
+    expect(formatCountdown({ days: 0, hours: 5, minutes: 0, seconds: 9, total: 1 })).toBe(
+      '05h 00m 09s',
+    );
+  });
+  it('dice "hoy" cuando ya llegó', () => {
+    expect(formatCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 })).toBe('hoy');
   });
 });
