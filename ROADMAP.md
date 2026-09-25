@@ -10,7 +10,7 @@
 - [x] Despliegue a producción (Fly API + Vercel web, GitHub → auto-deploy) — ref `docs/DEPLOY.md` · UI https://ahorrarg.vercel.app
 - [x] ML ON en prod (`MELI_*` secrets + `INCLUDE_ML=1`) — §T16 / `docs/ML.md`
 - [x] ML auto-refresh on 401 + Fly volume token file — §T38
-- [~] Señal real de envío gratis + pill UI — §T37
+- [x] Señal real de envío gratis + pill UI — §T37
 
 ## Luego (v0.3)
 
@@ -19,7 +19,7 @@
 - [ ] Cubrir más categorías/templates en `shared/ar-shops.json` (moda, bazar) + re-probe periódico — ref §T22/V19
 - [ ] Suite E2E automatizada (Playwright) sobre el flujo live SSE — ref `docs/testing-strategy.md`
 - [ ] Stage Docker opcional con browsers si se quiere `STEALTH_FETCH=1` en un entorno no-Fly — §T33 / `docs/DEPLOY.md`
-- [ ] **Filtro “Envío gratis” (UI oculta):** hoy `shipping.free` casi siempre `false` porque VTEX/Woo hardcodean `shippingHint: "Envío a domicilio"` (§V1 confirm) sin señal free. Re-habilitar pill en `SortBar` cuando haya fuente real: HTML listing (`envio gratis`), logística VTEX, y/o ML `free_shipping` (`INCLUDE_ML`). Lógica `filterResults.freeShipping` ya lista. “Solo local” eliminado (búsqueda AR-only → `store.local` siempre true).
+- [x] **Filtro “Envío gratis” con señal real:** `shipping.free` desde VTEX `ShippingSLA[].Price==0` y ML `free_shipping` (gana sobre regex del hint) · pill SortBar re-activado · paridad Node↔Python (fixture contrato con ShippingSLA) — §T37 / §V25
 
 ## Más adelante
 

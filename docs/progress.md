@@ -7,7 +7,7 @@
 
 ## En una línea
 
-v0.2 en **prod** (https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev) · T1–T36 + **T16** hechos; T17/T37 abiertos · ML ON prod · Scrapling + índice AR · 0 bugs §B.
+v0.2 en **prod** (https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev) · T1–T42 hechos (T37 incluido); T17 abierto · ML ON prod · Scrapling + índice AR · 0 bugs §B.
 
 ## Hecho
 
@@ -33,10 +33,11 @@ v0.2 en **prod** (https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev) · 
 - [x] **Prod**: https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev · GitHub `main` → Vercel+Fly · relevance filter · header GitHub repo link
 - [x] **ML ON en prod**: Fly secrets `MELI_*` + `INCLUDE_ML=1` (`fly.toml`); refresh vía `ml_login.py refresh` — §T16
 - [x] **ML auto-refresh on 401** + volume `/data/meli_tokens.json` — §T38
+- [x] **Speed Firecrawl-inspired** (scraper Python): caché ofertas por host (TTL 10min, dedupe, cap 30/host) + sitemap discovery (hosts no-VTEX curados, caché 24h) + probes en paralelo (pipeline 2 etapas) + warm cache populares (`WARM_CACHE=1`) — §T39–T42 · E2E: 2da búsqueda misma query 0 fetches (1008ms vs 2447ms)
+- [x] **Filtro Envío gratis con señal real**: `shipping.free` desde VTEX `ShippingSLA[].Price==0` y ML `free_shipping` (gana sobre regex del hint) + pill SortBar re-activado + paridad Node↔Python (fixture contrato con ShippingSLA) — §T37 / §V25
 
 ## En curso
 
-- [~] Filtro Envío gratis: señal real `shipping.free` + re-show pill — §T37
 - [ ] ML fallback StealthyFetcher+proxy (solo si API falla gate) — §T17
 
 ## Falta

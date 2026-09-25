@@ -11,7 +11,9 @@ Unreleased = lo que aún no se desplegó. Los refs §T apuntan al plan en `SPEC.
 - **ML ON en prod**: Fly secrets `MELI_*` + `INCLUDE_ML=1` (`fly.toml`); OAuth refresh documentado — §T16
 - **Prod live**: UI https://ahorrarg.vercel.app (Vercel) + API https://ahorrar-api.fly.dev (Fly); GitHub `main` redeploya ambos; dominio canónico + redirects 308
 - **Relevance query↔title**: filtro Node+Python — marca/modelo sola (`iphone`) exige substring; categoría sola (`perfume`) no — evita junk tipo baffle en #1
-- UI: logo → home idle; link GitHub del repo en header; filtro “Solo local” eliminado; pill “Envío gratis” oculta hasta señal real (§T37)
+- **Envío gratis con señal real**: `shipping.free` desde VTEX `ShippingSLA[].Price==0` y ML `free_shipping` (gana sobre regex del hint) · pill SortBar re-activado · paridad Node↔Python (fixture contrato con ShippingSLA) — §T37/§V25
+- **Speed Firecrawl-inspired** (scraper Python): caché de ofertas por host (TTL 10min, dedupe, cap 30/host) · sitemap discovery (hosts no-VTEX curados, caché 24h) · probes en paralelo (pipeline 2 etapas) · warm cache de búsquedas populares (`WARM_CACHE=1`) — §T39–T42 · E2E: 2da búsqueda misma query 0 fetches (1008ms vs 2447ms)
+- UI: logo → home idle; link GitHub del repo en header; filtro “Solo local” eliminado
 - **Scrapling session + platform seeds**: `FetcherSession` por worker, fetch kinds `hub|api|html`, early-stop; índice `ar-shops.json` v3 (`platform`/`alive`/`entry`) + probe offline `scripts/probe_ar_shops.py`; parsers Woo Store API + Shopify suggest/products; seeds platform-aware Node↔Python; `STEALTH_FETCH` gated (off en Fly) — §T30–T33
 - Streaming real por SSE: cards parciales en el frontend mientras el crawler corre — §T19/T20/T21
 - Índice curado de tiendas AR `shared/ar-shops.json` expandido de 14 a **88 tiendas** (32 con entry VTEX probeado con el fetcher real): fuentes comparaya.net API + precialo.com.ar — §T29
