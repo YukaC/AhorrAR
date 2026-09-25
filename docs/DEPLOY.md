@@ -58,7 +58,10 @@ fly secrets set \
   -a ahorrar-api
 ```
 
-`fly.toml` también fija `INCLUDE_ML=1`. Access token ~6h: `cd scraper && uv run python scripts/ml_login.py refresh` → re-setear los dos secrets de token.
+`fly.toml` fija `INCLUDE_ML=1` + mount volume `meli_data` → `/data` (`MELI_TOKEN_FILE`).
+Access ~6h: **auto-refresh on 401** persiste tokens en el volume. Solo si el refresh
+falla (revoke): `cd scraper && uv run python scripts/ml_login.py refresh` y re-setear secrets.
+Crear volume (una vez): `fly volumes create meli_data --region gru --size 1 -a ahorrar-api`
 
 ## Deploy manual (emergencia)
 

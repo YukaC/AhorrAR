@@ -70,7 +70,8 @@ scraper/src/ahorrar_scraper/
 ├── crawl.py            BFS con callbacks on_offer/on_progress + auto-expansión índice
 ├── seeds.py            seeds espejo del índice ar-shops (mismo JSON que Node)
 ├── parsers.py          _parse_vtex_catalog (JSON API), _parse_vtex_installments, HTML
-└── meli_api.py         MercadoLibre API oficial (products/search + /items), token obligatorio
+├── meli_api.py         MercadoLibre API oficial (products/search + /items), token obligatorio
+└── meli_auth.py        OAuth refresh on 401 + persist MELI_TOKEN_FILE
 
 frontend/src/
 ├── App.tsx             búsqueda + sección de cards en vivo durante el crawl

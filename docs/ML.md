@@ -73,9 +73,11 @@
   `/products/{id}/items`.
 - `scraper/src/ahorrar_scraper/meli_api.py` reescrito a la estrategia de
   competidores; probado end-to-end vía `crawl(include_ml=True)`.
-- ML **ON en prod** (`INCLUDE_ML=1` + secrets Fly). Local: `INCLUDE_ML=0` default en `.env.example`;
-  activar con token en `scraper/.env`. Access token ~6h → `uv run python scripts/ml_login.py refresh`
-  y re-setear secrets Fly. Stores AR siguen primary; ML cap ≤50% (§V17).
+- ML **ON en prod** (`INCLUDE_ML=1` + secrets Fly). Local: `INCLUDE_ML=0` default en `.env.example`.
+- **Auto-refresh**: si la API responde 401, `meli_auth.refresh_access_token()` rota access
+  (+ refresh) y persiste en `MELI_TOKEN_FILE` (`/data/meli_tokens.json` en Fly volume
+  `meli_data`). No hace falta `fly secrets set` en cada expiry. CLI manual sigue disponible.
+  Stores AR siguen primary; ML cap ≤50% (§V17).
 - Productos catálogo **sin items competidores** (404/`0 items`) se skipean — típico en algunos
   PDPs con cuenta no vendedora; no es fallo del gate OAuth.
 
@@ -109,8 +111,8 @@ El server Python NO autoload `.env`: exportar antes o cargar con `set -a; . .env
 1. **Fly secrets** (backend+scraper en `ahorrar-api`): `MELI_ACCESS_TOKEN`,
    `MELI_REFRESH_TOKEN`, `MELI_APP_ID`, `MELI_CLIENT_SECRET`, `MELI_REDIRECT_URI`,
    `MELI_SITE_ID=MLA`, `INCLUDE_ML=1`.
-2. **Token lifetime**: access 6h; refrescar antes de expirar (cron o lazy en 401).
-   El refresh token rota → persistir el nuevo en secret/fly.
+2. **Token lifetime**: access ~6h; **lazy refresh en 401** (automático) + persist volume.
+   El refresh token rota → archivo `/data/meli_tokens.json` (no solo secrets estáticos).
 3. **Permisos app DevCenter** (ya aplicados): Publicación y sincronización =
    **Lectura y escritura**; tópicos `item competition`, `items prices` + callback
    `https://ahorrar-api.fly.dev/webhooks/ml` (stub `POST /webhooks/ml` en backend → 200).

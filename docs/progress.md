@@ -32,6 +32,7 @@ v0.2 en **prod** (https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev) · 
 - [x] Frávega PDP itemId + prerender home SSG + UI polish — §T34–T36
 - [x] **Prod**: https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev · GitHub `main` → Vercel+Fly · relevance filter · header GitHub repo link
 - [x] **ML ON en prod**: Fly secrets `MELI_*` + `INCLUDE_ML=1` (`fly.toml`); refresh vía `ml_login.py refresh` — §T16
+- [x] **ML auto-refresh on 401** + volume `/data/meli_tokens.json` — §T38
 
 ## En curso
 
@@ -57,4 +58,4 @@ v0.2 en **prod** (https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev) · 
 
 ## Bloqueantes
 
-- Ninguno. Access token ML ~6h: refrescar con `ml_login.py refresh` y re-setear secrets Fly si aparece 401.
+- Ninguno. Access token ML ~6h: auto-refresh on 401 (+ persist volume). Solo re-consent manual si refresh revoke.

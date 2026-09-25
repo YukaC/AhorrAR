@@ -174,9 +174,21 @@ def main() -> int:
             write_env(tokens)
             print("Tokens OK → scraper/.env (MELI_ACCESS_TOKEN + MELI_REFRESH_TOKEN)")
         elif args.command == "refresh":
+            for key, value in env.items():
+                if value:
+                    os.environ[key] = value
             tokens = refresh(env)
             write_env(tokens)
-            print("Refresh OK → MELI_ACCESS_TOKEN rotado")
+            for key, value in tokens.items():
+                if value:
+                    os.environ[key] = value
+            try:
+                from ahorrar_scraper.meli_auth import persist_tokens
+
+                persist_tokens(tokens)
+            except Exception as persist_exc:  # noqa: BLE001
+                print(f"(aviso) no se pudo persistir token file: {persist_exc}")
+            print("Refresh OK → MELI_ACCESS_TOKEN rotado (+ .env / token file)")
         return 0
     except AppError as exc:
         print(f"error: {exc}", file=sys.stderr)

@@ -20,6 +20,7 @@ One rankeable offer per catalog product: the cheapest competing listing
 (across the results of /products/{id}/items). Products without competitors (404)
 are skipped. §V1: price + country + shipping signal required.
 Env: MELI_ACCESS_TOKEN (required), MELI_SITE_ID=MLA (optional).
+Auto-refresh on 401 via MELI_REFRESH_TOKEN + APP_ID/SECRET (see meli_auth.py).
 """
 
 from __future__ import annotations
@@ -31,6 +32,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
 import httpx
+
+from .meli_auth import (
+    auth_headers,
+    meli_token_configured,
+    refresh_after_unauthorized,
+)
 
 log = logging.getLogger("ahorrar.meli")
 
@@ -44,9 +51,8 @@ CATALOG_URL = f"https://www.mercadolibre.com.ar/p/"
 ML_MAX_WORKERS = int(os.environ.get("ML_MAX_WORKERS", "8").strip() or "8")
 ML_TIMEOUT_S = float(os.environ.get("ML_TIMEOUT_S", "15").strip() or "15")
 
-
-def meli_token_configured() -> bool:
-    return bool(os.environ.get("MELI_ACCESS_TOKEN", "").strip())
+# Re-export for crawl.py imports
+__all__ = ["meli_token_configured", "search_mla"]
 
 
 def _shipping_hint(shipping: dict[str, Any] | None) -> str | None:
@@ -160,23 +166,26 @@ def search_mla(query: str, *, limit: int = 20) -> list[dict[str, Any]]:
 
     Fase 0: detail+items por producto se resuelven en paralelo
     (ThreadPoolExecutor, client por thread) en vez de en serie.
+    On 401: refresh OAuth once and retry the search.
     """
-    token = os.environ.get("MELI_ACCESS_TOKEN", "").strip()
-    if not token:
+    if not meli_token_configured():
         log.info("MELI_ACCESS_TOKEN ausente — skip API ML")
         return []
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Accept": "application/json",
-        "User-Agent": "AhorrAR/0.1 (price-compare; contact local)",
-    }
     try:
         with httpx.Client(timeout=ML_TIMEOUT_S) as search_client:
+            headers = auth_headers()
             res = search_client.get(
                 f"{API}/products/search",
                 params={"site_id": SITE, "status": "active", "q": query.strip(), "limit": min(limit * 2, 50)},
                 headers=headers,
             )
+            if res.status_code == 401 and refresh_after_unauthorized(401):
+                headers = auth_headers()
+                res = search_client.get(
+                    f"{API}/products/search",
+                    params={"site_id": SITE, "status": "active", "q": query.strip(), "limit": min(limit * 2, 50)},
+                    headers=headers,
+                )
             if res.status_code in (401, 403):
                 log.warning(
                     "ML API %s products/search — token inválido o permiso funcional incompleto",

@@ -21,6 +21,8 @@ out/
 *.local
 MELI_*.token
 .ml_oauth_state.json
+scraper/.meli_tokens.json
+**/meli_tokens.json
 
 # logs
 *.log

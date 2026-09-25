@@ -9,6 +9,7 @@
 
 - [x] Despliegue a producción (Fly API + Vercel web, GitHub → auto-deploy) — ref `docs/DEPLOY.md` · UI https://ahorrarg.vercel.app
 - [x] ML ON en prod (`MELI_*` secrets + `INCLUDE_ML=1`) — §T16 / `docs/ML.md`
+- [x] ML auto-refresh on 401 + Fly volume token file — §T38
 - [~] Señal real de envío gratis + pill UI — §T37
 
 ## Luego (v0.3)
