@@ -43,7 +43,7 @@
 |---|---|---|
 | **1 PRIMARY** | API oficial catálogo: `products/search` + `products/{id}/items` (precio de competidores) | Implementado y probado (S24 → 5 ofertas ARS). Requiere app pdp r/w + token. |
 | **2 PARALLEL** | Crawler Scrapling AR (stores + SERP + VTEX/Woo/Shopify) | Siempre ON; ML suma vía API (cap ≤50% top-N §V17). |
-| **3 FALLBACK (si se sube ML)** | StealthyFetcher + proxies residenciales AR | Solo si se decide desobedecer la prohibición de HTML listado — **⊥ por §C**. |
+| **3 FALLBACK (descartado)** | StealthyFetcher + proxies residenciales AR | **⊥ por ToS ML** (scraping HTML no autorizado; API oficial es el único camino legal) — §T17 descartado. En su lugar: **circuit breaker** (T43/V26) degrada con gracia: tras 3 fallos consecutivos skip ML 5 min, búsqueda sigue sin ML. |
 | **⊥** | `/sites/MLA/search` (`q=/nickname=/seller_id=`), Octoparse, search sin token, scraping HTML | No adoptar. |
 
 ## Gate

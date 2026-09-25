@@ -28,6 +28,7 @@ from __future__ import annotations
 import logging
 import os
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
@@ -51,8 +52,55 @@ CATALOG_URL = f"https://www.mercadolibre.com.ar/p/"
 ML_MAX_WORKERS = int(os.environ.get("ML_MAX_WORKERS", "8").strip() or "8")
 ML_TIMEOUT_S = float(os.environ.get("ML_TIMEOUT_S", "15").strip() or "15")
 
+# Circuit breaker: tras N fallos consecutivos de la API, skip ML por cooldown
+# (evita golpear una API caída/limitada y acelera búsquedas durante la caída).
+ML_CIRCUIT_FAILURES = int(os.environ.get("ML_CIRCUIT_FAILURES", "3").strip() or "3")
+ML_CIRCUIT_COOLDOWN_S = float(os.environ.get("ML_CIRCUIT_COOLDOWN_S", "300").strip() or "300")
+
 # Re-export for crawl.py imports
 __all__ = ["meli_token_configured", "search_mla"]
+
+
+class _CircuitBreaker:
+    """Trip after N consecutive API failures; skip calls while open (cooldown).
+
+    Half-open: when the cooldown expires the next call probes the API again and
+    resets on success. Thread-safe (search_mla runs inside crawl workers).
+    """
+
+    def __init__(self, threshold: int, cooldown_s: float) -> None:
+        self._threshold = max(1, threshold)
+        self._cooldown_s = max(1.0, cooldown_s)
+        self._failures = 0
+        self._open_until = 0.0
+        self._lock = threading.Lock()
+
+    def is_open(self) -> bool:
+        with self._lock:
+            if self._open_until and time.monotonic() >= self._open_until:
+                self._open_until = 0.0
+                self._failures = 0
+                return False
+            return self._open_until > 0
+
+    def record_failure(self) -> None:
+        with self._lock:
+            self._failures += 1
+            if self._failures >= self._threshold:
+                self._open_until = time.monotonic() + self._cooldown_s
+                log.warning(
+                    "ML API circuit OPEN — skip %ss (failures=%d)",
+                    self._cooldown_s,
+                    self._failures,
+                )
+
+    def record_success(self) -> None:
+        with self._lock:
+            self._failures = 0
+            self._open_until = 0.0
+
+
+_ml_circuit = _CircuitBreaker(ML_CIRCUIT_FAILURES, ML_CIRCUIT_COOLDOWN_S)
 
 
 def _shipping_hint(shipping: dict[str, Any] | None) -> str | None:
@@ -171,6 +219,9 @@ def search_mla(query: str, *, limit: int = 20) -> list[dict[str, Any]]:
     if not meli_token_configured():
         log.info("MELI_ACCESS_TOKEN ausente — skip API ML")
         return []
+    if _ml_circuit.is_open():
+        log.info("ML API circuit open — skip (cooldown)")
+        return []
     try:
         with httpx.Client(timeout=ML_TIMEOUT_S) as search_client:
             headers = auth_headers()
@@ -187,21 +238,27 @@ def search_mla(query: str, *, limit: int = 20) -> list[dict[str, Any]]:
                     headers=headers,
                 )
             if res.status_code in (401, 403):
+                _ml_circuit.record_failure()
                 log.warning(
                     "ML API %s products/search — token inválido o permiso funcional incompleto",
                     res.status_code,
                 )
                 return []
             if res.status_code == 429:
+                _ml_circuit.record_failure()
                 log.warning("ML API 429 rate limit products/search")
                 return []
             if res.status_code >= 400:
+                _ml_circuit.record_failure()
                 log.warning("ML API HTTP %s products/search", res.status_code)
                 return []
             data = res.json()
             search_results = data.get("results") if isinstance(data, dict) else None
             if not isinstance(search_results, list):
+                _ml_circuit.record_failure()
+                log.warning("ML API products/search shape inesperado")
                 return []
+            _ml_circuit.record_success()
 
             # candidates: (índice del result, product_id canónico, pid original)
             candidates: list[tuple[int, str, str]] = []
@@ -242,6 +299,7 @@ def search_mla(query: str, *, limit: int = 20) -> list[dict[str, Any]]:
                 log.info("ML API: sin ofertas propagables para %r", query)
             return out
     except httpx.HTTPError as exc:
+        _ml_circuit.record_failure()
         log.warning("ML API network error: %s", exc)
         return []
     return []

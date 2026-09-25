@@ -11,7 +11,7 @@ Comparador de precios AR: [PRODUCTO] → crawler LIVE rankea ofertas REALES (pre
 - **streaming SSE**: `POST :4100/crawl/stream` → ndjson eventos (offer/progress/done) · backend reenvía `SearchProgress.results` (parciales) por SSE · frontend renderiza cards a medida llegan (skeleton real) · top-N cap 20 · ML share ≤50% on balance con resto
 - ranking: reputación tienda (curated) + precio + bonus financiación cuotas sin interés `installments` · VTEX `Installments` parse
 - crawl SECONDARY: Node BFS legacy (HTTP-fast + Playwright) si `CRAWLER=legacy` o auto-fallback
-- **ML PRIMARY (implementado):** API oficial catálogo OAuth: `products/search` → `products/{id}` → `products/{id}/items` (precio del item competidor más barato por producto, ARS + §V1) con permiso funcional app "Publicación y sincronización" r/w + re-consent OK (2026-09-23) · buy box NOT GATE: precios vía `/items` aunque `buy_box_winner` `null` · **cuenta token YUCA no vendedora** (`billing.allow=false address_pending`, list=false, kyc imposible — error ML) → `sale_price`/`/items/{id}`/`/sites/MLA/search` 403 por mejoramiento + items sin competencia ⊥ (404 "No winners found" por diseño, no compensable) · `sites/{site}/search` ⊥ (muerto 403 desde 2025) · ⊥ HTML listado · ⊥ Octoparse/GitHub scrapers · fallback solo StealthyFetcher+proxy residencial AR · ML ON en prod (`INCLUDE_ML=1` + secrets Fly; local default OFF `.env.example`) · auto-refresh OAuth on 401 → persist `/data/meli_tokens.json` (Fly volume) · docs/ML.md
+- **ML PRIMARY (implementado):** API oficial catálogo OAuth: `products/search` → `products/{id}` → `products/{id}/items` (precio del item competidor más barato por producto, ARS + §V1) con permiso funcional app "Publicación y sincronización" r/w + re-consent OK (2026-09-23) · buy box NOT GATE: precios vía `/items` aunque `buy_box_winner` `null` · **cuenta token YUCA no vendedora** (`billing.allow=false address_pending`, list=false, kyc imposible — error ML) → `sale_price`/`/items/{id}`/`/sites/MLA/search` 403 por mejoramiento + items sin competencia ⊥ (404 "No winners found" por diseño, no compensable) · `sites/{site}/search` ⊥ (muerto 403 desde 2025) · ⊥ HTML listado · fallback HTML ⊥ (ToS ML — scraping no autorizado; API oficial único camino legal) · **circuit breaker** degrada con gracia (T43/V26) · ML ON en prod (`INCLUDE_ML=1` + secrets Fly; local default OFF `.env.example`) · auto-refresh OAuth on 401 → persist `/data/meli_tokens.json` (Fly volume) · docs/ML.md
 - KISS/DRY: normalize/shipping/scoring en Node; Scrapling entrega offers crudas → finalize §V1
 - reputación AR (.ar + bootstrap .com) · ML solo con `MELI_ACCESS_TOKEN`
 - búsqueda SOLO AR · ∀ result → shipping.confirmed
@@ -61,6 +61,7 @@ V22: ∀ offer Frávega (host fravega.com) → url = `/p/{slug}-{itemId}/` con i
 V23: ∀ build frontend → `dist/index.html` contiene home prerenderizado (root no vacío + marcador idle "¿Qué querés ahorrar hoy?") · `scripts/prerender-home.mjs` falla el build si falta
 V24: ∀ result publicado → title matchea query (filtro relevancia pipeline Node+Python) · tests integración usan fixtures que pasan el pipeline completo (⊥ nombres que no matchean la query)
 V25: ∀ shipping.free → señal estructurada (VTEX ShippingSLA Price 0 / ML free_shipping) gana sobre regex del hint · paridad Node↔Python (fixture contrato VTEX con ShippingSLA)
+V26: ∀ fallo ML API (401/403/429/≥400/network/shape) → circuit breaker cuenta; tras N consecutivos skip ML por cooldown (⊥ golpear API caída) · éxito resetea · búsqueda degrada sin ML, nunca falla
 
 §T
 id|status|task|cites
@@ -80,7 +81,7 @@ T13|x|HTTP-fast path + BFS paralelo + VTEX catalog API + ML blacklist sesión|V5
 T14|x|Scrapling primary sidecar + Node secondary|V14,§C
 T15|x|ML catálogo client: search_mla via products/search → products/{id}/items (precio competidor más barato por PDP) · get 200 + integración crawl() verificado 2026-09-23 · app pdp r/w + tópicos/callback + re-consent done (grant r/w reflejado) · cuenta YUCA no vendedora (`address_pending`, kyc imposible) → buy box/sale_price/search ⊥, camino precio OK|V1,V14,V15
 T16|x|ML OAuth refresh (`ml_login.py refresh`) + INCLUDE_ML end-to-end en prod (Fly secrets MELI_* + INCLUDE_ML=1, 2026-09-25)|V1,V14,V15
-T17|.|ML fallback StealthyFetcher+proxy residencial (solo si API falla gate)|V14
+T17|⊥|ML fallback HTML StealthyFetcher+proxy residencial — DESCARTADO por ToS ML (scraping HTML no autorizado; API oficial es el único camino legal) · en su lugar: circuit breaker degrada con gracia (T43)|V14,§C
 T18|x|Deploy: Vercel frontend + Fly Docker API/Scrapling + DEPLOY.md|§I
 T19|x|streaming scrapers: crawl() on_offer/on_progress callbacks + POST /crawl/stream ndjson (offer/progress/done/error) · /crawl intacto digo|V16,§I
 T20|x|backend stream: SearchProgress.results opcional (contract+guard) + scrapling stream client (ndjson→SSE) + jobStore push parciales por SSE|V16,V10,§I
@@ -106,6 +107,7 @@ T39|x|caché ofertas por host: offer_cache.py (TTL 10min, dedupe URL, cap 30/hos
 T40|x|sitemap discovery: sitemap_candidate_hosts (no-VTEX curado misma categoría) + sitemap_product_urls (caché 24h, regex <loc>, 8 URLs) + worker background en crawl()|V19,§C
 T41|x|probes en paralelo: pipeline 2 etapas (launch_batch N+1 antes de process_batch N) + fix while (batch or crawl_queue)|V5,§C
 T42|x|warm cache populares: server.py _warm_loop gated WARM_CACHE=1 (5 queries, 300s, max_results 8/max_nodes 30) + start_warm_cache en main()|V21,§C
+T43|x|ML circuit breaker: _CircuitBreaker (threshold 3, cooldown 300s, half-open) en search_mla — 401/403/429/≥400/network/shape inesperado cuentan; éxito resetea; skip rápido mientras abierto (⊥ golpear API caída) · env ML_CIRCUIT_FAILURES/ML_CIRCUIT_COOLDOWN_S · tests unittest 7|V14,§C
 
 §B
 id|date|cause|fix

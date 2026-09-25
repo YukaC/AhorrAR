@@ -7,7 +7,7 @@
 
 ## En una línea
 
-v0.2 en **prod** (https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev) · T1–T42 hechos (T37 incluido); T17 abierto · ML ON prod · Scrapling + índice AR · 0 bugs §B.
+v0.2 en **prod** (https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev) · T1–T43 hechos; T17 descartado (ToS ML) · ML ON prod + circuit breaker · Scrapling + índice AR · 0 bugs §B.
 
 ## Hecho
 
@@ -35,10 +35,12 @@ v0.2 en **prod** (https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev) · 
 - [x] **ML auto-refresh on 401** + volume `/data/meli_tokens.json` — §T38
 - [x] **Speed Firecrawl-inspired** (scraper Python): caché ofertas por host (TTL 10min, dedupe, cap 30/host) + sitemap discovery (hosts no-VTEX curados, caché 24h) + probes en paralelo (pipeline 2 etapas) + warm cache populares (`WARM_CACHE=1`) — §T39–T42 · E2E: 2da búsqueda misma query 0 fetches (1008ms vs 2447ms)
 - [x] **Filtro Envío gratis con señal real**: `shipping.free` desde VTEX `ShippingSLA[].Price==0` y ML `free_shipping` (gana sobre regex del hint) + pill SortBar re-activado + paridad Node↔Python (fixture contrato con ShippingSLA) — §T37 / §V25
+- [x] **ML circuit breaker**: `_CircuitBreaker` en `search_mla` (threshold 3, cooldown 300s, half-open) — 401/403/429/≥400/network/shape cuentan; éxito resetea; skip rápido mientras abierto — §T43 / §V26 · tests unittest 7
+- [x] **Warm cache ON en prod**: `WARM_CACHE=1` en `fly.toml` (pre-calienta 5 búsquedas populares cada 300s) — §T42
 
 ## En curso
 
-- [ ] ML fallback StealthyFetcher+proxy (solo si API falla gate) — §T17
+- Nada. T17 (fallback HTML ML) **descartado por ToS** — scraping HTML no autorizado; API oficial es el único camino legal. Ver `docs/ML.md`.
 
 ## Falta
 
