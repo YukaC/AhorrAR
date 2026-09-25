@@ -15,6 +15,7 @@ Unreleased = lo que aún no se desplegó. Los refs §T apuntan al plan en `SPEC.
 - **Speed Firecrawl-inspired** (scraper Python): caché de ofertas por host (TTL 10min, dedupe, cap 30/host) · sitemap discovery (hosts no-VTEX curados, caché 24h) · probes en paralelo (pipeline 2 etapas) · warm cache de búsquedas populares (`WARM_CACHE=1`) — §T39–T42 · E2E: 2da búsqueda misma query 0 fetches (1008ms vs 2447ms) · **conceptos reimplementados desde cero, sin código de Firecrawl (AGPL-3.0)** — atribución en `docs/ATTRIBUTIONS.md` + `NOTICE`
 - **ML circuit breaker**: `_CircuitBreaker` en `search_mla` (threshold 3, cooldown 300s, half-open) — tras N fallos consecutivos skip ML por cooldown; éxito resetea; búsqueda degrada sin ML, nunca falla — §T43/§V26
 - **Warm cache ON en prod**: `WARM_CACHE=1` en `fly.toml` — §T42
+- **Tema automático del dispositivo**: `useTheme` sigue `prefers-color-scheme` del SO (incluidos cambios en vivo) y persiste en `localStorage` **solo tras un toggle manual** — 3 tests nuevos
 - UI: logo → home idle; link GitHub del repo en header; filtro “Solo local” eliminado
 - **Scrapling session + platform seeds**: `FetcherSession` por worker, fetch kinds `hub|api|html`, early-stop; índice `ar-shops.json` v3 (`platform`/`alive`/`entry`) + probe offline `scripts/probe_ar_shops.py`; parsers Woo Store API + Shopify suggest/products; seeds platform-aware Node↔Python; `STEALTH_FETCH` gated (off en Fly) — §T30–T33
 - Streaming real por SSE: cards parciales en el frontend mientras el crawler corre — §T19/T20/T21
