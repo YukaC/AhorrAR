@@ -36,7 +36,7 @@ function makeGraph(nodes: Record<string, Node>): { deps: CrawlDeps; fetchCalls: 
       return {
         results: [
           {
-            name: `Producto ${name}`,
+            name: `Test ${name}`,
             priceRaw: String(node.price),
             shippingHint: node.noShipping === true ? 'Solo retiro en local' : 'Envío a todo el país',
             store: { name: `Tienda ${name}`, logo: null, local: true, siteUrl: BASE },

@@ -24,6 +24,7 @@ from scrapling.fetchers import FetcherSession
 
 from ahorrar_scraper.parsers import looks_like_challenge, parse_page
 from ahorrar_scraper.meli_api import meli_token_configured, search_mla
+from ahorrar_scraper.offer_cache import OfferCache
 from ahorrar_scraper.relevance import title_matches_query
 from ahorrar_scraper.seeds import (
     ar_shop_hosts,
@@ -35,6 +36,8 @@ from ahorrar_scraper.seeds import (
     is_ar_host,
     is_publishable,
     is_serp,
+    sitemap_candidate_hosts,
+    sitemap_product_urls,
     unwrap_serp_hrefs,
 )
 
@@ -63,6 +66,14 @@ SOFT_404_RE = re.compile(
     r"no\s+encontramos|error\s*404|contenido\s+no\s+disponible",
     re.I,
 )
+
+# Reuse fresh verified offers per host across searches (Firecrawl-style
+# index-cache). Global so the warm cache and live searches share it.
+_offer_cache = OfferCache()
+# Skip re-fetching a host when the cache already contributed this many
+# relevant offers for the current query.
+CACHE_SKIP_FETCH_THRESHOLD = 3
+SITEMAP_FETCH_TIMEOUT_S = 3.0
 
 
 def _env_flag(name: str, default: str = "0") -> bool:
@@ -133,7 +144,9 @@ class _FetchPool:
     """Parallel fetches with per-worker FetcherSession and per-kind semaphores."""
 
     def __init__(self, max_workers: int = FETCH_WORKERS) -> None:
-        self._ex = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="crawl")
+        self._ex = ThreadPoolExecutor(
+            max_workers=max_workers, thread_name_prefix="crawl"
+        )
         self._sems = {kind: threading.Semaphore(n) for kind, n in FETCH_LIMITS.items()}
         self._managers: list[FetcherSession] = []
         self._session_q: queue.Queue[Any] = queue.Queue()
@@ -171,6 +184,25 @@ class _FetchPool:
 
         return self._ex.submit(_wrapped)
 
+    def fetch_one(self, url: str, timeout_s: float) -> tuple[str, str] | None:
+        """Synchronous single fetch with a custom timeout (sitemap probes)."""
+        session = self._session_q.get()
+        try:
+            try:
+                page = session.get(url, timeout=timeout_s, retries=0)
+            except Exception:  # noqa: BLE001
+                return None
+            if page is None:
+                return None
+            status = _page_status(page)
+            text = _page_body_text(page)
+            if status >= 400 or len(text) < 40:
+                return None
+            final = getattr(page, "url", None) or url
+            return str(final), text
+        finally:
+            self._session_q.put(session)
+
     def probe_many(self, urls: list[str]) -> dict[str, bool]:
         """Check PDP URLs are reachable. True=alive, False=dead.
 
@@ -190,8 +222,12 @@ class _FetchPool:
                 self._session_q.put(session)
 
         # Cap fan-out so probes don't starve listing fetches.
-        workers = min(PROBE_WORKERS, len(unique), max(1, self._session_q.qsize() or FETCH_WORKERS))
-        with ThreadPoolExecutor(max_workers=workers, thread_name_prefix="probe") as pool:
+        workers = min(
+            PROBE_WORKERS, len(unique), max(1, self._session_q.qsize() or FETCH_WORKERS)
+        )
+        with ThreadPoolExecutor(
+            max_workers=workers, thread_name_prefix="probe"
+        ) as pool:
             futs = [pool.submit(_one, u) for u in unique]
             for fut in as_completed(futs):
                 try:
@@ -343,7 +379,11 @@ class _FetchPool:
             if needs_stealth:
                 self._note_challenge(host)
                 if self._stealth_enabled and self._consume_stealth_budget():
-                    log.info("stealth retry (%s): %s", status if status >= 403 else "challenge", url)
+                    log.info(
+                        "stealth retry (%s): %s",
+                        status if status >= 403 else "challenge",
+                        url,
+                    )
                     stealth = self._stealth_fetch(url)
                     if stealth is not None:
                         self._reset_challenge(host)
@@ -396,6 +436,34 @@ def crawl(
             except Exception:  # noqa: BLE001
                 pass
 
+    def absorb_cached(host: str) -> bool:
+        """Reuse fresh cached offers for a host; True when enough were added to skip fetch.
+
+        Relevance-filtered on reuse, so a cache populated by "iphone 16" also
+        serves "iphone 16 128gb" (host-keyed cache, query-agnostic).
+        """
+        cached = _offer_cache.get(host)
+        if cached is None:
+            return False
+        added = 0
+        for offer in cached:
+            u = offer.get("url")
+            name = offer.get("name")
+            if not isinstance(u, str) or u in seen_urls:
+                continue
+            if not is_publishable(u):
+                continue
+            if "mercadolibre" in host_of(u):
+                continue
+            if not isinstance(name, str) or not title_matches_query(name, product):
+                continue
+            seen_urls.add(u)
+            results.append(offer)
+            added += 1
+            emit_offer(offer)
+            emit_progress(nodes_visited=len(visited), results_found=len(results))
+        return added >= CACHE_SKIP_FETCH_THRESHOLD
+
     def explore_offer(offer: dict[str, Any]) -> None:
         u = offer.get("url")
         if not isinstance(u, str):
@@ -418,15 +486,39 @@ def crawl(
         ml_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="ml")
         ml_future = ml_pool.submit(search_mla, product, limit=min(50, ml_cap * 3))
     elif want_ml:
-        log.info("include_ml pedido pero MELI_ACCESS_TOKEN ausente — skip ML (no HTML scrape)")
+        log.info(
+            "include_ml pedido pero MELI_ACCESS_TOKEN ausente — skip ML (no HTML scrape)"
+        )
 
     # ⊥ HTML ML seeds — API only. SERP + VTEX discovery for the rest.
     seeds = build_seed_urls(product, include_ml=False)
-    crawl_queue: deque[tuple[str, int]] = deque((u, 0) for u in seeds)
+    crawl_queue: deque[tuple[str, int]] = deque()
+    for u in seeds:
+        host = host_of(u)
+        if host and absorb_cached(host):
+            continue  # host con ofertas frescas relevantes — no re-crawlear
+        crawl_queue.append((u, 0))
     known_origins: set[str] = set()
     pages_fetched = 0
     max_depth_reached = 0
     fetch_pool = _FetchPool()
+
+    # Sitemap discovery (background): product URLs from non-VTEX curated shops
+    # in the product's category. Enqueued as they arrive; never blocks the crawl.
+    sitemap_pending: list[str] = []
+    sitemap_lock = threading.Lock()
+
+    def sitemap_worker() -> None:
+        for host in sitemap_candidate_hosts(product):
+            urls = sitemap_product_urls(
+                host,
+                lambda u: fetch_pool.fetch_one(u, SITEMAP_FETCH_TIMEOUT_S),
+            )
+            with sitemap_lock:
+                sitemap_pending.extend(urls)
+
+    if sitemap_candidate_hosts(product):
+        threading.Thread(target=sitemap_worker, daemon=True, name="sitemap").start()
 
     def enqueue(url: str, depth: int) -> None:
         if depth > max_depth:
@@ -449,7 +541,10 @@ def crawl(
         if origin in known_origins:
             return
         known_origins.add(origin)
-        canonical = curated_search_url(host_of(origin), product)
+        host = host_of(origin)
+        if host and absorb_cached(host):
+            return  # host con ofertas frescas relevantes — no re-crawlear
+        canonical = curated_search_url(host, product)
         if canonical is not None:
             enqueue(canonical, depth)
             return
@@ -495,11 +590,15 @@ def crawl(
             batch.append((url, d))
         return batch
 
-    def process_batch(batch: list[tuple[str, int]]) -> None:
+    def launch_batch(batch: list[tuple[str, int]]) -> dict[Any, str]:
+        """Fire the batch's fetches without waiting (pipeline: next batch fetches
+        while the current one parses + probes)."""
+        return {fetch_pool.submit(url): url for url, _d in batch}
+
+    def process_batch(batch: list[tuple[str, int]], futures: dict[Any, str]) -> None:
         nonlocal pages_fetched, max_depth_reached
         if not batch:
             return
-        futures = {fetch_pool.submit(url): url for url, _d in batch}
         fetched_by_url: dict[str, tuple[str, str] | None] = {}
         for fut in as_completed(futures):
             url = futures[fut]
@@ -545,9 +644,14 @@ def crawl(
 
             # Probe only as many as we still need (early-stop friendly).
             slots = max(0, max_results - len(results))
-            to_probe = candidates[: max(slots * 2, slots)]  # small overfetch for dead links
-            alive_map = fetch_pool.probe_many([c["url"] for c in to_probe if isinstance(c.get("url"), str)])
+            to_probe = candidates[
+                : max(slots * 2, slots)
+            ]  # small overfetch for dead links
+            alive_map = fetch_pool.probe_many(
+                [c["url"] for c in to_probe if isinstance(c.get("url"), str)]
+            )
 
+            added: list[dict[str, Any]] = []
             for offer in to_probe:
                 if len(results) >= max_results:
                     break
@@ -559,20 +663,44 @@ def crawl(
                     continue
                 seen_urls.add(u)
                 results.append(offer)
+                added.append(offer)
                 explore_offer(offer)
                 emit_offer(offer)
                 emit_progress(nodes_visited=len(visited), results_found=len(results))
+
+            # Verified offers go to the shared cache for future similar searches.
+            if added:
+                host = host_of(final_url)
+                if host:
+                    _offer_cache.add(host, added)
 
             if not is_serp(url):
                 expand_origin(final_url, depth + 1)
 
     try:
-        while crawl_queue and len(visited) < max_nodes and len(results) < max_results:
-            batch = take_batch()
-            if not batch:
-                break
+        batch = take_batch()
+        futures = launch_batch(batch) if batch else {}
 
-            process_batch(batch)
+        while (
+            (batch or crawl_queue)
+            and len(visited) < max_nodes
+            and len(results) < max_results
+        ):
+            # Sitemap discovery URLs (background worker) get enqueued as they arrive.
+            with sitemap_lock:
+                for u in sitemap_pending:
+                    enqueue(u, 1)
+                sitemap_pending.clear()
+
+            # Pipeline: fire the next batch's fetches while the current one
+            # parses + probes (probe latency overlaps the next fetch round-trip).
+            next_batch = take_batch()
+            next_futures = launch_batch(next_batch) if next_batch else {}
+
+            process_batch(batch, futures)
+
+            batch = next_batch
+            futures = next_futures
 
             # A3: enough diverse offers + queue is only HTML guesses for expanded hosts
             # → one more api-only batch, then exit (ML absorb unchanged at end).
@@ -591,7 +719,7 @@ def crawl(
                     visited.add(url)
                     api_only.append((url, d))
                 if api_only and len(results) < max_results:
-                    process_batch(api_only)
+                    process_batch(api_only, launch_batch(api_only))
                 break
     finally:
         fetch_pool.shutdown()

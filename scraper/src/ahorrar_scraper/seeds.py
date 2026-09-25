@@ -5,7 +5,10 @@ from __future__ import annotations
 import json
 import os
 import re
+import threading
+import time
 from pathlib import Path
+from typing import Any, Callable
 from urllib.parse import quote, urlparse
 
 AR_SHOPS_JSON = Path(__file__).resolve().parents[3] / "shared" / "ar-shops.json"
@@ -84,7 +87,9 @@ def discover_shop(host: str, category: str = "general") -> None:
     tmp = path.with_suffix(".json.tmp")
     try:
         tmp.write_text(
-            json.dumps({"version": INDEX_VERSION, "shops": shops}, ensure_ascii=False, indent=2),
+            json.dumps(
+                {"version": INDEX_VERSION, "shops": shops}, ensure_ascii=False, indent=2
+            ),
             "utf-8",
         )
         os.replace(tmp, path)
@@ -121,19 +126,35 @@ SERP_HOSTS = (
     "bing.com",
 )
 
-_TRUSTED = frozenset(("fravega.com", "farmacity.com", "compragamer.com", "musimundo.com", "garbarino.com", "cetrogar.com"))
+_TRUSTED = frozenset(
+    (
+        "fravega.com",
+        "farmacity.com",
+        "compragamer.com",
+        "musimundo.com",
+        "garbarino.com",
+        "cetrogar.com",
+    )
+)
 
 
 def host_of(url: str) -> str:
     try:
-        return urlparse(url).hostname.replace("www.", "", 1).lower() if urlparse(url).hostname else ""
+        return (
+            urlparse(url).hostname.replace("www.", "", 1).lower()
+            if urlparse(url).hostname
+            else ""
+        )
     except Exception:
         return ""
 
 
 def is_serp(url: str) -> bool:
     h = host_of(url)
-    return any(h == s.replace("www.", "") or h.endswith(f".{s.replace('www.', '')}") or h == s for s in SERP_HOSTS)
+    return any(
+        h == s.replace("www.", "") or h.endswith(f".{s.replace('www.', '')}") or h == s
+        for s in SERP_HOSTS
+    )
 
 
 def is_ar_host(host: str) -> bool:
@@ -169,7 +190,9 @@ def product_slug(product: str) -> str:
     return text
 
 
-def guess_search_urls(origin: str, product: str, platform: str | None = None) -> list[str]:
+def guess_search_urls(
+    origin: str, product: str, platform: str | None = None
+) -> list[str]:
     """Platform-aware search URL guesses (§V19). Max 1–2 for known platforms, 4 for unknown."""
     q = quote(product.strip())
     base = origin.rstrip("/")
@@ -213,11 +236,17 @@ def guess_search_urls(origin: str, product: str, platform: str | None = None) ->
 def category_for(product: str) -> str:
     """Mirror of Node categoryFor (§V19): same rules, same category ids."""
     text = f" {product} "
-    if re.search(r"perfume|fragancia|colonia|makeup|cosmetic|bensimon|julie|bellamar", text, re.I):
+    if re.search(
+        r"perfume|fragancia|colonia|makeup|cosmetic|bensimon|julie|bellamar", text, re.I
+    ):
         return "perfumeria"
     if re.search(r"zapatilla|zapatos|remera|campera|jean|ropa|nike|adidas", text, re.I):
         return "moda"
-    if re.search(r"motherboard|procesador|cpu|ryzen|gpu|rtx|rx\s*\d|notebook|gaming|teclado|mouse|monitor", text, re.I):
+    if re.search(
+        r"motherboard|procesador|cpu|ryzen|gpu|rtx|rx\s*\d|notebook|gaming|teclado|mouse|monitor",
+        text,
+        re.I,
+    ):
         return "gaming"
     if re.search(r"bazar|vajilla|cacerola|cubiertos", text, re.I):
         return "bazar"
@@ -298,16 +327,104 @@ def unwrap_serp_hrefs(page_url: str, html: str) -> list[str]:
             if payload.lower().startswith("a1"):
                 payload = payload[2:]
             try:
-                decoded = base64.b64decode(payload + "==").decode("utf-8", errors="ignore")
+                decoded = base64.b64decode(payload + "==").decode(
+                    "utf-8", errors="ignore"
+                )
                 push(decoded)
             except Exception:
                 pass
 
     for m in re.finditer(r"[?&]u=a1([A-Za-z0-9+/=_-]{20,})", html):
         try:
-            decoded = base64.b64decode(m.group(1) + "==").decode("utf-8", errors="ignore")
+            decoded = base64.b64decode(m.group(1) + "==").decode(
+                "utf-8", errors="ignore"
+            )
             push(decoded)
         except Exception:
             pass
 
     return list(dict.fromkeys(out))
+
+
+# --- Sitemap discovery (Firecrawl-style URL discovery for non-VTEX shops) ---
+
+SITEMAP_TTL_S = 24 * 3600
+SITEMAP_MAX_URLS = 8
+SITEMAP_MAX_HOSTS = 5
+_PRODUCT_PATH_RE = re.compile(
+    r"/(?:p|producto|product|item|sku|articulo|products)/", re.I
+)
+_sitemap_cache: dict[str, tuple[float, list[str]]] = {}
+_sitemap_lock = threading.Lock()
+
+
+def sitemap_candidate_hosts(product: str, limit: int = SITEMAP_MAX_HOSTS) -> list[str]:
+    """Non-VTEX curated hosts in the product's category (sitemap discovery targets).
+
+    VTEX shops already expose a catalog API; the sitemap adds the most value
+    for shops that currently depend on SERP guesses (Woo/Shopify/unknown).
+    """
+    cat = category_for(product)
+    out: list[str] = []
+    for s in _load_ar_shops():
+        if not s.get("curated") or s.get("alive") is False:
+            continue
+        if s.get("platform") == "vtex":
+            continue
+        if s.get("category") != cat:
+            continue
+        host = str(s.get("host", "")).lower()
+        if host:
+            out.append(host)
+        if len(out) >= limit:
+            break
+    return out
+
+
+def sitemap_product_urls(
+    host: str, fetch_fn: Callable[[str], tuple[str, str] | None]
+) -> list[str]:
+    """Product URLs from the host sitemap, cached 24h. Empty when no sitemap.
+
+    fetch_fn(url) -> (final_url, body) | None (short timeout, fail-open).
+    """
+    host = host.replace("www.", "", 1).lower()
+    if not host:
+        return []
+    with _sitemap_lock:
+        cached = _sitemap_cache.get(host)
+        if cached is not None and time.monotonic() - cached[0] < SITEMAP_TTL_S:
+            return list(cached[1])
+    urls = _fetch_sitemap(host, fetch_fn)
+    with _sitemap_lock:
+        _sitemap_cache[host] = (time.monotonic(), urls)
+    return urls
+
+
+def _fetch_sitemap(
+    host: str, fetch_fn: Callable[[str], tuple[str, str] | None]
+) -> list[str]:
+    for candidate in (f"https://{host}/sitemap.xml", f"https://www.{host}/sitemap.xml"):
+        try:
+            fetched = fetch_fn(candidate)
+        except Exception:
+            continue
+        if fetched is None:
+            continue
+        _final, body = fetched
+        urls = _parse_sitemap_urls(body)
+        if urls:
+            return urls
+    return []
+
+
+def _parse_sitemap_urls(body: str) -> list[str]:
+    """Extract product-looking URLs from sitemap XML (regex, no XML deps)."""
+    out: list[str] = []
+    for m in re.finditer(r"<loc>\s*([^<\s]+)\s*</loc>", body, re.I):
+        url = m.group(1).strip()
+        if _PRODUCT_PATH_RE.search(url) and is_ar_host(host_of(url)):
+            out.append(url)
+        if len(out) >= SITEMAP_MAX_URLS:
+            break
+    return out

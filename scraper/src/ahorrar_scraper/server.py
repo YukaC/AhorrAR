@@ -6,6 +6,8 @@ import asyncio
 import json
 import logging
 import os
+import threading
+import time
 from typing import Any
 
 import uvicorn
@@ -19,6 +21,41 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 log = logging.getLogger("ahorrar.scraper")
 
 app = FastAPI(title="AhorrAR Scrapling crawler", version="0.1.0")
+
+# Warm cache: keep the shared offer cache hot for the most common searches so
+# live queries for similar products reuse fresh offers instantly. Gated by
+# WARM_CACHE=1 (off by default; opt-in in prod).
+POPULAR_SEARCHES = ("iPhone 16", "Notebook", "PS5", "Perfume", "Zapatillas")
+WARM_INTERVAL_S = 300
+WARM_MAX_RESULTS = 8
+WARM_MAX_NODES = 30
+
+
+def _env_flag(name: str, default: str = "0") -> bool:
+    return os.environ.get(name, default).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _warm_loop() -> None:
+    while True:
+        for product in POPULAR_SEARCHES:
+            try:
+                crawl(
+                    product,
+                    max_results=WARM_MAX_RESULTS,
+                    max_nodes=WARM_MAX_NODES,
+                    max_depth=2,
+                    include_ml=False,
+                )
+            except Exception:  # noqa: BLE001
+                log.warning("warm cache failed: %s", product, exc_info=True)
+        time.sleep(WARM_INTERVAL_S)
+
+
+def start_warm_cache() -> None:
+    if not _env_flag("WARM_CACHE", "0"):
+        return
+    threading.Thread(target=_warm_loop, daemon=True, name="warm-cache").start()
+    log.info("warm cache started (interval %ss)", WARM_INTERVAL_S)
 
 
 class CrawlRequest(BaseModel):
@@ -107,6 +144,7 @@ async def crawl_stream(req: CrawlRequest) -> StreamingResponse:
 
 
 def main() -> None:
+    start_warm_cache()
     host = os.environ.get("SCRAPER_HOST", "127.0.0.1")
     port = int(os.environ.get("SCRAPER_PORT", "4100"))
     uvicorn.run(

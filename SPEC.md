@@ -16,6 +16,7 @@ Comparador de precios AR: [PRODUCTO] → crawler LIVE rankea ofertas REALES (pre
 - reputación AR (.ar + bootstrap .com) · ML solo con `MELI_ACCESS_TOKEN`
 - búsqueda SOLO AR · ∀ result → shipping.confirmed
 - live-only · tests herméticos Node con fixtures · caché TTL 15min SWR (Fase 1, `CACHE_*` env) · jobs persistidos SQLite `node:sqlite` (Fase 3, `JOBS_DB` env) · robots.txt: legacy respeta vía helper compartido `robots.ts`, primario Scrapling NO consulta por política documentada (VTEX API pública + índice curado) · parser schema: `shared/ar-shops.json` único ya; contrato entre motores por fixtures de ambos lados
+- speed scraper (Firecrawl-inspired): caché ofertas por host `offer_cache.py` (TTL 10min, query-agnostic, filtro relevancia al reutilizar, skip fetch si ≥3 ofertas frescas) · sitemap discovery no-VTEX curado (5 hosts/categoría, 8 URLs, caché 24h, worker background) · pipeline 2 etapas (fetch batch N+1 mientras probe N) · warm cache populares `WARM_CACHE=1` (5 queries, 300s, presupuesto bajo) · ML cap adaptativo ⊥ (preserva §V17)
 - env: PORT, CRAWLER, SCRAPLING_URL, INCLUDE_ML, MELI_*, STEALTH, STEALTH_FETCH, STEALTH_PROXY, MAX_*
 - UI: país fijo AR · **prerender home SSG post-build** (`scripts/prerender-home.mjs`: Vite `createServer`+`ssrLoadModule`+`renderToStaticMarkup` inyecta home en `dist/index.html`) → crawlers sin JS (Claude.ai/Google) ven contenido real · ⊥ SSR completo/hidratación (cliente re-renderiza con createRoot)
 - UI polish: header tagline sutil + footer disclaimer no-afiliados · chips búsquedas populares (idle) · banner eventos LIVE pulse + countdown real (`useCountdown` tick 1s alineado, dep string YYYY-MM-DD) · filtros estado activo filled · card #1 destacada "Mejor precio" + `displayName` (normaliza ALL CAPS preservando marcas) · stagger 35ms · íconos Lucide consistentes (⊥ emojis bandera/🗓️)
@@ -57,6 +58,7 @@ V20: ∀ GET job → id overvive restart backend si `JOBS_DB` set (SQLite persis
 V21: ∀ caché hit (TTL vivo) → respuesta de vuelta sin crawlear; hit vencido → respuesta stale + refresh background (SWR); miss → crawlea + pobla
 V22: ∀ offer Frávega (host fravega.com) → url = `/p/{slug}-{itemId}/` con itemId = VTEX `items[0].itemId` (GraphQL `sku(code:)` resuelve); ⊥ `link`/`linkText` con productId ni `/{linkText}/p` (shell vacío)
 V23: ∀ build frontend → `dist/index.html` contiene home prerenderizado (root no vacío + marcador idle "¿Qué querés ahorrar hoy?") · `scripts/prerender-home.mjs` falla el build si falta
+V24: ∀ result publicado → title matchea query (filtro relevancia pipeline Node+Python) · tests integración usan fixtures que pasan el pipeline completo (⊥ nombres que no matchean la query)
 
 §T
 id|status|task|cites
@@ -98,6 +100,10 @@ T35|x|prerender home SSG: scripts/prerender-home.mjs (createServer+ssrLoadModule
 T36|x|UI polish (feedback capturas): header tagline/footer + chips populares + banner LIVE/countdown + filtros filled + card #1 destacada + displayName + stagger 35ms + íconos Lucide|§C,V23
 T37|.|Filtro Envío gratis: señal real shipping.free (HTML/VTEX logistics/ML) + re-show pill SortBar · Solo local ⊥ (AR-only)|V12,§C
 T38|x|ML auto-refresh on 401 (`meli_auth.py`) + persist MELI_TOKEN_FILE (/data volume Fly) · retry search_mla · tests unittest|V15,§C
+T39|x|caché ofertas por host: offer_cache.py (TTL 10min, dedupe URL, cap 30/host, 64 hosts) + absorb_cached en seeds/expand_origin + save post-probe — E2E: 2da búsqueda misma query 0 fetches (1008ms vs 2447ms)|V24,§C
+T40|x|sitemap discovery: sitemap_candidate_hosts (no-VTEX curado misma categoría) + sitemap_product_urls (caché 24h, regex <loc>, 8 URLs) + worker background en crawl()|V19,§C
+T41|x|probes en paralelo: pipeline 2 etapas (launch_batch N+1 antes de process_batch N) + fix while (batch or crawl_queue)|V5,§C
+T42|x|warm cache populares: server.py _warm_loop gated WARM_CACHE=1 (5 queries, 300s, max_results 8/max_nodes 30) + start_warm_cache en main()|V21,§C
 
 §B
 id|date|cause|fix
@@ -108,3 +114,4 @@ B4|2026-09-23|ML descontinuó `/sites/{site}/search?q=` (403 anónimo y OAuth, a
 B5|2026-09-24|doble bug preexistente en seeds Node enmascarado por la suite: (1) `ALLOWED_DOMAINS` (export muerto) llamaba `arShopTrustedHosts()` a nivel de módulo → `_arShopsCache` se poblaba con el índice REAL al importar, antes de que los tests seteen `AR_SHOPS_JSON` (el fixture nunca aplicó; seeds.test.ts pasaba de casualidad con 14 tiendas); (2) `categoryFor` devolvía `'perfume'` pero el índice usa `'perfumeria'` → prioridad por categoría silenciosamente rota en Node desde T22|ALLOWED_DOMAINS eliminado; CategoryId→`'perfumeria'` alineado al índice (fuente de verdad §V19); test de contrato seeds Node↔Python compara los 24 seeds exactos (gaming + perfumería) → paridad de orden/cap en ambos motores
 B6|2026-09-24|Frávega Next resuelve SKU por trailing digits de `/p/{slug}-{id}/` vía GraphQL `sku(code:)`; el catalog VTEX emite `link`/`linkText` con **productId** y `/{linkText}/p` → redirect a shell vacío (og genérico, sku productId → Failed to fetch). Web search usa itemId → links vivos. Audit `scripts/audit_pdp_links.py` sobre 52 VTEX vivos: **solo Frávega** muestra FRAVEGA_PATTERN; resto CLASSIC_VTEX (`/slug/p` OK, `/p/…-itemId` 404)|V22: parsers Node+Python `fravegaPdpUrl`/`fravega_pdp_url` swap productId→itemId; HTML Frávega skip sin itemId; probe `_fravega_sku_alive`; tests http-fetch+parsers-contract+live GraphQL 6/6 OK
 B7|2026-09-24|`platformForHost` (nuevo, WIP seeds) comparaba `s.platform !== ''` contra tipo `ShopPlatform` sin `''` → `tsc --noEmit` fallaba (guard `typeof` muerto)|fix `if (s.platform)` (semántica idéntica: índice sin `""`, verificado 0 ocurrencias) · typecheck repo verde
+B8|2026-09-25|bfs.test.ts (agregado 5a97e0b) usaba nombres "Producto X" que no matchean `product:'test'`; c2014fb agregó titleMatchesQuery al pipeline sin actualizar el test → 3 tests integración devolvían results vacío (filtro relevancia correcto en prod)|V24: makeGraph genera "Test {name}" (matchea query) · bfs.test.ts 7/7 · backend 131/131
