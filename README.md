@@ -48,10 +48,16 @@ Env útil (`backend/.env.example`):
 - `SCRAPLING_URL=http://127.0.0.1:4100`
 - `INCLUDE_ML=0`
 
-## Tests
+## Deploy (prod)
+
+Ver [`docs/DEPLOY.md`](docs/DEPLOY.md):
 
 ```bash
-npm test   # backend vitest (hermético, legacy fixtures)
+# API + Scrapling → Fly.io
+./scripts/deploy-api.sh
+
+# UI → Vercel (seteá VITE_API_BASE=https://ahorrar-api.fly.dev)
+./scripts/deploy-frontend.sh --prod
 ```
 
 ## Docs
@@ -61,6 +67,9 @@ npm test   # backend vitest (hermético, legacy fixtures)
 - API: [`docs/API.md`](docs/API.md)
 - Deploy: [`docs/DEPLOY.md`](docs/DEPLOY.md)
 - Mercado Libre: [`docs/ML.md`](docs/ML.md)
+- Arquitectura: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- Progreso: [`docs/progress.md`](docs/progress.md) · Roadmap: [`ROADMAP.md`](ROADMAP.md)
+- Decisiones (ADRs): [`docs/decisions/`](docs/decisions/)
 
 ## License & legal
 
