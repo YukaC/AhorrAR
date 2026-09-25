@@ -20,7 +20,7 @@ npm run dev:backend   # :4000
 npm run dev:frontend  # :5173
 ```
 
-Demo prod: https://ahorrarg.vercel.app · Deploy: [`docs/DEPLOY.md`](docs/DEPLOY.md)
+Demo prod: https://ahorrarg.vercel.app · Deploy: [`docs/DEPLOY.md`](docs/DEPLOY.md) · ML: [`docs/ML.md`](docs/ML.md) (ON en prod)
 
 ## Tests
 

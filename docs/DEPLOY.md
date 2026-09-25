@@ -44,9 +44,21 @@ Secret Fly:
 
 ```bash
 fly secrets set CORS_ORIGINS=https://ahorrarg.vercel.app,http://localhost:5173 -a ahorrar-api
-# opcional ML:
-# fly secrets set MELI_ACCESS_TOKEN=... INCLUDE_ML=1 -a ahorrar-api
+
+# ML ON (prod): tokens desde scraper/.env tras OAuth / refresh
+# set -a; . scraper/.env; set +a
+fly secrets set \
+  MELI_ACCESS_TOKEN="$MELI_ACCESS_TOKEN" \
+  MELI_REFRESH_TOKEN="$MELI_REFRESH_TOKEN" \
+  MELI_APP_ID="$MELI_APP_ID" \
+  MELI_CLIENT_SECRET="$MELI_CLIENT_SECRET" \
+  MELI_REDIRECT_URI="$MELI_REDIRECT_URI" \
+  MELI_SITE_ID=MLA \
+  INCLUDE_ML=1 \
+  -a ahorrar-api
 ```
+
+`fly.toml` también fija `INCLUDE_ML=1`. Access token ~6h: `cd scraper && uv run python scripts/ml_login.py refresh` → re-setear los dos secrets de token.
 
 ## Deploy manual (emergencia)
 

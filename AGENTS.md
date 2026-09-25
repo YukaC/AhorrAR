@@ -48,7 +48,7 @@ Soy un senior full-stack developer. Prioridades:
 - `shared/contract.ts` — contratos TS compartidos Node↔frontend.
 - `shared/ar-shops.json` — índice curado/descubierto de tiendas AR (Node↔Python, **misma fuente**, §V19).
 - **NO** poner lógica de negocio en componentes de React.
-- Prod: https://ahorrarg.vercel.app · API https://ahorrar-api.fly.dev · deploy `docs/DEPLOY.md`.
+- Prod: https://ahorrarg.vercel.app · API https://ahorrar-api.fly.dev · ML ON (`INCLUDE_ML=1`) · deploy `docs/DEPLOY.md`.
 Detalle ampliado: `docs/ARCHITECTURE.md`. Decisiones pasadas: `docs/decisions/`.
 
 ## Reglas

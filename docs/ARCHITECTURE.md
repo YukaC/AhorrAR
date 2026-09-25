@@ -118,4 +118,4 @@ Push a `main` redeploya Vercel + Fly. Detalle: `docs/DEPLOY.md`.
 - Caché de resultados: TTL 15 min + SWR (§T25); hosts del índice no re-descubren URL scheme.
 - `crawl/stream` con `maxResults=10` y `maxDepth=3` tarda ~24 s en "samsung s24",
   pero los primeros partials llegan en ~2–3 s (SSE en vivo).
-- ML en prod off por defecto (`INCLUDE_ML=0`) hasta secret + app OAuth (§C.13).
+- ML ON en prod (`INCLUDE_ML=1` + secrets `MELI_*`). Token ~6h → refresh + re-set Fly secrets (`docs/ML.md`).

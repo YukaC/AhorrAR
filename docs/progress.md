@@ -7,13 +7,13 @@
 
 ## En una línea
 
-v0.2 en **prod** (https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev) · T1–T36 hechos; T16/T17/T37 abiertos · Scrapling + índice AR + relevance · 0 bugs abiertos en SPEC §B.
+v0.2 en **prod** (https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev) · T1–T36 + **T16** hechos; T17/T37 abiertos · ML ON prod · Scrapling + índice AR · 0 bugs §B.
 
 ## Hecho
 
 - [x] Backend Express 5 con jobs en memoria + SSE (`/api/search/:id/events`) — §T16
 - [x] Crawler Python (Scrapling) primario con BFS + parsers VTEX/HTML — §T17
-- [x] ML integrado por API oficial (products/search + /items), token obligatorio, OFF en prod — §T18
+- [x] ML integrado por API oficial (products/search + /items), token obligatorio — §T15
 - [x] **Streaming real por SSE**: cards parciales en vivo durante el crawl (ndjson `/crawl/stream`) — §T19–T20
 - [x] Frontend React muestra resultados **mientras** el crawler corre (live section) — §T21
 - [x] **Descubrimiento fuerte**: índice curado `shared/ar-shops.json` (14 tiendas, categorías) + `guessSearchUrls` ampliado + auto-expansión de tiendas nuevas — §T22
@@ -31,16 +31,17 @@ v0.2 en **prod** (https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev) · 
   - `STEALTH_FETCH` gated (off default Fly; nota en `docs/DEPLOY.md`); `capture_xhr` diferido (ROADMAP) — §T33
 - [x] Frávega PDP itemId + prerender home SSG + UI polish — §T34–T36
 - [x] **Prod**: https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev · GitHub `main` → Vercel+Fly · relevance filter · header GitHub repo link
+- [x] **ML ON en prod**: Fly secrets `MELI_*` + `INCLUDE_ML=1` (`fly.toml`); refresh vía `ml_login.py refresh` — §T16
 
 ## En curso
 
-- [~] ML OAuth refresh + INCLUDE_ML end-to-end en prod (secret opcional) — §T16
 - [~] Filtro Envío gratis: señal real `shipping.free` + re-show pill — §T37
+- [ ] ML fallback StealthyFetcher+proxy (solo si API falla gate) — §T17
 
 ## Falta
 
-- [ ] ML ON en prod solo con `MELI_ACCESS_TOKEN` + re-consent OK (§C.13, `docs/ML.md`)
 - [x] Deploy prod Vercel+Fly conectados a GitHub (`main` → redeploy UI+API)
+- [x] ML ON en prod (`MELI_*` secrets + `INCLUDE_ML=1`; re-consent OK) — §T16 / `docs/ML.md`
 - [x] Dominio canónico UI `ahorrarg.vercel.app` (+ redirects 308)
 - [x] Live bench local (2026-09-24, scraper `:4100`, `includeMl=false`, maxResults=20):
 
@@ -56,4 +57,4 @@ v0.2 en **prod** (https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev) · 
 
 ## Bloqueantes
 
-- ML en prod requiere secret `MELI_ACCESS_TOKEN` (+ app r/w); por defecto `INCLUDE_ML=0` (§C.13).
+- Ninguno. Access token ML ~6h: refrescar con `ml_login.py refresh` y re-setear secrets Fly si aparece 401.

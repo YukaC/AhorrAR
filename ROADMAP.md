@@ -8,7 +8,7 @@
 ## Ahora (v0.2)
 
 - [x] Despliegue a producción (Fly API + Vercel web, GitHub → auto-deploy) — ref `docs/DEPLOY.md` · UI https://ahorrarg.vercel.app
-- [~] Inyectar secrets de ML en prod (`MELI_ACCESS_TOKEN`) para activar ML fuera de dev — §C.13 / §T16
+- [x] ML ON en prod (`MELI_*` secrets + `INCLUDE_ML=1`) — §T16 / `docs/ML.md`
 - [~] Señal real de envío gratis + pill UI — §T37
 
 ## Luego (v0.3)

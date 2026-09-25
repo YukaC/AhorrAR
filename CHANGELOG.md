@@ -7,6 +7,7 @@ Unreleased = lo que aún no se desplegó. Los refs §T apuntan al plan en `SPEC.
 ## [WIP]
 
 ### Added
+- **ML ON en prod**: Fly secrets `MELI_*` + `INCLUDE_ML=1` (`fly.toml`); OAuth refresh documentado — §T16
 - **Prod live**: UI https://ahorrarg.vercel.app (Vercel) + API https://ahorrar-api.fly.dev (Fly); GitHub `main` redeploya ambos; dominio canónico + redirects 308
 - **Relevance query↔title**: filtro Node+Python — marca/modelo sola (`iphone`) exige substring; categoría sola (`perfume`) no — evita junk tipo baffle en #1
 - UI: logo → home idle; link GitHub del repo en header; filtro “Solo local” eliminado; pill “Envío gratis” oculta hasta señal real (§T37)
@@ -35,6 +36,7 @@ Unreleased = lo que aún no se desplegó. Los refs §T apuntan al plan en `SPEC.
 ## [0.1.0] — primeras iteraciones (histórico)
 
 ### Added
+- **ML ON en prod**: Fly secrets `MELI_*` + `INCLUDE_ML=1` (`fly.toml`); OAuth refresh documentado — §T16
 - API Express 5 con jobs en memoria + SSE, calendar de trading, webhook ML (stub)
 - Crawler Node BFS (legacy, respaldo) y crawler Python Scrapling (primario)
 - ML integrado por API oficial (products/search + products/{id}/items), token obligatorio, OFF en prod

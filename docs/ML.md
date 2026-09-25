@@ -42,7 +42,7 @@
 | Prioridad | Camino | Notas |
 |---|---|---|
 | **1 PRIMARY** | API oficial catálogo: `products/search` + `products/{id}/items` (precio de competidores) | Implementado y probado (S24 → 5 ofertas ARS). Requiere app pdp r/w + token. |
-| **2 ACTUAL** | Crawler Scrapling AR (stores + SERP + VTEX) — sin ML | Ya cumple §G; ML queda OFF por defecto (`INCLUDE_ML=0`) hasta decidir. |
+| **2 PARALLEL** | Crawler Scrapling AR (stores + SERP + VTEX/Woo/Shopify) | Siempre ON; ML suma vía API (cap ≤50% top-N §V17). |
 | **3 FALLBACK (si se sube ML)** | StealthyFetcher + proxies residenciales AR | Solo si se decide desobedecer la prohibición de HTML listado — **⊥ por §C**. |
 | **⊥** | `/sites/MLA/search` (`q=/nickname=/seller_id=`), Octoparse, search sin token, scraping HTML | No adoptar. |
 
@@ -55,7 +55,7 @@
 | 3 | Permiso funcional "Publicación y sincronización" Lectura y escritura en app | ✅ `GET /applications/8567113374842839` → `urn:ml:all:publish-sync:/read-write` + `notifications_topics` cargados |
 | 4 | `GET /products/search` + `GET /products/{id}/items` con precios | ✅ 200, precios reales (17 items iPhone, etc.) |
 | 5 | buy box / `sale_price` / `/sites/MLA/search` | ❌ bloqueado por **cuenta no vendedora** (`address_pending`, sin KYC posible). No obstruye el camino 1. |
-| 6 | `INCLUDE_ML=1` en prod | ⏳ pendiente decisión (implementación lista y testeada local) |
+| 6 | `INCLUDE_ML=1` en prod | ✅ ON (Fly secrets + `fly.toml`, 2026-09-25) |
 
 ## Estado 2026-09-23 (v2 — conclusión final)
 
@@ -73,7 +73,11 @@
   `/products/{id}/items`.
 - `scraper/src/ahorrar_scraper/meli_api.py` reescrito a la estrategia de
   competidores; probado end-to-end vía `crawl(include_ml=True)`.
-- ML queda **OFF por defecto** en el comparador (fuente AR de stores sigue primary).
+- ML **ON en prod** (`INCLUDE_ML=1` + secrets Fly). Local: `INCLUDE_ML=0` default en `.env.example`;
+  activar con token en `scraper/.env`. Access token ~6h → `uv run python scripts/ml_login.py refresh`
+  y re-setear secrets Fly. Stores AR siguen primary; ML cap ≤50% (§V17).
+- Productos catálogo **sin items competidores** (404/`0 items`) se skipean — típico en algunos
+  PDPs con cuenta no vendedora; no es fallo del gate OAuth.
 
 ## OAuth (PKCE)
 

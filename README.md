@@ -21,7 +21,7 @@ imagen y link + calendario comercial AR. Stack: Scrapling + Express + React · S
 | **`frontend/`** | React 19 + Vite 7 + Tailwind 4 |
 | Contrato | [`shared/contract.ts`](shared/contract.ts) |
 
-MercadoLibre: **apagado por defecto** (`INCLUDE_ML=0`) hasta cerrar estrategia (API OAuth / proxy / StealthyFetcher).
+MercadoLibre: **ON en prod** (`INCLUDE_ML=1` + API OAuth). Local: `INCLUDE_ML=0` hasta setear `scraper/.env` (`docs/ML.md`).
 
 ## Requisitos
 
