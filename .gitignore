@@ -20,6 +20,7 @@ out/
 !.env.example
 *.local
 MELI_*.token
+.ml_oauth_state.json
 
 # logs
 *.log
@@ -37,3 +38,6 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+.vercel
+.env*
+tmp-*.json

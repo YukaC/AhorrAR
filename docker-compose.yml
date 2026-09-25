@@ -1,0 +1,21 @@
+# Local production-like stack (requires Docker)
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '4000:4000'
+    environment:
+      CRAWLER: scrapling
+      SCRAPLING_URL: http://127.0.0.1:4100
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      INCLUDE_ML: '0'
+      MAX_NODES: '40'
+      CONCURRENCY: '3'
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:4000/api/health']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s

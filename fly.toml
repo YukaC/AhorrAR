@@ -1,0 +1,41 @@
+# fly.toml app configuration file generated for AhorrAR API + Scrapling
+# https://fly.io/docs/reference/configuration/
+
+app = 'ahorrar-api'
+primary_region = 'gru'
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[env]
+  CRAWLER = 'scrapling'
+  SCRAPLING_URL = 'http://127.0.0.1:4100'
+  SCRAPER_HOST = '127.0.0.1'
+  SCRAPER_PORT = '4100'
+  HOST = '0.0.0.0'
+  PORT = '4000'
+  INCLUDE_ML = '0'
+  MAX_DEPTH = '2'
+  MAX_NODES = '40'
+  MAX_RESULTS = '10'
+  CONCURRENCY = '3'
+
+[http_service]
+  internal_port = 4000
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+  [[http_service.checks]]
+    interval = '30s'
+    timeout = '5s'
+    grace_period = '45s'
+    method = 'GET'
+    path = '/api/health'
+
+[[vm]]
+  size = 'shared-cpu-1x'
+  memory = '1024mb'
+  cpus = 1
