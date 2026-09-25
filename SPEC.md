@@ -16,7 +16,7 @@ Comparador de precios AR: [PRODUCTO] → crawler LIVE rankea ofertas REALES (pre
 - reputación AR (.ar + bootstrap .com) · ML solo con `MELI_ACCESS_TOKEN`
 - búsqueda SOLO AR · ∀ result → shipping.confirmed
 - live-only · tests herméticos Node con fixtures · caché TTL 15min SWR (Fase 1, `CACHE_*` env) · jobs persistidos SQLite `node:sqlite` (Fase 3, `JOBS_DB` env) · robots.txt: legacy respeta vía helper compartido `robots.ts`, primario Scrapling NO consulta por política documentada (VTEX API pública + índice curado) · parser schema: `shared/ar-shops.json` único ya; contrato entre motores por fixtures de ambos lados
-- speed scraper (Firecrawl-inspired): caché ofertas por host `offer_cache.py` (TTL 10min, query-agnostic, filtro relevancia al reutilizar, skip fetch si ≥3 ofertas frescas) · sitemap discovery no-VTEX curado (5 hosts/categoría, 8 URLs, caché 24h, worker background) · pipeline 2 etapas (fetch batch N+1 mientras probe N) · warm cache populares `WARM_CACHE=1` (5 queries, 300s, presupuesto bajo) · ML cap adaptativo ⊥ (preserva §V17)
+- speed scraper (Firecrawl-inspired — conceptos, sin código copiado, ver `docs/ATTRIBUTIONS.md`): caché ofertas por host `offer_cache.py` (TTL 10min, query-agnostic, filtro relevancia al reutilizar, skip fetch si ≥3 ofertas frescas) · sitemap discovery no-VTEX curado (5 hosts/categoría, 8 URLs, caché 24h, worker background) · pipeline 2 etapas (fetch batch N+1 mientras probe N) · warm cache populares `WARM_CACHE=1` (5 queries, 300s, presupuesto bajo) · ML cap adaptativo ⊥ (preserva §V17)
 - env: PORT, CRAWLER, SCRAPLING_URL, INCLUDE_ML, MELI_*, STEALTH, STEALTH_FETCH, STEALTH_PROXY, MAX_*
 - UI: país fijo AR · **prerender home SSG post-build** (`scripts/prerender-home.mjs`: Vite `createServer`+`ssrLoadModule`+`renderToStaticMarkup` inyecta home en `dist/index.html`) → crawlers sin JS (Claude.ai/Google) ven contenido real · ⊥ SSR completo/hidratación (cliente re-renderiza con createRoot)
 - UI polish: header tagline sutil + footer disclaimer no-afiliados · chips búsquedas populares (idle) · banner eventos LIVE pulse + countdown real (`useCountdown` tick 1s alineado, dep string YYYY-MM-DD) · filtros estado activo filled · card #1 destacada "Mejor precio" + `displayName` (normaliza ALL CAPS preservando marcas) · stagger 35ms · íconos Lucide consistentes (⊥ emojis bandera/🗓️)
@@ -33,7 +33,7 @@ cmd: `npm run dev` (scraper+backend+frontend) · `cd scraper && uv sync && uv ru
 cmd: `npm --prefix frontend run build` → tsc --noEmit && vite build && node scripts/prerender-home.mjs (prerender+check)
 env: PORT · HOST · CORS_ORIGINS · CRAWLER · SCRAPLING_URL · INCLUDE_ML · MELI_* · STEALTH_FETCH · STEALTH_PROXY
 deploy: Vercel (frontend https://ahorrarg.vercel.app) + Fly.io Docker API/Scrapling (https://ahorrar-api.fly.dev) · GitHub main → auto-deploy · docs/DEPLOY.md
-docs: `docs/ARCHITECTURE.md` (vista ampliada) · `docs/progress.md` (estado narrativo) · `docs/testing-strategy.md` (mapa test→§V) · `docs/decisions/*.md` (ADRs) · `AGENTS.md` (instrucciones de sesión) · `ROADMAP.md` · `CHANGELOG.md` · `DONT_DO.md` (decisiones no-repetición)
+docs: `docs/ARCHITECTURE.md` (vista ampliada) · `docs/progress.md` (estado narrativo) · `docs/testing-strategy.md` (mapa test→§V) · `docs/decisions/*.md` (ADRs) · `docs/ATTRIBUTIONS.md` (inspiraciones/licencias terceros) · `AGENTS.md` (instrucciones de sesión) · `ROADMAP.md` · `CHANGELOG.md` · `DONT_DO.md` (decisiones no-repetición)
 
 §V
 V1: ∀ result publicado → shipping.confirmed=true ∧ country=Query.country

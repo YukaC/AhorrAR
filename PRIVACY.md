@@ -28,6 +28,7 @@ If an operator enables Mercado Libre integration:
 ## Cookies and local storage
 - The web UI may store **theme preference** (light/dark) in `localStorage` on your device.
 - No advertising trackers are shipped in the default open-source UI.
+- The crawler does **not** persist third-party cookies; dev-only fixtures (e.g. `scripts/firecrawl/fixtures/`) are never served in production.
 
 ## What we do not do (default open-source build)
 - We do not sell personal data.

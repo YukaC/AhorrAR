@@ -85,3 +85,17 @@ Estudiando los fixtures se puede replicar el valor de Firecrawl sin el SaaS:
 El plan free de Firecrawl da ~1.000 créditos/ciclo. `record.mjs` usa 3-5 por
 ejecución. Correrlo solo cuando se quiera re-grabar (los fixtures ya commiteados
 sirven para el mock sin gastar nada).
+
+## Licencia y atribución
+
+- **Firecrawl** es de Sideguide Technologies Inc., licencia **AGPL-3.0** (core) /
+  **MIT** (SDKs): https://github.com/firecrawl/firecrawl
+- Este directorio es **código propio** (cliente de la API SaaS de Firecrawl, patrón
+  VCR) — **no** es código derivado de Firecrawl. No copiamos su implementación.
+- Las mejoras del scraper inspiradas en Firecrawl (caché por host, sitemap
+  discovery, probes paralelos, warm cache) son **reimplementaciones originales** en
+  Python/Scrapling; las ideas no son copyrightables, solo su expresión concreta.
+- Los fixtures contienen respuestas de la API (contenido público de terceros)
+  grabadas **solo para desarrollo local**; no se sirven en producción ni se
+  redistribuyen comercialmente.
+- Detalle completo: `docs/ATTRIBUTIONS.md`.
