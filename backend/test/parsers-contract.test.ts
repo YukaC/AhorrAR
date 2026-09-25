@@ -25,6 +25,7 @@ interface ContractHit {
   price: number;
   url: string;
   installments: { count: number; interestFree: boolean } | null;
+  shippingFree: boolean;
 }
 
 const { products } = JSON.parse(readFileSync(FIXTURE_PATH, 'utf8')) as {
@@ -39,6 +40,7 @@ function nodeParse(): ContractHit[] {
     price: Number(r.priceRaw),
     url: r.url,
     installments: null,
+    shippingFree: r.shippingFree ?? false,
   }));
 }
 
@@ -56,7 +58,7 @@ for r in rows:
         inst = {"count": r["installments"]["count"], "interestFree": r["installments"]["interestFree"]}
     else:
         inst = None
-    print(json.dumps({"name": r["name"], "price": float(r["price"]), "url": r["url"], "installments": inst}))
+    print(json.dumps({"name": r["name"], "price": float(r["price"]), "url": r["url"], "installments": inst, "shippingFree": bool(r.get("shippingFree"))}))
 `;
   const out = execFileSync('uv', ['run', 'python', '-c', script, FIXTURE_URL, FIXTURE_PATH], {
     cwd: SCRAPER_CWD,
@@ -83,6 +85,10 @@ describe('contrato de parsers VTEX · Node vs Python (Fase 4)', () => {
     expect(node.map((h) => h.name)).toEqual(py.map((h) => h.name));
     expect(node.map((h) => h.price)).toEqual(py.map((h) => h.price));
     expect(node.map((h) => h.url)).toEqual(py.map((h) => h.url));
+    // Señal real de envío gratis (ShippingSLA Price 0) — paridad ambos motores (T37).
+    expect(node.map((h) => h.shippingFree)).toEqual(py.map((h) => h.shippingFree));
+    expect(node.find((h) => /Sunset/i.test(h.name))?.shippingFree).toBe(true);
+    expect(node.find((h) => /Bold/i.test(h.name))?.shippingFree).toBe(false);
     // Frávega: /p/{slug}-{itemId}/ — never legacy /{linkText}/p with productId
     expect(node.map((h) => h.url)).toEqual([
       'https://www.fravega.com/p/bensimon-bold-deodorant-150ml-778900/',

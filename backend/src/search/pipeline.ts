@@ -27,6 +27,8 @@ export function finalizeRawItem(raw: RawItem, params: SearchParams, country: Cou
   const shipping = validateShipping(country, raw.shippingHint ?? '', raw.store.local);
   // §V1: non-negotiable filter — anything unconfirmed is discarded here.
   if (!shipping.confirmed) return null;
+  // Señal estructurada (VTEX ShippingSLA / ML free_shipping) gana sobre el regex del hint.
+  if (raw.shippingFree !== undefined) shipping.free = raw.shippingFree;
 
   const url = normalizeUrl(raw.url);
   if (url === null) return null;

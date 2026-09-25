@@ -273,6 +273,8 @@ def parse_vtex_catalog(url: str, body: str) -> list[dict[str, Any]]:
         images = item.get("images") or []
         image = images[0].get("imageUrl") if images else None
         installments = _parse_vtex_installments(offer)
+        # Real free-shipping signal: any SLA with Price 0 (VTEX logistics).
+        shipping_free = _vtex_shipping_free(offer)
         results.append(
             {
                 "name": name,
@@ -281,6 +283,7 @@ def parse_vtex_catalog(url: str, body: str) -> list[dict[str, Any]]:
                 "url": product_url,
                 "image": image,
                 "shippingHint": "Envío a domicilio",
+                "shippingFree": shipping_free,
                 "store": {"name": host, "logo": None, "local": True, "siteUrl": origin},
                 "installments": installments,
                 "depth": 0,
@@ -288,6 +291,17 @@ def parse_vtex_catalog(url: str, body: str) -> list[dict[str, Any]]:
             }
         )
     return results
+
+
+def _vtex_shipping_free(offer: dict[str, Any]) -> bool:
+    """True when any VTEX ShippingSLA ships free (Price == 0)."""
+    sla = offer.get("ShippingSLA")
+    if not isinstance(sla, list):
+        return False
+    for entry in sla:
+        if isinstance(entry, dict) and entry.get("Price") == 0:
+            return True
+    return False
 
 
 def parse_woo_store_api(url: str, body: str) -> list[dict[str, Any]]:
@@ -528,6 +542,7 @@ def parse_ml_api(url: str, body: str) -> list[dict[str, Any]]:
                 "url": permalink,
                 "image": thumb,
                 "shippingHint": hint,
+                "shippingFree": free,
                 "store": {
                     "name": f"ML · {nick}" if nick else "MercadoLibre",
                     "logo": None,

@@ -46,8 +46,8 @@ describe('filterResults (V12)', () => {
     expect(out.map((r) => r.price)).toEqual([2000]);
   });
 
-  // freeShipping filter logic kept; UI pill hidden until shipping.free is real (ROADMAP).
-  it('free shipping only (logic ready, UI hidden)', () => {
+  // freeShipping filter backed by real signal (VTEX ShippingSLA / ML free_shipping, T37).
+  it('free shipping only', () => {
     const out = filterResults(base, { ...EMPTY_FILTERS, freeShipping: true });
     expect(out.map((r) => r.rank)).toEqual([1]);
   });

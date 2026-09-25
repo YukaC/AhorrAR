@@ -98,6 +98,19 @@ export default function SortBar({
         <div className="flex w-full flex-wrap gap-2.5 sm:w-auto sm:flex-1 sm:justify-end">
           <button
             type="button"
+            aria-pressed={filters.freeShipping}
+            aria-label={
+              filters.freeShipping
+                ? 'Filtrar por envío gratis: activo. Desactivar'
+                : 'Filtrar por envío gratis: inactivo. Activar'
+            }
+            onClick={() => onFiltersChange({ ...filters, freeShipping: !filters.freeShipping })}
+            className={`${pillBase} ${pillPressed(filters.freeShipping)}`}
+          >
+            Envío gratis
+          </button>
+          <button
+            type="button"
             aria-pressed={sort === 'price-asc'}
             aria-label={
               sort === 'price-asc'
@@ -109,7 +122,6 @@ export default function SortBar({
           >
             {priceLabel}
           </button>
-          {/* "Envío gratis" pill hidden until shipping.free is real (ROADMAP). Logic stays in filterResults. */}
         </div>
       </div>
     </div>

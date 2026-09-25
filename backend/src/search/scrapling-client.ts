@@ -21,6 +21,7 @@ export interface ScraplingOffer {
   url: string;
   image?: string | null;
   shippingHint?: string;
+  shippingFree?: boolean;
   installments?: InstallmentsInfo | null;
   store: { name: string; logo?: string | null; local: boolean; siteUrl: string };
   depth?: number;
@@ -94,6 +95,7 @@ export async function crawlViaScrapling(
       name: offer.name,
       priceRaw: String(offer.price),
       shippingHint: offer.shippingHint,
+      shippingFree: offer.shippingFree,
       store: offer.store,
       url: offer.url,
       image: offer.image ?? null,
@@ -161,6 +163,7 @@ export async function crawlViaScraplingStream(
       name: offer.name,
       priceRaw: String(offer.price),
       shippingHint: offer.shippingHint,
+      shippingFree: offer.shippingFree,
       store: offer.store,
       url: offer.url,
       image: offer.image ?? null,

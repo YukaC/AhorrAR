@@ -16,7 +16,12 @@ interface VtexProduct {
     images?: Array<{ imageUrl?: string }>;
     sellers?: Array<{
       sellerId?: string;
-      commertialOffer?: { Price?: number; ListPrice?: number; AvailableQuantity?: number };
+      commertialOffer?: {
+        Price?: number;
+        ListPrice?: number;
+        AvailableQuantity?: number;
+        ShippingSLA?: Array<{ Name?: string; Price?: number }>;
+      };
     }>;
   }>;
 }
@@ -118,10 +123,12 @@ export function parseVtexCatalogApi(url: string, body: string, _params: SearchPa
     seen.add(norm);
 
     const image = item?.images?.[0]?.imageUrl ?? null;
+    const shippingFree = (offer?.ShippingSLA ?? []).some((sla) => sla.Price === 0);
     results.push({
       name,
       priceRaw: String(price),
       shippingHint: 'Envío a domicilio',
+      shippingFree,
       store: { name: storeHost, logo: null, local: true, siteUrl: origin },
       url: norm,
       image,

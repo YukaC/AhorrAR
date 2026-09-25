@@ -9,6 +9,8 @@ export interface RawItem {
   name: string;
   priceRaw: string;
   shippingHint?: string;
+  /** Señal estructurada de envío gratis (VTEX ShippingSLA / ML free_shipping). Gana sobre el regex del hint. */
+  shippingFree?: boolean;
   store: { name: string; logo?: string | null; local: boolean; siteUrl: string };
   url: string;
   image?: string | null;

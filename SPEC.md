@@ -20,6 +20,7 @@ Comparador de precios AR: [PRODUCTO] → crawler LIVE rankea ofertas REALES (pre
 - env: PORT, CRAWLER, SCRAPLING_URL, INCLUDE_ML, MELI_*, STEALTH, STEALTH_FETCH, STEALTH_PROXY, MAX_*
 - UI: país fijo AR · **prerender home SSG post-build** (`scripts/prerender-home.mjs`: Vite `createServer`+`ssrLoadModule`+`renderToStaticMarkup` inyecta home en `dist/index.html`) → crawlers sin JS (Claude.ai/Google) ven contenido real · ⊥ SSR completo/hidratación (cliente re-renderiza con createRoot)
 - UI polish: header tagline sutil + footer disclaimer no-afiliados · chips búsquedas populares (idle) · banner eventos LIVE pulse + countdown real (`useCountdown` tick 1s alineado, dep string YYYY-MM-DD) · filtros estado activo filled · card #1 destacada "Mejor precio" + `displayName` (normaliza ALL CAPS preservando marcas) · stagger 35ms · íconos Lucide consistentes (⊥ emojis bandera/🗓️)
+- envío gratis: señal REAL `shipping.free` (VTEX `ShippingSLA[].Price==0` · ML `free_shipping`) gana sobre regex del hint · pill SortBar activo · filtro `freeShipping` (V12) · paridad Node↔Python fixture contrato
 
 §I
 api: POST /api/search {product} → 202 (country AR)
@@ -59,6 +60,7 @@ V21: ∀ caché hit (TTL vivo) → respuesta de vuelta sin crawlear; hit vencido
 V22: ∀ offer Frávega (host fravega.com) → url = `/p/{slug}-{itemId}/` con itemId = VTEX `items[0].itemId` (GraphQL `sku(code:)` resuelve); ⊥ `link`/`linkText` con productId ni `/{linkText}/p` (shell vacío)
 V23: ∀ build frontend → `dist/index.html` contiene home prerenderizado (root no vacío + marcador idle "¿Qué querés ahorrar hoy?") · `scripts/prerender-home.mjs` falla el build si falta
 V24: ∀ result publicado → title matchea query (filtro relevancia pipeline Node+Python) · tests integración usan fixtures que pasan el pipeline completo (⊥ nombres que no matchean la query)
+V25: ∀ shipping.free → señal estructurada (VTEX ShippingSLA Price 0 / ML free_shipping) gana sobre regex del hint · paridad Node↔Python (fixture contrato VTEX con ShippingSLA)
 
 §T
 id|status|task|cites
@@ -98,7 +100,7 @@ T33|x|Stealth gated: STEALTH_FETCH=0 default · challenge/403 → StealthyFetche
 T34|x|Frávega PDP: `fravega_pdp_url`/`fravegaPdpUrl` arma `/p/{slug}-{itemId}/` (swap productId→itemId, keep --) · probe GraphQL sku(code) · contrato fixture+tests · HTML Frávega skip sin itemId · audit 52 VTEX: solo Frávega tiene patrón (resto CLASSIC /slug/p OK)|V22
 T35|x|prerender home SSG: scripts/prerender-home.mjs (createServer+ssrLoadModule+renderToStaticMarkup) inyecta home en dist/index.html + check marcador idle · build = tsc && vite build && node scripts/prerender-home.mjs|V23,§C,§I
 T36|x|UI polish (feedback capturas): header tagline/footer + chips populares + banner LIVE/countdown + filtros filled + card #1 destacada + displayName + stagger 35ms + íconos Lucide|§C,V23
-T37|.|Filtro Envío gratis: señal real shipping.free (HTML/VTEX logistics/ML) + re-show pill SortBar · Solo local ⊥ (AR-only)|V12,§C
+T37|x|Filtro Envío gratis: señal real shipping.free (VTEX ShippingSLA Price 0 / ML free_shipping) + re-show pill SortBar · Solo local ⊥ (AR-only)|V12,§C,V25
 T38|x|ML auto-refresh on 401 (`meli_auth.py`) + persist MELI_TOKEN_FILE (/data volume Fly) · retry search_mla · tests unittest|V15,§C
 T39|x|caché ofertas por host: offer_cache.py (TTL 10min, dedupe URL, cap 30/host, 64 hosts) + absorb_cached en seeds/expand_origin + save post-probe — E2E: 2da búsqueda misma query 0 fetches (1008ms vs 2447ms)|V24,§C
 T40|x|sitemap discovery: sitemap_candidate_hosts (no-VTEX curado misma categoría) + sitemap_product_urls (caché 24h, regex <loc>, 8 URLs) + worker background en crawl()|V19,§C

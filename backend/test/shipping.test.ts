@@ -65,4 +65,30 @@ describe('validateShipping', () => {
     expect(done!.shipping.confirmed).toBe(true);
     expect(done!.currency).toBe('ARS'); // §V2 currency-force
   });
+
+  it('structured shippingFree overrides the hint regex (T37)', () => {
+    const base: RawItem = {
+      name: 'iPhone 16',
+      priceRaw: '1500',
+      shippingHint: 'Envío a domicilio',
+      store: { name: 'X', logo: null, local: true, siteUrl: 'https://x.example' },
+      url: 'https://x.example/p/1',
+      image: null,
+      depth: 1,
+      sourceUrl: 'https://x.example',
+    };
+    // VTEX ShippingSLA Price 0 → free=true aunque el hint no diga "gratis".
+    const free = finalizeRawItem({ ...base, shippingFree: true }, { product: 'iphone', country: 'AR' }, AR);
+    expect(free!.shipping.free).toBe(true);
+    // ML free_shipping=false → free=false aunque el hint diga "gratis".
+    const notFree = finalizeRawItem(
+      { ...base, shippingHint: 'Envío gratis', shippingFree: false },
+      { product: 'iphone', country: 'AR' },
+      AR,
+    );
+    expect(notFree!.shipping.free).toBe(false);
+    // Sin señal estructurada → el regex del hint decide (comportamiento previo).
+    const regex = finalizeRawItem({ ...base, shippingHint: 'Envío gratis' }, { product: 'iphone', country: 'AR' }, AR);
+    expect(regex!.shipping.free).toBe(true);
+  });
 });
