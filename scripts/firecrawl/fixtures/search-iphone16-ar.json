@@ -1,0 +1,37 @@
+{
+  "request": {
+    "name": "search-iphone16-ar",
+    "path": "/v2/search",
+    "body": {
+      "query": "iPhone 16 Argentina",
+      "limit": 3
+    }
+  },
+  "response": {
+    "success": true,
+    "data": {
+      "web": [
+        {
+          "url": "https://listado.mercadolibre.com.ar/iphone-16",
+          "title": "Iphone 16 | MercadoLibre",
+          "description": "4.6118 Apple iPhone 16 (128 GB) - Negro - Distribuidor Autorizado · 1.899.999 · Mismo precio 9 cuotas de $211.111 ; Apple iPhone 16e (512 Gb) - Blanco - Distribuidor ...",
+          "position": 1
+        },
+        {
+          "url": "https://www.personal.com.ar/tienda/celulares/apple/iphone-16-512-gb/f",
+          "title": "iPhone 16 512 GB - Personal",
+          "description": "In stockPrecio sin impto. $1.878.327 ; Color:Black ; Almacenamiento:512 GB ; Métodos de entrega · Envío a domicilio. Gratis. fal_store. Retiro en punto de entrega. Gratis.",
+          "position": 2
+        },
+        {
+          "url": "https://www.instagram.com/popular/iphone-16-argentina/",
+          "title": "Iphone 16 Argentina • 200+ reels on Instagram",
+          "description": "The iPhone 16 prices in Argentina vary depending on the model. The base model, iPhone 16, starts at around 1,374,714 pesos argentinos.",
+          "position": 3
+        }
+      ]
+    },
+    "creditsUsed": 2,
+    "id": "01a0d97e-5676-73bb-a35c-79854d7480c7"
+  }
+}

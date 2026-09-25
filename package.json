@@ -11,6 +11,8 @@
     "dev": "npm run dev:scraper & npm run dev:backend & npm run dev:frontend",
     "deploy:api": "bash scripts/deploy-api.sh",
     "deploy:web": "bash scripts/deploy-frontend.sh --prod",
+    "firecrawl:record": "node scripts/firecrawl/record.mjs",
+    "firecrawl:mock": "node scripts/firecrawl/mock-server.mjs",
     "test": "npm --prefix backend run test",
     "typecheck": "npm --prefix backend run typecheck && npm --prefix frontend run typecheck",
     "build": "npm --prefix backend run build && npm --prefix frontend run build",

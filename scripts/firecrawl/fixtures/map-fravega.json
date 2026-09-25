@@ -1,0 +1,223 @@
+{
+  "request": {
+    "name": "map-fravega",
+    "path": "/v2/map",
+    "body": {
+      "url": "https://www.fravega.com",
+      "limit": 50
+    }
+  },
+  "response": {
+    "success": true,
+    "id": "01a0d97e-5398-755f-b015-8e2cb6889c64",
+    "links": [
+      {
+        "url": "https://www.fravega.com/p/aspiradora-einhell-industrial-20-litros-aspira-polvo-y-agua-apta-para-auto-te-vc-1820-10015153",
+        "title": "Frávega: Electrodomésticos, Tecnología y Artículos para e...",
+        "description": "Aprovechá las ofertas y cuotas disponibles en productos seleccionados. Encontralos en nuestra tienda online o en la sucursal más cercana."
+      },
+      {
+        "url": "https://www.fravega.com/l/bebes-y-primera-infancia/alimentacion-y-lactancia/calienta-mamaderas",
+        "title": "bebes-y-primera-infancia/alimentacion-y-lactancia/calient...",
+        "description": "Encontrá ofertas en bebes-y-primera-infancia/alimentacion-y-lactancia/calienta-mamaderas. Conseguí marcas como Generico, Baby Brezza, Avent y más. Retiro gra..."
+      },
+      {
+        "url": "https://www.fravega.com/l/seguridad-para-el-hogar/sistemas-de-monitoreo/",
+        "title": "seguridad-para-el-hogar/sistemas-de-monitoreo - Cámaras I...",
+        "description": "Encontrá las mejores ofertas en seguridad-para-el-hogar/sistemas-de-monitoreo - Cámaras IP. Retiro gratis por sucursal y envíos a todo el país. Todas las mar..."
+      },
+      {
+        "url": "https://www.fravega.com/l/pequenos-electrodomesticos/cocina/hornitos-electricos/",
+        "title": "pequenos-electrodomesticos/cocina/hornitos-electricos - C...",
+        "description": "Encontrá ofertas en pequenos-electrodomesticos/cocina/hornitos-electricos. Conseguí marcas como BGH, Smartlife, Atma y más. Retiro gratis por sucursal y enví..."
+      },
+      {
+        "url": "https://www.fravega.com/l/herramientas-y-construccion/herramientas/herramientas-electricas/atornilladores-y-destornilladores",
+        "title": "herramientas-y-construccion/herramientas/herramientas-ele...",
+        "description": "Encontrá ofertas en herramientas-y-construccion/herramientas/herramientas-electricas/atornilladores-y-destornilladores. Conseguí marcas como Daihatsu, Dewalt..."
+      },
+      {
+        "url": "https://www.fravega.com/p/reacondicionado-notebook-acer-al15-31p-c28l-15-6-ips-intel-celeron-n4500-8gb-256gb-ssd-w11-470986",
+        "title": "Frávega: Electrodomésticos, Tecnología y Artículos para e...",
+        "description": "Aprovechá las ofertas y cuotas disponibles en productos seleccionados. Encontralos en nuestra tienda online o en la sucursal más cercana."
+      },
+      {
+        "url": "https://www.fravega.com/p/aire-ventana-enova-aev12nf10-3400-watts-3130-frigorias-21918361",
+        "title": "Frávega: Electrodomésticos, Tecnología y Artículos para e...",
+        "description": "Aprovechá las ofertas y cuotas disponibles en productos seleccionados. Encontralos en nuestra tienda online o en la sucursal más cercana."
+      },
+      {
+        "url": "https://www.fravega.com/l/herramientas-y-construccion/herramientas/herramientas-de-jardin/motosierras/",
+        "title": "herramientas-y-construccion/herramientas/herramientas-de-...",
+        "description": "Encontrá las mejores ofertas en herramientas-y-construccion/herramientas/herramientas-de-jardin/motosierras - Eléctrica. Retiro gratis por sucursal y envíos ..."
+      },
+      {
+        "url": "https://www.fravega.com/p/aspiradora-sopladora-shop-vac-seco-humedo-60-lts-1800w-990185702",
+        "title": "Frávega: Electrodomésticos, Tecnología y Artículos para e...",
+        "description": "Aprovechá las ofertas y cuotas disponibles en productos seleccionados. Encontralos en nuestra tienda online o en la sucursal más cercana."
+      },
+      {
+        "url": "https://www.fravega.com/p/alfombra-protectora-plastica-antideslizante-para-cajones-y-estantes-multiusos--22696906",
+        "title": "Frávega: Electrodomésticos, Tecnología y Artículos para e...",
+        "description": "Aprovechá las ofertas y cuotas disponibles en productos seleccionados. Encontralos en nuestra tienda online o en la sucursal más cercana."
+      },
+      {
+        "url": "https://www.fravega.com/l/herramientas-y-construccion/herramientas/herramientas-de-jardin/sopladoras/",
+        "title": "herramientas-y-construccion/herramientas/herramientas-de-...",
+        "description": "Encontrá las mejores ofertas en herramientas-y-construccion/herramientas/herramientas-de-jardin/sopladoras - Inalámbrica. Retiro gratis por sucursal y envíos..."
+      },
+      {
+        "url": "https://www.fravega.com/p/laptop-reacondicionado-dell-latitude-5410-business-14-intel-core-i5-16gb-r-22623778",
+        "title": "Frávega: Electrodomésticos, Tecnología y Artículos para e...",
+        "description": "Aprovechá las ofertas y cuotas disponibles en productos seleccionados. Encontralos en nuestra tienda online o en la sucursal más cercana."
+      },
+      {
+        "url": "https://www.fravega.com/sitemap/index.xml"
+      },
+      {
+        "url": "https://www.fravega.com/p/tender-tendedero-3-niveles-de-pie-colgador-ropa-con-rueda-vertical-portatil-990221826",
+        "title": "Frávega: Electrodomésticos, Tecnología y Artículos para e...",
+        "description": "Aprovechá las ofertas y cuotas disponibles en productos seleccionados. Encontralos en nuestra tienda online o en la sucursal más cercana."
+      },
+      {
+        "url": "https://www.fravega.com/e/ofertas/electro",
+        "title": "Frávega: Electrodomésticos, Tecnología y Artículos para e...",
+        "description": "Aprovechá las ofertas y cuotas disponibles en productos seleccionados. Encontralos en nuestra tienda online o en la sucursal más cercana."
+      },
+      {
+        "url": "https://www.fravega.com/l/climatizacion/aire-acondicionado/",
+        "title": "climatizacion/aire-acondicionado - Portátil en Frávega",
+        "description": "Encontrá las mejores ofertas en climatizacion/aire-acondicionado - Portátil. Retiro gratis por sucursal y envíos a todo el país. Todas las marcas y modelos e..."
+      },
+      {
+        "url": "https://www.fravega.com/sitemap.xml"
+      },
+      {
+        "url": "https://www.fravega.com/industria-gastronomica/tostadora",
+        "title": "Tostadoras a cinta"
+      },
+      {
+        "url": "https://www.fravega.com/p/meta-quest-3s-128-gb-lentes-de-realidad-virtual-batman-arkham-shadow-22056175",
+        "title": "Frávega: Electrodomésticos, Tecnología y Artículos para e...",
+        "description": "Aprovechá las ofertas y cuotas disponibles en productos seleccionados. Encontralos en nuestra tienda online o en la sucursal más cercana."
+      },
+      {
+        "url": "https://www.fravega.com/p/aire-acondicionado-lg-smile-plus-2300-frigorias-frio-calor-split-ts-h096yma2-990233784",
+        "title": "Frávega: Electrodomésticos, Tecnología y Artículos para e...",
+        "description": "Aprovechá las ofertas y cuotas disponibles en productos seleccionados. Encontralos en nuestra tienda online o en la sucursal más cercana."
+      },
+      {
+        "url": "https://www.fravega.com/sitemap/fravega.xml"
+      },
+      {
+        "url": "https://www.fravega.com/l/hogar/lavadero-y-limpieza/tenders",
+        "title": "hogar/lavadero-y-limpieza/tenders - Comprá al mejor preci...",
+        "description": "Encontrá ofertas en hogar/lavadero-y-limpieza/tenders. Conseguí marcas como Hölsen, Mor, Hogar Actual y más. Retiro gratis por sucursal y envíos a todo el país."
+      },
+      {
+        "url": "https://www.fravega.com/l/herramientas-y-construccion/herramientas/herramientas-electricas/atornilladores-y-destornilladores/",
+        "title": "herramientas-y-construccion/herramientas/herramientas-ele...",
+        "description": "Encontrá las mejores ofertas en herramientas-y-construccion/herramientas/herramientas-electricas/atornilladores-y-destornilladores - Inalámbrico. Retiro grat..."
+      },
+      {
+        "url": "https://www.fravega.com/sitemap/productos-02.xml"
+      },
+      {
+        "url": "https://seller-center.fravega.com/login",
+        "title": "Seller Center - Login"
+      },
+      {
+        "url": "https://www.fravega.com/p/robot-aspirador-y-trapeador-roborock-q7-max-4200-pa-color-negro-22480786",
+        "title": "Frávega: Electrodomésticos, Tecnología y Artículos para e...",
+        "description": "Aprovechá las ofertas y cuotas disponibles en productos seleccionados. Encontralos en nuestra tienda online o en la sucursal más cercana."
+      },
+      {
+        "url": "https://www.fravega.com/l/herramientas-y-construccion/herramientas/herramientas-de-jardin/hidrolavadoras",
+        "title": "herramientas-y-construccion/herramientas/herramientas-de-...",
+        "description": "Encontrá ofertas en herramientas-y-construccion/herramientas/herramientas-de-jardin/hidrolavadoras. Conseguí marcas como Karcher, Logus, Lusqtoff y más. Reti..."
+      },
+      {
+        "url": "https://www.fravega.com/l/herramientas-y-construccion/herramientas/herramientas-de-jardin/sopladoras",
+        "title": "herramientas-y-construccion/herramientas/herramientas-de-...",
+        "description": "Encontrá ofertas en herramientas-y-construccion/herramientas/herramientas-de-jardin/sopladoras. Conseguí marcas como Daihatsu, Lusqtoff, Hamilton y más. Reti..."
+      },
+      {
+        "url": "https://www.fravega.com/p/valija-cargador-arrancador-suono-bateria-portatil-usb-auto-20214383",
+        "title": "Frávega: Electrodomésticos, Tecnología y Artículos para e...",
+        "description": "Aprovechá las ofertas y cuotas disponibles en productos seleccionados. Encontralos en nuestra tienda online o en la sucursal más cercana."
+      },
+      {
+        "url": "https://www.fravega.com/p/lavarropas-lg-carga-frontal-10kg-wm10bvc4s6-negro-inverter-direct-drive-ai-dd-thinq-wifi-steam-170515",
+        "title": "Frávega: Electrodomésticos, Tecnología y Artículos para e...",
+        "description": "Aprovechá las ofertas y cuotas disponibles en productos seleccionados. Encontralos en nuestra tienda online o en la sucursal más cercana."
+      },
+      {
+        "url": "https://www.fravega.com/p/lavarropas-lg-wm10bvc4s6-10-5kg-1400rpm-inverter-negro-990298101",
+        "title": "Frávega: Electrodomésticos, Tecnología y Artículos para e...",
+        "description": "Aprovechá las ofertas y cuotas disponibles en productos seleccionados. Encontralos en nuestra tienda online o en la sucursal más cercana."
+      },
+      {
+        "url": "https://www.fravega.com/p/kayak-inflable-intex-explorer-k2-10014089",
+        "title": "Frávega: Electrodomésticos, Tecnología y Artículos para e...",
+        "description": "Aprovechá las ofertas y cuotas disponibles en productos seleccionados. Encontralos en nuestra tienda online o en la sucursal más cercana."
+      },
+      {
+        "url": "https://www.fravega.com/sitemap/productos-01.xml"
+      },
+      {
+        "url": "https://www.fravega.com/l/herramientas-y-construccion/herramientas/herramientas-de-jardin/hidrolavadoras/",
+        "title": "herramientas-y-construccion/herramientas/herramientas-de-...",
+        "description": "Encontrá las mejores ofertas en herramientas-y-construccion/herramientas/herramientas-de-jardin/hidrolavadoras - Sí. Retiro gratis por sucursal y envíos a to..."
+      },
+      {
+        "url": "https://www.fravega.com/sitemap/productos-03.xml"
+      },
+      {
+        "url": "https://www.fravega.com",
+        "title": "Frávega: Electrodomésticos, Tecnología y Artículos para e...",
+        "description": "Aprovechá las ofertas y cuotas disponibles en productos seleccionados. Encontralos en nuestra tienda online o en la sucursal más cercana."
+      },
+      {
+        "url": "https://www.fravega.com/p/aire-acondicionado-split-frio-calor-likon-3000f-3450w-lks35wccr-50006337",
+        "title": "Frávega: Electrodomésticos, Tecnología y Artículos para e...",
+        "description": "Aprovechá las ofertas y cuotas disponibles en productos seleccionados. Encontralos en nuestra tienda online o en la sucursal más cercana."
+      },
+      {
+        "url": "https://www.fravega.com/p/perfume-dior-homme-cologne-spray-125-ml-para-hombre-23006826"
+      },
+      {
+        "url": "https://www.fravega.com/p/perfume-carolina-herrera-212-vip-black-eau-de-parfum-100-ml-23006796"
+      },
+      {
+        "url": "https://www.fravega.com/p/perfume-versace-red-jeans-eau-de-toilette-75-ml-para-mujer-23006907"
+      },
+      {
+        "url": "https://www.fravega.com/p/bemis-1055-asiento-de-inodoro-comercial-de-plastico-con-fren-23006871"
+      },
+      {
+        "url": "https://www.fravega.com/p/perfume-nina-ricci-nina-extra-rouge-80-ml-23006919"
+      },
+      {
+        "url": "https://www.fravega.com/p/figura-de-juguete-fisher-price-disney-princesas-tienda-de-ve-23007148"
+      },
+      {
+        "url": "https://www.fravega.com/p/perfume-lorenzo-pazzaglia-van-py-rhum-extrait-de-parfum-50-m-23006944"
+      },
+      {
+        "url": "https://www.fravega.com/p/am-fm-portatil-boombox-gpx-bca209b-con-cd-y-casete-23006827"
+      },
+      {
+        "url": "https://www.fravega.com/p/monitor-de-video-para-bebes-simyke-bme28-con-wifi-de-2-8-pul-23006859"
+      },
+      {
+        "url": "https://www.fravega.com/p/balsamo-labial-aquaphor-lip-repair-stick-hidratante-2x0-17-o-23006974"
+      },
+      {
+        "url": "https://www.fravega.com/p/perfume-marc-jacobs-daisy-eau-so-fresh-eau-de-toilette-4-ml-23006995"
+      },
+      {
+        "url": "https://www.fravega.com/p/set-de-construccion-lego-the-lego-movie-2-queen-watevra-70824-23004055"
+      }
+    ]
+  }
+}

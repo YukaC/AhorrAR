@@ -1,0 +1,37 @@
+{
+  "recordedAt": "2026-09-25T16:55:28.363Z",
+  "apiUrl": "https://api.firecrawl.dev",
+  "targets": [
+    {
+      "name": "scrape-fravega-home",
+      "path": "/v2/scrape",
+      "request": {
+        "url": "https://www.fravega.com",
+        "formats": [
+          "markdown",
+          "links"
+        ],
+        "onlyMainContent": true
+      },
+      "fixture": "scrape-fravega-home.json"
+    },
+    {
+      "name": "map-fravega",
+      "path": "/v2/map",
+      "request": {
+        "url": "https://www.fravega.com",
+        "limit": 50
+      },
+      "fixture": "map-fravega.json"
+    },
+    {
+      "name": "search-iphone16-ar",
+      "path": "/v2/search",
+      "request": {
+        "query": "iPhone 16 Argentina",
+        "limit": 3
+      },
+      "fixture": "search-iphone16-ar.json"
+    }
+  ]
+}
