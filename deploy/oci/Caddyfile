@@ -1,0 +1,16 @@
+# TLS reverse proxy on the OCI VM (no paid OCI Load Balancer required).
+#
+# Set DOMAIN in deploy/oci/.env (or export before `caddy run`). Caddy obtains a
+# public certificate automatically when the hostname resolves to this VM.
+#
+# No custom domain needed: after the VM has a public IPv4, use sslip.io:
+#   DOMAIN=203.0.113.42.sslip.io
+# (replace with your actual public IP). Then set Vercel VITE_API_BASE=https://$DOMAIN
+#
+# With Docker: `docker compose --profile caddy up -d` (sets API_UPSTREAM=api:4000).
+
+{$DOMAIN} {
+	encode gzip
+	# Host Caddy: API_UPSTREAM=127.0.0.1:4000. Docker Caddy profile sets api:4000.
+	reverse_proxy {$API_UPSTREAM}
+}

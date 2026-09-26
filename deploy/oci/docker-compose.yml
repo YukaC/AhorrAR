@@ -1,0 +1,53 @@
+# OCI Always Free ARM (VM.Standard.A1.Flex, ~6 GB RAM).
+# Run from this directory after cloning repo to /opt/ahorrar:
+#   cd /opt/ahorrar/deploy/oci && docker compose up -d --build
+# HTTPS (Caddy profile on compose default network; API only on host 127.0.0.1:4000):
+#   docker compose --profile caddy up -d --build
+#
+# Build natively on the VM (arm64). Cross-compiling from x86 is slower and untested here.
+
+services:
+  api:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    ports:
+      - '127.0.0.1:4000:4000'
+    env_file:
+      - .env
+    environment:
+      MELI_TOKEN_FILE: /data/meli_tokens.json
+    volumes:
+      - meli_data:/data
+    restart: unless-stopped
+    mem_limit: 4096m
+    mem_reservation: 512m
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:4000/api/health']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  caddy:
+    profiles: ['caddy']
+    image: caddy:2-alpine
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      DOMAIN: ${DOMAIN}
+      API_UPSTREAM: api:4000
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  meli_data:
+  caddy_data:
+  caddy_config:

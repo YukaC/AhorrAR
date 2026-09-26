@@ -1,5 +1,6 @@
 # Build context: repo root
 # Single image: Scrapling (PRIMARY) + Node API. No Playwright browsers (CRAWLER=scrapling).
+# Multi-arch base images (node/python bookworm-slim): prefer native build on OCI ARM (aarch64).
 
 FROM node:22-bookworm-slim AS node-deps
 WORKDIR /app/backend
