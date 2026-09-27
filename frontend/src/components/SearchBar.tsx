@@ -2,6 +2,7 @@ import { useId } from 'react';
 import type { FormEvent } from 'react';
 import { Loader2, MapPin, Search } from 'lucide-react';
 import type { SearchParams } from '../../../shared/contract';
+import { specificityHintFor } from '../lib/query-specificity';
 
 interface SearchBarProps {
   busy: boolean;
@@ -28,6 +29,8 @@ export default function SearchBar({
 }: SearchBarProps) {
   const productId = useId();
   const countryId = useId();
+  const hintId = useId();
+  const hint = specificityHintFor(product);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -65,9 +68,15 @@ export default function SearchBar({
             onFocus={() => onFocusProduct?.()}
             autoComplete="off"
             placeholder="Ej: bensimon, iPhone 16, placa de video…"
+            aria-describedby={hint ? hintId : undefined}
             className={`${inputBase} pl-11 pr-4`}
           />
         </div>
+        {hint ? (
+          <p id={hintId} className="mt-1.5 text-xs leading-snug text-muted-foreground">
+            {hint}
+          </p>
+        ) : null}
       </div>
 
       <div className="w-full sm:w-40 sm:shrink-0">

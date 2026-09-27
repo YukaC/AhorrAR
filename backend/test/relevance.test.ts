@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  isCategoryOnlyProduct,
   isRelevantResult,
+  publishFloorFor,
   queryTokens,
   titleMatchesQuery,
   titleRelevanceScore,
@@ -82,6 +84,19 @@ describe('isRelevantResult', () => {
     expect(isRelevantResult('Cable HDMI 2m negro', 'notebook')).toBe(false);
     expect(isRelevantResult('Protectores Diarios Always Con Perfume', 'perfume')).toBe(false);
     expect(isRelevantResult('Zapatillas Nike Revolution', 'perfume')).toBe(false);
+  });
+
+  it('categoría sola: piso 0.72; query específica mantiene amplitud 0.55', () => {
+    expect(isCategoryOnlyProduct('perfume')).toBe(true);
+    expect(isCategoryOnlyProduct('perfume dior')).toBe(false);
+    expect(publishFloorFor('perfume')).toBe(0.72);
+    expect(publishFloorFor('perfume dior')).toBe(0.55);
+    // Real primary under category-only still publishes (class boost ≥ 0.75).
+    expect(isRelevantResult('Perfume Hombre EDT 60ml', 'perfume')).toBe(true);
+    expect(isRelevantResult('Dior Sauvage EDP 100ml', 'perfume')).toBe(true);
+    expect(isRelevantResult('Notebook Lenovo IdeaPad 15 Intel i5', 'notebook')).toBe(true);
+    // Specific query keeps lower floor → more amplitude for brand hits.
+    expect(isRelevantResult('Dior Sauvage EDP 100ml', 'perfume dior')).toBe(true);
   });
 });
 

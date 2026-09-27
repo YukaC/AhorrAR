@@ -217,8 +217,18 @@ const TOKEN_RE = /[a-z0-9]+/gi;
 /** Ranking tier: strong vs weak (§V28). */
 export const RELEVANCE_STRONG = 0.55;
 
-/** Publish floor — below this the offer never reaches the UI (§V29). */
+/**
+ * Publish floor for specific queries (brand/model) — §V29.
+ * Category-only queries use {@link RELEVANCE_PUBLISH_CATEGORY} (stricter).
+ */
 export const RELEVANCE_PUBLISH = 0.55;
+
+/**
+ * Publish floor when the query is only a product class ("perfume", "notebook").
+ * Soft boosts for real class evidence land at ≥0.75, so amplitude of primary
+ * products is kept; weak title-only hits (~0.55–0.65) are dropped.
+ */
+export const RELEVANCE_PUBLISH_CATEGORY = 0.72;
 
 export function normalizeText(text: string): string {
   return text
@@ -472,10 +482,23 @@ export function titleMatchesQuery(title: string, product: string): boolean {
 }
 
 /**
- * Publish gate for the live pipeline (§V29): structural match + strong score.
- * Weak / alien-class hits are dropped, not demoted.
+ * Publish gate for the live pipeline (§V29): structural match + score floor.
+ * Category-only queries need a higher floor; branded queries keep amplitude.
  */
+export function isCategoryOnlyProduct(product: string): boolean {
+  const tokens = queryTokens(product);
+  if (tokens.length === 0) return false;
+  if (tokens.some((t) => /^\d+$/.test(t))) return false;
+  const alphas = tokens.filter((t) => !/^\d+$/.test(t) && t.length >= 4);
+  if (alphas.length !== 1) return false;
+  return CATEGORY_OPTIONAL.has(alphas[0]!);
+}
+
+export function publishFloorFor(product: string): number {
+  return isCategoryOnlyProduct(product) ? RELEVANCE_PUBLISH_CATEGORY : RELEVANCE_PUBLISH;
+}
+
 export function isRelevantResult(title: string, product: string): boolean {
   if (!titleMatchesQuery(title, product)) return false;
-  return titleRelevanceScore(title, product) >= RELEVANCE_PUBLISH;
+  return titleRelevanceScore(title, product) >= publishFloorFor(product);
 }

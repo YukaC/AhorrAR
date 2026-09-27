@@ -5,7 +5,9 @@ from __future__ import annotations
 import unittest
 
 from ahorrar_scraper.relevance import (
+    is_category_only_product,
     is_relevant_result,
+    publish_floor_for,
     query_tokens,
     title_matches_query,
     title_relevance_score,
@@ -71,6 +73,15 @@ class TestTitleMatchesQuery(unittest.TestCase):
         self.assertFalse(is_relevant_result("Cable HDMI 2m negro", "notebook"))
         self.assertFalse(is_relevant_result("Protectores Diarios Always Con Perfume", "perfume"))
         self.assertFalse(is_relevant_result("Zapatillas Nike Revolution", "perfume"))
+
+    def test_category_only_stricter_floor(self) -> None:
+        self.assertTrue(is_category_only_product("perfume"))
+        self.assertFalse(is_category_only_product("perfume dior"))
+        self.assertEqual(publish_floor_for("perfume"), 0.72)
+        self.assertEqual(publish_floor_for("perfume dior"), 0.55)
+        self.assertTrue(is_relevant_result("Perfume Hombre EDT 60ml", "perfume"))
+        self.assertTrue(is_relevant_result("Dior Sauvage EDP 100ml", "perfume"))
+        self.assertTrue(is_relevant_result("Dior Sauvage EDP 100ml", "perfume dior"))
 
     def test_relevance_score_primary_beats_weak(self) -> None:
         primary = title_relevance_score("Notebook Lenovo IdeaPad 15", "notebook")

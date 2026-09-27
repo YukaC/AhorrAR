@@ -64,7 +64,7 @@ V25: ∀ shipping.free → señal estructurada (VTEX ShippingSLA Price 0 / ML fr
 V26: ∀ fallo ML API (401/403/429/≥400/network/shape) → circuit breaker cuenta; tras N consecutivos skip ML por cooldown (⊥ golpear API caída) · éxito resetea · búsqueda degrada sin ML, nunca falla
 V27: ∀ query categoría primaria sola → title exige evidencia de clase (sinónimo ∨ señales dominio: perfume→EDP/ml≠beauty-adjacent) ∧ ⊥ listing secundario estructural (lead funda/crema/RAM… ∨ "para X") salvo query pida secundario · paridad Node↔Python
 V28: ranking ! title relevance tier (gap ≫ precio): match primario fuerte antes que débil/secundario · gate binario universal · `rankByPriority(..., product)` · paridad score Node↔Python
-V29: ∀ result publicado → `isRelevantResult` (gate ∧ score≥RELEVANCE_PUBLISH) · ⊥ publicar match débil · cross-class conflict (query familia A ∧ title lead familia B⇒drop) · token whole-word · paridad Node↔Python
+V29: ∀ result publicado → `isRelevantResult` (gate ∧ score≥publishFloorFor) · category-only → RELEVANCE_PUBLISH_CATEGORY (0.72) · branded/model → RELEVANCE_PUBLISH (0.55) · ⊥ publicar match débil · cross-class conflict (query familia A ∧ title lead familia B⇒drop) · token whole-word · paridad Node↔Python
 
 §T
 id|status|task|cites
@@ -117,6 +117,7 @@ T46|x|UI result caps 25→50→100 + SearchBar sync chips/query + early-stop scr
 T47|x|buscador realista: isRelevantResult publish floor + cross-class family conflict + whole-word tokens · pipeline+crawl|V29,V28
 T48|x|Render Free 512MB: render.yaml (FETCH_WORKERS=2, MAX_NODES techo) + nodesBudgetFor ceiling + caches acotados + api-wake/focus + caps 25→50|§I,V5,V16,V17
 T49|x|OCI Micro E2.1 primario: reserved IP + compose.micro + GHCR workflow + bootstrap + Vercel cutover; Render backup; A1 opcional|§I
+T50|x|dual publish floor: category-only 0.72 / branded 0.55 + UI specificity hint|V29,V28
 
 §B
 id|date|cause|fix

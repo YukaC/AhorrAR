@@ -244,6 +244,8 @@ _TOKEN_RE = re.compile(r"[a-z0-9]+", re.I)
 
 RELEVANCE_STRONG = 0.55
 RELEVANCE_PUBLISH = 0.55
+# Stricter floor for category-only queries; class-evidence boosts still ≥0.75.
+RELEVANCE_PUBLISH_CATEGORY = 0.72
 
 
 def normalize_text(text: str) -> str:
@@ -503,8 +505,24 @@ def title_matches_query(title: str, product: str) -> bool:
     return True
 
 
+def is_category_only_product(product: str) -> bool:
+    tokens = query_tokens(product)
+    if not tokens:
+        return False
+    if any(t.isdigit() for t in tokens):
+        return False
+    alphas = [t for t in tokens if not t.isdigit() and len(t) >= 4]
+    if len(alphas) != 1:
+        return False
+    return alphas[0] in _CATEGORY_OPTIONAL
+
+
+def publish_floor_for(product: str) -> float:
+    return RELEVANCE_PUBLISH_CATEGORY if is_category_only_product(product) else RELEVANCE_PUBLISH
+
+
 def is_relevant_result(title: str, product: str) -> bool:
-    """Publish gate: structural match + score ≥ RELEVANCE_PUBLISH (§V29)."""
+    """Publish gate: structural match + score floor (§V29). Category-only is stricter."""
     if not title_matches_query(title, product):
         return False
-    return title_relevance_score(title, product) >= RELEVANCE_PUBLISH
+    return title_relevance_score(title, product) >= publish_floor_for(product)
