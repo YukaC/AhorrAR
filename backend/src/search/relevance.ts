@@ -137,6 +137,12 @@ const FRAGRANCE_LEAD_RE =
   /^(?:(?:nuevo|nueva|new)\s+)?(?:perfume|perfumes|colonia|fragancia|fragancias|parfum)\b/;
 const FRAGRANCE_ML_RE = /\b\d+\s*ml\b/;
 const FRAGRANCE_ADJUNCT_RE = /\b(?:con\s+perfume|aroma\s+(?:a\s+)?perfume|perfume(?:s)?\s+suave)\b/;
+/** Beauty / ambient / hair / sample — not a wearable fragrance bottle (§V27). */
+const FRAGRANCE_ALIEN_RE =
+  /\b(?:capilar|cabello|hair(?:\s+mist)?|ambiente|ambientador|difusor|textil|ropa|almohada|auto|coche|vehiculo|home\s+fragrance|linen\s+spray|window\s+perfume|perfume\s+para\s+(?:el\s+)?(?:auto|casa|ambiente))\b/;
+const FRAGRANCE_SAMPLE_RE =
+  /\b(?:mini|miniatura|vial|sample|muestra|tester|decant|travel\s*size|de\s+cartera|perfume\s+de\s+cartera)\b/;
+const FRAGRANCE_TINY_ML_RE = /\b(?:[1-9]|10)\s*ml\b/;
 const HYGIENE_OR_CARE_RE =
   /\b(?:protectores?|toallas?(?:\s+humedas?)?|panales?|tampones?|hisopos?|algodon|papel\s+higien|jabon|shampoo|acondicionador|crema|desodorante|enjuague|pasta\s+dental|panitos?|toallitas?|compresa|absorbente|locion|serum|mascarilla|body\s+splash|splash\s+corporal|gel\s+de\s+ducha|aceite\s+corporal)\b/;
 
@@ -147,6 +153,13 @@ const FRAGRANCE_FAMILY = new Set([
   'fragancias',
   'colonia',
 ]);
+
+/** Laptop/PC evidence — rejects paper "composition notebook" flood (§V27). */
+const NOTEBOOK_FAMILY = new Set(['notebook', 'notebooks', 'laptop', 'laptops']);
+const NOTEBOOK_STRONG_RE =
+  /\b(?:intel|amd|ryzen|core\s*i[3579]|celeron|pentium|snapdragon|ssd|hdd|nvme|ddr[45]?|windows|freedos|ubuntu|rtx|gtx|radeon|geforce|lenovo|thinkpad|ideapad|yoga|dell|asus|acer|msi|bangho|pcbox|hp\s+(?:laptop|pavilion|victus|omen|250|255|445)|macbook|chromebook)\b/;
+const NOTEBOOK_PAPER_RE =
+  /\b(?:composition|pastel|journal|diary|graph\s+paper|cuaderno|rayado|espiral|spiral|lined|wide\s+ruled|college\s+ruled|unicorn|for\s+(?:dog|cat)\s+lovers|sketchbook|libreta)\b/;
 
 const SECONDARY_INTENT = new Set([
   'funda',
@@ -183,13 +196,18 @@ const SECONDARY_INTENT = new Set([
   'jabon',
   'desodorante',
   'locion',
+  'mini',
+  'miniatura',
+  'vial',
+  'capilar',
 ]);
 
 const SECONDARY_LEAD_RE =
-  /^(?:funda|fundas|case|cover|sleeve|soporte|soportes|stand|base|cooler|mochila|bolso|maletin|adaptador|cable|cargador|memoria|ram|modulo|dock|hub|mousepad|protectores?|skin|mica|templado|kit|pasta|muestra|tester|decant|atomizador|vaporizador|crema|shampoo|jabon|acondicionador|desodorante|locion|splash|repuesto|compatible|toallas?|toallitas?|panales?|tampones?)\b/;
+  /^(?:funda|fundas|case|cover|sleeve|soporte|soportes|stand|base|cooler|mochila|bolso|maletin|adaptador|cable|cargador|memoria|ram|modulo|dock|hub|mousepad|protectores?|skin|mica|templado|kit|pasta|muestra|tester|decant|atomizador|vaporizador|crema|shampoo|jabon|acondicionador|desodorante|locion|splash|repuesto|compatible|toallas?|toallitas?|panales?|tampones?|mini|miniatura|vial)\b/;
 
 const SECONDARY_PHRASE_RE =
-  /\b(?:funda|sleeve|soporte|cooler\s*pad|cooling\s*pad|pad\s+refriger|memoria\s+ram|ram\s+ddr|sodimm|mochila|bolso|maletin|compatible\s+con|repuesto\s+(?:de|para)|muestra\s+de|tester\s+de|decant\s+de|crema\s+(?:corporal|de\s+manos|hidrat)|body\s+splash|splash\s+corporal|locion\s+corporal)\b/;
+  /\b(?:funda|sleeve|soporte|cooler\s*pad|cooling\s*pad|pad\s+refriger|memoria\s+ram|ram\s+ddr|sodimm|mochila|bolso|maletin|compatible\s+con|repuesto\s+(?:de|para)|muestra\s+de|tester\s+de|decant\s+de|crema\s+(?:corporal|de\s+manos|hidrat)|body\s+splash|splash\s+corporal|locion\s+corporal|perfume\s+de\s+cartera|travel\s*size)\b/;
+
 
 const PRIMARY_LEAD_RE =
   /^(?:(?:nuevo|nueva|new)\s+)?(?:notebooks?|laptops?|celulares?|telefonos?|smartphones?|monitores?|zapatillas?|auriculares?|headsets?|teclados?|keyboards?|mouses?|ratones?|procesadores?|cpus?|perfumes?|fragancias?|colonias?|parfum)\b/;
@@ -245,16 +263,44 @@ function titleHasCategory(hay: string, token: string): boolean {
 
 function hasFragranceEvidence(hay: string): boolean {
   if (HYGIENE_OR_CARE_RE.test(hay)) return false;
+  if (FRAGRANCE_ALIEN_RE.test(hay)) return false;
+  if (FRAGRANCE_SAMPLE_RE.test(hay)) return false;
+  // Mini bottles without eau markers are usually samples/testers.
+  if (FRAGRANCE_TINY_ML_RE.test(hay) && !FRAGRANCE_STRONG_RE.test(hay)) return false;
   if (FRAGRANCE_STRONG_RE.test(hay)) return true;
-  if (FRAGRANCE_LEAD_RE.test(hay)) return true;
-  if (FRAGRANCE_ML_RE.test(hay) && !FRAGRANCE_ADJUNCT_RE.test(hay)) return true;
-  if (/\b(?:colonia|fragancia|fragancias|parfum)\b/.test(hay)) return true;
-  if (/\bperfumes?\b/.test(hay) && !FRAGRANCE_ADJUNCT_RE.test(hay)) return true;
+  if (FRAGRANCE_LEAD_RE.test(hay) && FRAGRANCE_ML_RE.test(hay)) return true;
+  if (
+    FRAGRANCE_LEAD_RE.test(hay) &&
+    /\b(?:hombre|mujer|unisex|men|women|kids|infantil|ninos?|ninas?)\b/.test(hay)
+  ) {
+    return true;
+  }
+  // "212 Men 100ml" / "Sauvage 100ml pour homme" without the word perfume.
+  if (
+    FRAGRANCE_ML_RE.test(hay) &&
+    !FRAGRANCE_ADJUNCT_RE.test(hay) &&
+    /\b(?:hombre|mujer|unisex|men|women|pour\s+homme|pour\s+femme|him|her)\b/.test(hay)
+  ) {
+    return true;
+  }
+  if (/\b(?:colonia|fragancia|fragancias)\b/.test(hay) && FRAGRANCE_ML_RE.test(hay)) return true;
+  return false;
+}
+
+function hasNotebookEvidence(hay: string): boolean {
+  if (NOTEBOOK_PAPER_RE.test(hay)) return false;
+  if (NOTEBOOK_STRONG_RE.test(hay)) return true;
+  if (/\blaptops?\b/.test(hay)) return true;
+  // Screen size + storage pattern typical of PCs
+  if (/\b\d{1,2}(?:[.,]\d)?\s*(?:\"|''|pulg|inch)/.test(hay) && /\b(?:\d+\s*gb|\d+\s*ssd)\b/.test(hay)) {
+    return true;
+  }
   return false;
 }
 
 function hasClassEvidence(hay: string, token: string): boolean {
   if (FRAGRANCE_FAMILY.has(token)) return hasFragranceEvidence(hay);
+  if (NOTEBOOK_FAMILY.has(token)) return hasNotebookEvidence(hay);
   return titleHasCategory(hay, token);
 }
 
@@ -367,6 +413,7 @@ export function titleRelevanceScore(title: string, product: string): number {
     alphas.length === 1 &&
     CATEGORY_OPTIONAL.has(alphas[0]!) &&
     !FRAGRANCE_FAMILY.has(alphas[0]!) &&
+    !NOTEBOOK_FAMILY.has(alphas[0]!) &&
     titleHasCategory(hay, alphas[0]!)
   ) {
     score = Math.max(score, headMentionsQuery(hay, tokens) ? 0.85 : 0.65);
@@ -401,6 +448,8 @@ export function titleMatchesQuery(title: string, product: string): boolean {
     const only = alphas[0]!;
     if (FRAGRANCE_FAMILY.has(only)) {
       if (!hasFragranceEvidence(hay)) return false;
+    } else if (NOTEBOOK_FAMILY.has(only)) {
+      if (!hasNotebookEvidence(hay)) return false;
     } else if (CATEGORY_OPTIONAL.has(only)) {
       if (!hasClassEvidence(hay, only) && !titleHasCategory(hay, only)) return false;
     } else if (!tokenInTitle(hay, only)) {

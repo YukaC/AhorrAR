@@ -24,8 +24,13 @@ describe('titleMatchesQuery', () => {
     expect(titleMatchesQuery('Bensimon Sunset Edp 100ml', 'perfume')).toBe(true);
     expect(titleMatchesQuery('Carolina Herrera 212 Men 100ml', 'perfume')).toBe(true);
     expect(titleMatchesQuery('Perfume Dior Sauvage EDP 100ml', 'perfume')).toBe(true);
+    expect(titleMatchesQuery('Perfume Hombre EDT 60ml', 'perfume')).toBe(true);
     expect(titleMatchesQuery('Crema corporal hidratante 200ml', 'perfume')).toBe(false);
     expect(titleMatchesQuery('Jabon liquido aroma vainilla', 'perfume')).toBe(false);
+    expect(titleMatchesQuery('Perfume Capilar Herbal Essences x 90 ml', 'perfume')).toBe(false);
+    expect(titleMatchesQuery('Perfume mini goya 5 ml', 'perfume')).toBe(false);
+    expect(titleMatchesQuery('Window perfume 50 ml', 'perfume')).toBe(false);
+    expect(titleMatchesQuery('Set Perfume 50ml perfume De Cartera 8ml', 'perfume')).toBe(false);
     expect(
       titleMatchesQuery(
         'Protectores Diarios Always Xtra Diarios Extra Largos Con Perfume X 100 Unid',
@@ -54,6 +59,8 @@ describe('titleMatchesQuery', () => {
     expect(titleMatchesQuery('Funda Notebook 15.6 Neoprene', 'notebook')).toBe(false);
     expect(titleMatchesQuery('Soporte refrigerante para notebook', 'notebook')).toBe(false);
     expect(titleMatchesQuery('Memoria Kingston Fury 8GB', 'notebook')).toBe(false);
+    expect(titleMatchesQuery('Composition Notebook: Pretty Unicorn', 'notebook')).toBe(false);
+    expect(titleMatchesQuery('Notebook - Pastel27: Simple Pastel Notebook', 'notebook')).toBe(false);
     expect(titleMatchesQuery('Funda Notebook 15.6 Neoprene', 'funda notebook')).toBe(true);
     expect(titleMatchesQuery('Memoria RAM DDR4 8GB Notebook', 'ram notebook')).toBe(true);
     expect(titleMatchesQuery('Muestra tester perfume 5ml', 'perfume')).toBe(false);

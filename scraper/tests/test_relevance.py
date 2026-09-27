@@ -52,6 +52,8 @@ class TestTitleMatchesQuery(unittest.TestCase):
         self.assertFalse(title_matches_query("Funda Notebook 15.6 Neoprene", "notebook"))
         self.assertFalse(title_matches_query("Soporte refrigerante para notebook", "notebook"))
         self.assertFalse(title_matches_query("Memoria Kingston Fury 8GB", "notebook"))
+        self.assertFalse(title_matches_query("Composition Notebook: Pretty Unicorn", "notebook"))
+        self.assertFalse(title_matches_query("Notebook - Pastel27: Simple Pastel Notebook", "notebook"))
         self.assertTrue(title_matches_query("Funda Notebook 15.6 Neoprene", "funda notebook"))
         self.assertTrue(title_matches_query("Memoria RAM DDR4 8GB Notebook", "ram notebook"))
         self.assertFalse(title_matches_query("Muestra tester perfume 5ml", "perfume"))

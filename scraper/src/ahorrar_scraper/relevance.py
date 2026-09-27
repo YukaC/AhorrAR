@@ -145,11 +145,33 @@ _FRAGRANCE_ML_RE = re.compile(r"\b\d+\s*ml\b")
 _FRAGRANCE_ADJUNCT_RE = re.compile(
     r"\b(?:con\s+perfume|aroma\s+(?:a\s+)?perfume|perfume(?:s)?\s+suave)\b"
 )
+_FRAGRANCE_ALIEN_RE = re.compile(
+    r"\b(?:capilar|cabello|hair(?:\s+mist)?|ambiente|ambientador|difusor|textil|ropa|"
+    r"almohada|auto|coche|vehiculo|home\s+fragrance|linen\s+spray|window\s+perfume|"
+    r"perfume\s+para\s+(?:el\s+)?(?:auto|casa|ambiente))\b"
+)
+_FRAGRANCE_SAMPLE_RE = re.compile(
+    r"\b(?:mini|miniatura|vial|sample|muestra|tester|decant|travel\s*size|"
+    r"de\s+cartera|perfume\s+de\s+cartera)\b"
+)
+_FRAGRANCE_TINY_ML_RE = re.compile(r"\b(?:[1-9]|10)\s*ml\b")
 _HYGIENE_OR_CARE_RE = re.compile(
     r"\b(?:protectores?|toallas?(?:\s+humedas?)?|panales?|tampones?|hisopos?|algodon|"
     r"papel\s+higien|jabon|shampoo|acondicionador|crema|desodorante|enjuague|"
     r"pasta\s+dental|panitos?|toallitas?|compresa|absorbente|locion|serum|"
     r"mascarilla|body\s+splash|splash\s+corporal|gel\s+de\s+ducha|aceite\s+corporal)\b"
+)
+
+_NOTEBOOK_FAMILY = frozenset({"notebook", "notebooks", "laptop", "laptops"})
+_NOTEBOOK_STRONG_RE = re.compile(
+    r"\b(?:intel|amd|ryzen|core\s*i[3579]|celeron|pentium|snapdragon|ssd|hdd|nvme|"
+    r"ddr[45]?|windows|freedos|ubuntu|rtx|gtx|radeon|geforce|lenovo|thinkpad|ideapad|"
+    r"yoga|dell|asus|acer|msi|bangho|pcbox|hp\s+(?:laptop|pavilion|victus|omen|250|255|445)|"
+    r"macbook|chromebook)\b"
+)
+_NOTEBOOK_PAPER_RE = re.compile(
+    r"\b(?:composition|pastel|journal|diary|graph\s+paper|cuaderno|rayado|espiral|spiral|"
+    r"lined|wide\s+ruled|college\s+ruled|unicorn|for\s+(?:dog|cat)\s+lovers|sketchbook|libreta)\b"
 )
 
 _SECONDARY_INTENT = frozenset(
@@ -188,6 +210,10 @@ _SECONDARY_INTENT = frozenset(
         "jabon",
         "desodorante",
         "locion",
+        "mini",
+        "miniatura",
+        "vial",
+        "capilar",
     }
 )
 
@@ -196,7 +222,7 @@ _SECONDARY_LEAD_RE = re.compile(
     r"bolso|maletin|adaptador|cable|cargador|memoria|ram|modulo|dock|hub|mousepad|"
     r"protectores?|skin|mica|templado|kit|pasta|muestra|tester|decant|atomizador|"
     r"vaporizador|crema|shampoo|jabon|acondicionador|desodorante|locion|splash|"
-    r"repuesto|compatible|toallas?|toallitas?|panales?|tampones?)\b"
+    r"repuesto|compatible|toallas?|toallitas?|panales?|tampones?|mini|miniatura|vial)\b"
 )
 
 _SECONDARY_PHRASE_RE = re.compile(
@@ -204,7 +230,7 @@ _SECONDARY_PHRASE_RE = re.compile(
     r"memoria\s+ram|ram\s+ddr|sodimm|mochila|bolso|maletin|compatible\s+con|"
     r"repuesto\s+(?:de|para)|muestra\s+de|tester\s+de|decant\s+de|"
     r"crema\s+(?:corporal|de\s+manos|hidrat)|body\s+splash|splash\s+corporal|"
-    r"locion\s+corporal)\b"
+    r"locion\s+corporal|perfume\s+de\s+cartera|travel\s*size)\b"
 )
 
 _PRIMARY_LEAD_RE = re.compile(
@@ -258,15 +284,39 @@ def _title_has_category(hay: str, token: str) -> bool:
 def _has_fragrance_evidence(hay: str) -> bool:
     if _HYGIENE_OR_CARE_RE.search(hay):
         return False
+    if _FRAGRANCE_ALIEN_RE.search(hay):
+        return False
+    if _FRAGRANCE_SAMPLE_RE.search(hay):
+        return False
+    if _FRAGRANCE_TINY_ML_RE.search(hay) and not _FRAGRANCE_STRONG_RE.search(hay):
+        return False
     if _FRAGRANCE_STRONG_RE.search(hay):
         return True
-    if _FRAGRANCE_LEAD_RE.match(hay):
+    if _FRAGRANCE_LEAD_RE.match(hay) and _FRAGRANCE_ML_RE.search(hay):
         return True
-    if _FRAGRANCE_ML_RE.search(hay) and not _FRAGRANCE_ADJUNCT_RE.search(hay):
+    if _FRAGRANCE_LEAD_RE.match(hay) and re.search(
+        r"\b(?:hombre|mujer|unisex|men|women|kids|infantil|ninos?|ninas?)\b", hay
+    ):
         return True
-    if re.search(r"\b(?:colonia|fragancia|fragancias|parfum)\b", hay):
+    if _FRAGRANCE_ML_RE.search(hay) and not _FRAGRANCE_ADJUNCT_RE.search(hay) and re.search(
+        r"\b(?:hombre|mujer|unisex|men|women|pour\s+homme|pour\s+femme|him|her)\b", hay
+    ):
         return True
-    if re.search(r"\bperfumes?\b", hay) and not _FRAGRANCE_ADJUNCT_RE.search(hay):
+    if re.search(r"\b(?:colonia|fragancia|fragancias)\b", hay) and _FRAGRANCE_ML_RE.search(hay):
+        return True
+    return False
+
+
+def _has_notebook_evidence(hay: str) -> bool:
+    if _NOTEBOOK_PAPER_RE.search(hay):
+        return False
+    if _NOTEBOOK_STRONG_RE.search(hay):
+        return True
+    if re.search(r"\blaptops?\b", hay):
+        return True
+    if re.search(r"\b\d{1,2}(?:[.,]\d)?\s*(?:\"|''|pulg|inch)", hay) and re.search(
+        r"\b(?:\d+\s*gb|\d+\s*ssd)\b", hay
+    ):
         return True
     return False
 
@@ -274,6 +324,8 @@ def _has_fragrance_evidence(hay: str) -> bool:
 def _has_class_evidence(hay: str, token: str) -> bool:
     if token in _FRAGRANCE_FAMILY:
         return _has_fragrance_evidence(hay)
+    if token in _NOTEBOOK_FAMILY:
+        return _has_notebook_evidence(hay)
     return _title_has_category(hay, token)
 
 
@@ -392,6 +444,7 @@ def title_relevance_score(title: str, product: str) -> float:
         len(alphas) == 1
         and alphas[0] in _CATEGORY_OPTIONAL
         and alphas[0] not in _FRAGRANCE_FAMILY
+        and alphas[0] not in _NOTEBOOK_FAMILY
         and _title_has_category(hay, alphas[0])
     ):
         score = max(score, 0.85 if _head_mentions_query(hay, tokens) else 0.65)
@@ -425,6 +478,9 @@ def title_matches_query(title: str, product: str) -> bool:
         only = alphas[0]
         if only in _FRAGRANCE_FAMILY:
             if not _has_fragrance_evidence(hay):
+                return False
+        elif only in _NOTEBOOK_FAMILY:
+            if not _has_notebook_evidence(hay):
                 return False
         elif only in _CATEGORY_OPTIONAL:
             if not _has_class_evidence(hay, only) and not _title_has_category(hay, only):
