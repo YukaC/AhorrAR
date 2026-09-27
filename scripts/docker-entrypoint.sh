@@ -17,11 +17,21 @@ if [ -z "${MELI_TOKEN_FILE:-}" ]; then
 fi
 mkdir -p "$(dirname "${MELI_TOKEN_FILE}")"
 
+# Prefer the image .venv (baked at build). Avoid `uv run` re-sync on Micro/Render.
+VENV_BIN="/app/scraper/.venv/bin"
+SCRAPER_PY="${VENV_BIN}/python"
+SCRAPER_CMD="${VENV_BIN}/ahorrar-scraper"
+if [ ! -x "$SCRAPER_PY" ] || [ ! -x "$SCRAPER_CMD" ]; then
+  echo "[entrypoint] missing baked venv at ${VENV_BIN}; falling back to uv run" >&2
+  SCRAPER_PY="uv run python"
+  SCRAPER_CMD="uv run ahorrar-scraper"
+fi
+
 # Seed token file from env secrets on first boot (file wins after refresh when writable).
 if [ -n "${MELI_ACCESS_TOKEN:-}" ] && [ ! -f "${MELI_TOKEN_FILE}" ]; then
   echo "[entrypoint] seeding ${MELI_TOKEN_FILE} from env secrets"
   cd /app/scraper
-  uv run python -c "from ahorrar_scraper.meli_auth import persist_tokens; persist_tokens()" || true
+  $SCRAPER_PY -c "from ahorrar_scraper.meli_auth import persist_tokens; persist_tokens()" || true
 fi
 
 cleanup() {
@@ -33,7 +43,7 @@ trap cleanup EXIT INT TERM
 
 echo "[entrypoint] starting Scrapling on ${SCRAPER_HOST}:${SCRAPER_PORT}"
 cd /app/scraper
-uv run ahorrar-scraper &
+$SCRAPER_CMD &
 SCRAPER_PID=$!
 
 i=0

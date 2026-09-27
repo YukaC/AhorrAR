@@ -64,6 +64,7 @@ Live: **https://ahorrarg.vercel.app** (Vercel) + **https://ahorrar-api.fly.dev**
 Detalle en [`docs/DEPLOY.md`](docs/DEPLOY.md):
 
 - **Vercel** y **Fly** están conectados al repo GitHub: un push a `main` redeploya UI y API.
+- **OCI Micro (GHCR):** push a `main` (paths Docker/API/scraper) publica `ghcr.io/yukac/ahorrar-api` (`:micro`, `:main`) vía [`.github/workflows/docker-ghcr.yml`](.github/workflows/docker-ghcr.yml).
 - Deploy manual de emergencia:
   ```bash
   ./scripts/deploy-api.sh          # Fly (API + Scrapling)

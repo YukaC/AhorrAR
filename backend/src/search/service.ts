@@ -154,8 +154,14 @@ export async function runLiveSearch(
         logger.info(`scrapling ok: ${via.results.length} results in ${via.stats.elapsedMs}ms`);
         return via;
       }
-      if (via !== null && via.results.length === 0 && cfg.crawler === 'scrapling') {
-        return via;
+      if (cfg.crawler === 'scrapling') {
+        // Strict scrapling: never fall back to Node/Chromium (Micro/Render HTTP-only images).
+        if (via !== null) {
+          return via;
+        }
+        throw new Error(
+          `Scrapling falló en ${cfg.scraplingUrl} (sin resultados ni stream). Revisá logs del sidecar.`,
+        );
       }
       logger.info('scrapling empty/fail → legacy fallback');
     } else if (cfg.crawler === 'scrapling') {

@@ -32,7 +32,7 @@ scraper: GET :4100/health · POST :4100/crawl {product,maxResults,maxNodes,maxDe
 cmd: `npm run dev` (scraper+backend+frontend) · `cd scraper && uv sync && uv run ahorrar-scraper`
 cmd: `npm --prefix frontend run build` → tsc --noEmit && vite build && node scripts/prerender-home.mjs (prerender+check)
 env: PORT · HOST · CORS_ORIGINS · CRAWLER · SCRAPLING_URL · INCLUDE_ML · MELI_* · STEALTH_FETCH · STEALTH_PROXY
-deploy: Vercel UI + **Render Free API puente** (`render.yaml`) · OCI Always Free ARM **DISABLED** hasta cupo A1 (`deploy/oci/`) · Fly caído · docs/PROD.md · docs/DEPLOY.md
+deploy: Vercel UI + **OCI Micro** API primario (`147.15.72.239.sslip.io`) · Render Free **backup** · A1 ARM DISABLED cupo · Fly muerto · docs/PROD.md · deploy/oci/MICRO-PLAN.md
 docs: `docs/ARCHITECTURE.md` (vista ampliada) · `docs/progress.md` (estado narrativo) · `docs/testing-strategy.md` (mapa test→§V) · `docs/decisions/*.md` (ADRs) · `docs/ATTRIBUTIONS.md` (inspiraciones/licencias terceros) · `AGENTS.md` (instrucciones de sesión) · `ROADMAP.md` · `CHANGELOG.md` · `DONT_DO.md` (decisiones no-repetición)
 
 §V
@@ -116,7 +116,7 @@ T45|x|relevancia universal: class evidence (perfume≠crema) + secondary lead es
 T46|x|UI result caps 25→50→100 + SearchBar sync chips/query + early-stop scraper al cap pedido · API maxResults≤100|V17,V18
 T47|x|buscador realista: isRelevantResult publish floor + cross-class family conflict + whole-word tokens · pipeline+crawl|V29,V28
 T48|x|Render Free 512MB: render.yaml (FETCH_WORKERS=2, MAX_NODES techo) + nodesBudgetFor ceiling + caches acotados + api-wake/focus + caps 25→50|§I,V5,V16,V17
-T49|~|OCI Always Free prep (VCN/guards/scripts) DISABLED prod hasta cupo A1; puente Render + Vercel fuera de Fly muerto|§I
+T49|x|OCI Micro E2.1 primario: reserved IP + compose.micro + GHCR workflow + bootstrap + Vercel cutover; Render backup; A1 opcional|§I
 
 §B
 id|date|cause|fix

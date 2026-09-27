@@ -1,9 +1,45 @@
 # Deploy — Oracle Cloud Always Free (API + Scrapling)
 
-> **DISABLED for production** until A1 capacity — see [`DISABLED.md`](DISABLED.md) and [`STATUS.md`](STATUS.md).  
-> Prod API bridge today: **Render Free** ([`docs/PROD.md`](../../docs/PROD.md)).
+> **Prod API hoy:** **OCI Micro** `https://147.15.72.239.sslip.io` ([`docs/PROD.md`](../../docs/PROD.md)).  
+> **Backup:** Render Free — [`REVERT-RENDER.md`](REVERT-RENDER.md).  
+> **A1 ARM full:** futuro upgrade cuando haya cupo — [`DISABLED.md`](DISABLED.md).
 
-Host the **full** API profile (warm cache, ML, higher crawl caps) on a single **ARM** VM. Frontend stays on [Vercel](https://ahorrarg.vercel.app); point `VITE_API_BASE` at this host **only after** the VM is up.
+Frontend on [Vercel](https://ahorrarg.vercel.app) con `VITE_API_BASE` → Micro.
+
+---
+
+## Micro E2.1 (x86, ~1 GB — primario)
+
+Always Free `VM.Standard.E2.1.Micro`. Preferir pull GHCR amd64; build en Micro solo fallback.
+
+| Item | Detalle |
+|---|---|
+| Instancia | `ahorrar-api-micro` · IP reservada **147.15.72.239** · `147.15.72.239.sslip.io` |
+| Compose | `docker-compose.micro.yml` — `mem_limit` ~768m, perfil slim (knobs tipo Render) |
+| Imagen | `ghcr.io/yukac/ahorrar-api:micro` (CI: `.github/workflows/docker-ghcr.yml`) |
+| Env plantilla | `deploy/oci/.env.micro.example` → copiar a `.env` en la VM (nunca commit) |
+| Bootstrap | `./scripts/oci-bootstrap-micro.sh 147.15.72.239 [/path/to/env]` |
+| Smoke | `DOMAIN=147.15.72.239.sslip.io ./scripts/oci-micro-smoke.sh` |
+| Revert prod | [`REVERT-RENDER.md`](REVERT-RENDER.md) |
+
+En la VM (tras bootstrap):
+
+```bash
+cd /opt/ahorrar/deploy/oci
+docker compose -f docker-compose.micro.yml --profile caddy pull
+docker compose -f docker-compose.micro.yml --profile caddy up -d
+curl -fsS "https://${DOMAIN}/api/health"
+```
+
+Env: `./scripts/oci-make-env.sh --micro` (mezcla `.env.micro.example` + `scraper/.env` MELI_*).
+
+Vercel (activo): `VITE_API_BASE=https://147.15.72.239.sslip.io`, `VITE_FREE_HOST=1`.
+
+---
+
+## A1 Flex ARM (full profile — upgrade futuro)
+
+Host the **full** API profile (warm cache, ML, higher crawl caps) on a single **ARM** VM when Oracle grants `VM.Standard.A1.Flex` capacity.
 
 ## Always Free guardrails (read before creating anything)
 
@@ -92,8 +128,11 @@ Default health check hits `http://127.0.0.1:4000/api/health` (works even when on
 
 | File | Role |
 |---|---|
-| `docker-compose.yml` | API on `127.0.0.1:4000`; optional `caddy` profile (`--profile caddy`) |
-| `.env.example` | `DOMAIN`, `API_UPSTREAM`, full OCI env profile |
+| `docker-compose.micro.yml` | Micro: GHCR pull, slim mem, `--profile caddy` |
+| `docker-compose.yml` | A1 full: build on VM, higher caps |
+| `.env.example` | A1 full: `DOMAIN`, `API_UPSTREAM`, env profile |
+| `MICRO-PLAN.md` | Plan Micro + Render backup + cutover |
+| `REVERT-RENDER.md` | Runbook Vercel + ML → Render |
 | `Caddyfile` | `{$DOMAIN}` → `{$API_UPSTREAM}` |
 | `setup-vm.sh` | Docker + compose plugin |
 | `always-free-guards.md` | Hard $0 rules for the tenancy |

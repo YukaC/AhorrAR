@@ -10,6 +10,8 @@ RUN npm ci --omit=dev
 
 FROM ghcr.io/astral-sh/uv:0.9-python3.12-bookworm-slim AS py-deps
 WORKDIR /app/scraper
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
+    UV_LINK_MODE=copy
 COPY scraper/pyproject.toml scraper/uv.lock ./
 COPY scraper/README.md ./README.md
 COPY scraper/src ./src
@@ -17,10 +19,19 @@ RUN uv sync --frozen --no-dev
 
 FROM node:22-bookworm-slim
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates curl \
+    ca-certificates curl libsqlite3-0 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=ghcr.io/astral-sh/uv:0.9 /uv /usr/local/bin/uv
+# CPython that the copied .venv expects (node image has no system Python 3.12).
+COPY --from=py-deps /usr/local/bin/python3.12 /usr/local/bin/python3.12
+COPY --from=py-deps /usr/local/lib/python3.12 /usr/local/lib/python3.12
+COPY --from=py-deps /usr/local/lib/libpython3.12.so.1.0 /usr/local/lib/libpython3.12.so.1.0
+COPY --from=py-deps /usr/local/lib/libpython3.12.so /usr/local/lib/libpython3.12.so
+COPY --from=py-deps /usr/local/lib/libpython3.so /usr/local/lib/libpython3.so
+RUN ln -sf /usr/local/bin/python3.12 /usr/local/bin/python3 \
+  && ln -sf /usr/local/bin/python3.12 /usr/local/bin/python \
+  && ldconfig /usr/local/lib
 
 WORKDIR /app
 COPY shared ./shared
@@ -30,10 +41,13 @@ COPY backend/src ./backend/src
 COPY backend/tsconfig.json ./backend/tsconfig.json
 COPY --from=py-deps /app/scraper /app/scraper
 COPY scripts/docker-entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN chmod +x /entrypoint.sh \
+  && /app/scraper/.venv/bin/python -c "import ahorrar_scraper" \
+  && test -x /app/scraper/.venv/bin/ahorrar-scraper
 
 ENV NODE_ENV=production \
     PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
+    UV_NO_SYNC=1 \
     CRAWLER=scrapling \
     SCRAPLING_URL=http://127.0.0.1:4100 \
     SCRAPER_HOST=127.0.0.1 \

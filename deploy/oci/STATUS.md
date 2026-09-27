@@ -1,7 +1,23 @@
 # OCI migration status — 2026-09-26
 
-> **DISABLED for production** until Ampere A1 capacity exists in `sa-saopaulo-1`.  
-> Current prod API bridge: **Render Free** — see [`docs/PROD.md`](../../docs/PROD.md).
+> **Prod API hoy:** **Render Free** (puente) — [`docs/PROD.md`](../../docs/PROD.md).  
+> **Siguiente primario:** E2.1.Micro — [`MICRO-PLAN.md`](MICRO-PLAN.md) (cutover pendiente Fase D).  
+> **A1 full:** sigue **bloqueado** por cupo Oracle; upgrade futuro, no bloquea Micro.
+
+## Micro E2.1 (primario planificado)
+
+| Campo | Valor |
+|---|---|
+| Instancia | `ahorrar-api-micro` (display name; antes `watchdog-micro`) |
+| Shape | `VM.Standard.E2.1.Micro` · **RUNNING** · `sa-saopaulo-1` |
+| **Reserved Public IP** | **147.15.72.239** |
+| **DOMAIN** | `147.15.72.239.sslip.io` |
+| Public IP OCID | `ocid1.publicip.oc1.sa-saopaulo-1.amaaaaaa7brmyhaamypaclpsgdex2jlsd7fl7qwavdl4eu76y2r5r7aftw6q` |
+| Stack en VM | **UP** — Docker + Caddy + swap 2G + anti-idle cron 4h · scrapling OK |
+| DOMAIN health | `https://147.15.72.239.sslip.io/api/health` → ok |
+| Imagen | build local en Micro (`ghcr.io/yukac/ahorrar-api:micro`); workflow GHCR listo (push `main` → CI) |
+
+**Cutover D hecho:** Vercel Production apunta a Micro. Render = backup.
 
 ## Hecho ($0 en tarjeta)
 
@@ -10,34 +26,43 @@
 | VCN + subnet pública + IGW + SL 22/80/443 | OK · solo home `sa-saopaulo-1` |
 | SSH `~/.ssh/oci_ahorrar` | OK |
 | Budget `ahorrar-zero-spend-guard` $1/mes + alertas 1% email | OK (anti-cargo) |
-| AMD Micro `watchdog-micro` | RUNNING · 1 GB · **no** corre AhorrAR |
-| Artefactos `deploy/oci/*` + scripts `scripts/oci-*` | OK en repo |
+| Micro + **IP reservada** en VNIC | OK (B1) |
+| `docker-compose.micro.yml` + `scripts/oci-bootstrap-micro.sh` + `oci-micro-smoke.sh` | OK en repo |
+| Workflow `.github/workflows/docker-ghcr.yml` (amd64 → GHCR) | OK en repo |
 | Retry A1 + watchdog (timeout 90s) + bootstrap watcher | opcional en laptop |
 | Support ticket formal | **bloqueado** (cuenta free sin CSI) |
 
-## Bloqueado (Oracle)
+## Bloqueado (Oracle — solo A1 Flex)
 
 - `LaunchInstance` → `InternalError` / **Out of host capacity** para `VM.Standard.A1.Flex`
 - Región con **1 solo AD** → no hay “probar otro AD”
 - Docs oficiales: reintentar / otra shape / esperar · capacity no garantizada en Always Free
 
-## Scripts (no prod hasta IP)
+## Scripts
 
 | Script | Rol |
 |---|---|
+| `oci-bootstrap-micro.sh` | Micro: swap, Docker, pull GHCR, compose micro + Caddy, anti-idle |
+| `oci-micro-smoke.sh` | Smoke health (+ búsqueda opcional) contra sslip |
 | `oci-a1-rotate-retry.sh` | Intenta A1 1 OCPU/6 GB (timeout, rota imagen+FD) |
 | `oci-a1-watchdog.sh` | Reinicia rotator si el log se estanca |
-| `oci-watch-and-bootstrap.sh` | Al ver `public_ip=` → bootstrap |
-| `oci-finish-when-ready.sh` | make-env + bootstrap + hint Vercel |
-| `oci-make-env.sh` / `oci-bootstrap-remote.sh` | `.env` + Docker/Caddy/anti-idle en la VM |
-| `oci-anti-idle.sh` | Cron 6h anti-reclaim 7d |
+| `oci-watch-and-bootstrap.sh` | Al ver `public_ip=` → bootstrap **A1** |
+| `oci-finish-when-ready.sh` | make-env + bootstrap A1 + hint Vercel |
+| `oci-make-env.sh` / `oci-bootstrap-remote.sh` | `.env` + Docker/Caddy/anti-idle perfil **A1** |
+| `oci-anti-idle.sh` | Cron 4–6h anti-reclaim 7d |
 
-## Activar OCI (cuando haya cupo)
+## Cutover Micro (cuando Fase C smoke OK)
 
-1. Confirmar instancia `ahorrar-api` RUNNING + IP pública  
+1. `https://147.15.72.239.sslip.io/api/health` → `ok:true`  
+2. Vercel Production: `VITE_API_BASE=https://147.15.72.239.sslip.io`, `VITE_FREE_HOST=1` + redeploy  
+3. ML DevCenter: redirect + webhook a sslip  
+4. Render **no** apagar (backup) — revert: [`REVERT-RENDER.md`](REVERT-RENDER.md)
+
+## Cutover A1 (cuando haya cupo — futuro)
+
+1. Instancia `ahorrar-api` RUNNING + IP  
 2. `./scripts/oci-finish-when-ready.sh <IP>`  
-3. Vercel Production: `VITE_API_BASE=https://<IP>.sslip.io`, `VITE_FREE_HOST=0` + redeploy  
-4. Apagar / no usar Render como primario  
+3. Vercel: `VITE_API_BASE=https://<IP>.sslip.io`, `VITE_FREE_HOST=0` + redeploy  
 
 ## Anti-cargo
 

@@ -43,4 +43,5 @@ Thumbs.db
 .vercel
 .env*
 !**/.env.example
+!**/.env.micro.example
 tmp-*.json

@@ -1,12 +1,43 @@
 #!/usr/bin/env bash
-# Merge deploy/oci/.env.example + local scraper/.env MELI_* → /tmp/ahorrar-oci.env
+# Merge deploy/oci/.env[.micro].example + local scraper/.env MELI_* → env file.
 # Never commit the output.
+#
+# Usage:
+#   ./scripts/oci-make-env.sh                         # A1 full → /tmp/ahorrar-oci.env
+#   ./scripts/oci-make-env.sh /tmp/out.env            # A1 full → custom path
+#   ./scripts/oci-make-env.sh --micro                 # Micro slim → /tmp/ahorrar-oci-micro.env
+#   ./scripts/oci-make-env.sh --micro /tmp/out.env
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-EXAMPLE="${ROOT}/deploy/oci/.env.example"
 SCRAPER_ENV="${ROOT}/scraper/.env"
-OUT="${1:-/tmp/ahorrar-oci.env}"
+PROFILE=full
+OUT=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --micro)
+      PROFILE=micro
+      shift
+      ;;
+    -*)
+      echo "unknown flag: $1" >&2
+      exit 1
+      ;;
+    *)
+      OUT="$1"
+      shift
+      ;;
+  esac
+done
+
+if [[ "$PROFILE" == "micro" ]]; then
+  EXAMPLE="${ROOT}/deploy/oci/.env.micro.example"
+  OUT="${OUT:-/tmp/ahorrar-oci-micro.env}"
+else
+  EXAMPLE="${ROOT}/deploy/oci/.env.example"
+  OUT="${OUT:-/tmp/ahorrar-oci.env}"
+fi
 
 if [[ ! -f "$EXAMPLE" ]]; then
   echo "missing $EXAMPLE" >&2
