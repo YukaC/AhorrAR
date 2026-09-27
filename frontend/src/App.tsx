@@ -9,7 +9,7 @@ import type { SortMode } from './components/SortBar';
 import { EMPTY_FILTERS, filterAndSort, hasActiveFilters } from './lib/filterResults';
 import type { Filters } from './lib/filterResults';
 import { DEFAULT_RESULT_CAP, hostResultCaps, nextResultCap } from './lib/result-caps';
-import { pingApiHealth, startApiKeepWarm } from './lib/api-wake';
+import { pingApiHealth, startApiKeepWarm, wakeApi } from './lib/api-wake';
 import ResultsGrid from './components/ResultsGrid';
 import EmptyState from './components/EmptyState';
 import ErrorState from './components/ErrorState';
@@ -31,8 +31,18 @@ export default function App() {
   const [product, setProduct] = useState('');
   const [resultCap, setResultCap] = useState<number>(DEFAULT_RESULT_CAP);
 
-  // Keep Render Free awake while the tab is visible (JS ping < 15m idle).
-  useEffect(() => startApiKeepWarm(), []);
+  // Render Free: start cold-start as soon as the page opens (while the user types),
+  // then keep-warm every 12m while the tab stays visible.
+  useEffect(() => {
+    if (!IS_FREE_HOST) return undefined;
+    const ctl = new AbortController();
+    void wakeApi(ctl.signal).catch(() => undefined);
+    const stopKeepWarm = startApiKeepWarm();
+    return () => {
+      ctl.abort();
+      stopKeepWarm();
+    };
+  }, []);
 
   function handleGoHome() {
     setSort('price-asc');
