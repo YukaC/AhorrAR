@@ -26,10 +26,21 @@ echo "[micro-pull] pulling ${IMAGE}"
 docker compose -f "$COMPOSE_FILE" --profile caddy pull
 
 echo "[micro-pull] up -d"
-docker compose -f "$COMPOSE_FILE" --profile caddy up -d
+# Retry recreate — concurrent CI runs can race on container removal.
+for attempt in 1 2 3 4 5; do
+  if docker compose -f "$COMPOSE_FILE" --profile caddy up -d; then
+    break
+  fi
+  echo "[micro-pull] up failed (attempt ${attempt}); waiting…"
+  sleep $((attempt * 3))
+  if [[ "$attempt" -eq 5 ]]; then
+    echo "[micro-pull] up failed after retries" >&2
+    exit 1
+  fi
+done
 
 echo "[micro-pull] health"
-sleep 3
-curl -fsS --max-time 15 http://127.0.0.1:4000/api/health
+sleep 5
+curl -fsS --max-time 20 http://127.0.0.1:4000/api/health
 echo
 echo "[micro-pull] done"
