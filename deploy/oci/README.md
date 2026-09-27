@@ -16,7 +16,9 @@ Always Free `VM.Standard.E2.1.Micro`. Preferir pull GHCR amd64; build en Micro s
 |---|---|
 | Instancia | `ahorrar-api-micro` · IP reservada **147.15.72.239** · `147.15.72.239.sslip.io` |
 | Compose | `docker-compose.micro.yml` — `mem_limit` ~768m, perfil slim (knobs tipo Render) |
-| Imagen | `ghcr.io/yukac/ahorrar-api:micro` (CI: `.github/workflows/docker-ghcr.yml`) |
+| Imagen | `ghcr.io/yukac/ahorrar-api:micro` (CI build+push+**auto-deploy** SSH → Micro) |
+| Auto-deploy | Push a `main` (paths API) → Actions `deploy-micro` → `scripts/oci-micro-pull.sh` |
+| Secrets GH | `OCI_MICRO_HOST`, `OCI_MICRO_SSH_KEY` |
 | Env plantilla | `deploy/oci/.env.micro.example` → copiar a `.env` en la VM (nunca commit) |
 | Bootstrap | `./scripts/oci-bootstrap-micro.sh 147.15.72.239 [/path/to/env]` |
 | Smoke | `DOMAIN=147.15.72.239.sslip.io ./scripts/oci-micro-smoke.sh` |

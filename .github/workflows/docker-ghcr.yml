@@ -1,4 +1,5 @@
 # MICRO-PLAN Phase A2 — build amd64 API image for OCI E2 Micro (pull on VM, no build on host).
+# After push: auto-SSH to Micro → pull :micro + recreate (secrets OCI_MICRO_HOST, OCI_MICRO_SSH_KEY).
 # See deploy/oci/MICRO-PLAN.md
 
 name: Docker GHCR
@@ -10,9 +11,12 @@ on:
     paths:
       - Dockerfile
       - scripts/docker-entrypoint.sh
+      - scripts/oci-micro-pull.sh
       - backend/**
       - scraper/**
       - shared/**
+      - deploy/oci/docker-compose.micro.yml
+      - .github/workflows/docker-ghcr.yml
   workflow_dispatch:
 
 permissions:
@@ -61,3 +65,38 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # Anonymous pull on Micro (no docker login on the 1 GB VM).
+      - name: Set package visibility public
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api --method PUT \
+            -H "Accept: application/vnd.github+json" \
+            "/user/packages/container/ahorrar-api/visibility" \
+            -f visibility=public \
+            || echo "WARN: could not set public visibility (set manually in GHCR package settings)"
+
+  deploy-micro:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Pull new image on OCI Micro
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.OCI_MICRO_HOST }}
+          username: ubuntu
+          key: ${{ secrets.OCI_MICRO_SSH_KEY }}
+          script_stop: true
+          command_timeout: 15m
+          script: |
+            set -euo pipefail
+            cd /opt/ahorrar
+            sudo git fetch --depth 1 origin main || true
+            sudo git checkout -f origin/main -- \
+              scripts/oci-micro-pull.sh \
+              deploy/oci/docker-compose.micro.yml \
+              deploy/oci/Caddyfile || true
+            sudo chmod +x scripts/oci-micro-pull.sh
+            sudo AHORRAR_GIT_PULL=0 ./scripts/oci-micro-pull.sh
