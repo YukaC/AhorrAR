@@ -5,8 +5,8 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 LOG="${1:-/tmp/oci-vm-a-retry.log}"
 ENV_FILE="${2:-/tmp/ahorrar-oci.env}"
 
-echo "[watch] waiting for public_ip in $LOG"
-for i in $(seq 1 720); do
+echo "[watch] waiting for public_ip in $LOG (no timeout)"
+while true; do
   if [[ -f "$LOG" ]] && grep -q '^public_ip=' "$LOG"; then
     IP=$(grep '^public_ip=' "$LOG" | tail -1 | cut -d= -f2)
     if [[ -n "$IP" && "$IP" != "null" ]]; then
@@ -20,5 +20,3 @@ for i in $(seq 1 720); do
   fi
   sleep 30
 done
-echo "[watch] timed out waiting for IP" >&2
-exit 1

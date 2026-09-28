@@ -35,8 +35,11 @@
 ## Bloqueado (Oracle — solo A1 Flex)
 
 - `LaunchInstance` → `InternalError` / **Out of host capacity** para `VM.Standard.A1.Flex`
+- Cuota tenancy OK (`standard-a1-core-count` avail=2 used=0 · memory avail=12) — no es límite de cuenta
 - Región con **1 solo AD** → no hay “probar otro AD”
+- Probe 2026-09-27: FD1/2/3 + auto → Out of host capacity · Micro E2.1 sigue RUNNING
 - Docs oficiales: reintentar / otra shape / esperar · capacity no garantizada en Always Free
+- Rotator SDK: `scripts/oci-a1-rotate-retry.py` (CLI cuelga) + `oci-a1-watchdog.sh` · log `/tmp/oci-vm-a-retry.log`
 
 ## Scripts
 
@@ -44,7 +47,8 @@
 |---|---|
 | `oci-bootstrap-micro.sh` | Micro: swap, Docker, pull GHCR, compose micro + Caddy, anti-idle |
 | `oci-micro-smoke.sh` | Smoke health (+ búsqueda opcional) contra sslip |
-| `oci-a1-rotate-retry.sh` | Intenta A1 1 OCPU/6 GB (timeout, rota imagen+FD) |
+| `oci-a1-rotate-retry.py` | Intenta A1 1 OCPU/6 GB vía SDK (rápido; preferido) |
+| `oci-a1-rotate-retry.sh` | Fallback CLI (timeout 90s; a menudo cuelga) |
 | `oci-a1-watchdog.sh` | Reinicia rotator si el log se estanca |
 | `oci-watch-and-bootstrap.sh` | Al ver `public_ip=` → bootstrap **A1** |
 | `oci-finish-when-ready.sh` | make-env + bootstrap A1 + hint Vercel |

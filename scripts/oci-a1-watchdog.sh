@@ -26,7 +26,12 @@ echo $$ > /tmp/oci-a1-watchdog.pid
 
 while true; do
   echo "[watchdog $(date -Is)] starting rotator" | tee -a "$LOG"
-  bash "$ROOT/scripts/oci-a1-rotate-retry.sh" &
+  # Prefer SDK rotator (oci CLI often hangs 60–90s with empty stderr).
+  if [[ -x "$ROOT/scripts/oci-a1-rotate-retry.py" ]]; then
+    "$ROOT/scripts/oci-a1-rotate-retry.py" &
+  else
+    bash "$ROOT/scripts/oci-a1-rotate-retry.sh" &
+  fi
   CHILD_PID=$!
   while kill -0 "$CHILD_PID" 2>/dev/null; do
     if [[ -f "$LOG" ]]; then
