@@ -334,6 +334,11 @@ def parse_woo_store_api(url: str, body: str) -> list[dict[str, Any]]:
         price = _woo_price(prices)
         if price is None or price <= 0:
             continue
+        # Stock: Store API is_in_stock / is_purchasable when present.
+        if product.get("is_in_stock") is False:
+            continue
+        if product.get("is_purchasable") is False:
+            continue
         if permalink in seen:
             continue
         seen.add(permalink)
@@ -415,6 +420,8 @@ def parse_shopify_suggest_or_products(url: str, body: str) -> list[dict[str, Any
         price = _shopify_price(product)
         if price is None or price <= 0:
             continue
+        if _shopify_out_of_stock(product):
+            continue
         product_url = _shopify_product_url(origin, product)
         if product_url is None or product_url in seen:
             continue
@@ -452,6 +459,26 @@ def _shopify_query_tokens(url: str) -> list[str]:
 def _title_matches_tokens(title: str, tokens: list[str]) -> bool:
     lower = title.lower()
     return all(t in lower for t in tokens)
+
+
+def _shopify_out_of_stock(product: dict[str, Any]) -> bool:
+    """True when Shopify marks the product/variants unavailable."""
+    if product.get("available") is False:
+        return True
+    variants = product.get("variants")
+    if isinstance(variants, list) and variants:
+        any_available = False
+        saw_flag = False
+        for v in variants:
+            if not isinstance(v, dict):
+                continue
+            if "available" in v:
+                saw_flag = True
+                if v.get("available") is True:
+                    any_available = True
+        if saw_flag and not any_available:
+            return True
+    return False
 
 
 def _shopify_price(product: dict[str, Any]) -> float | None:

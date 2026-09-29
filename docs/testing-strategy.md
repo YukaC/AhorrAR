@@ -11,8 +11,8 @@
 - **Integration**: contrato `shared/contract.ts` (`contract.test.ts`), API (`api.test.ts`),
   streaming ndjson (`live.test.ts`), seeds e índice (`seeds.test.ts`).
 - **Frontend**: guards de contrato y formatters (`frontend/src/**/*.test.ts`).
-- **E2E**: manual sobre los procesos dev (curl a `/crawl/stream` y `/api/search/:id/events`).
-  No hay suite E2E automatizada todavía.
+- **E2E**: Playwright (`frontend/e2e`, `npm run test:e2e`) — SSE mock, sin Scrapling.
+  Live opcional: `E2E_LIVE=1` (no default). Manual: `npm run dev` + curl stream.
 
 ## Frameworks y comandos
 

@@ -7,6 +7,7 @@
 
 import { readFileSync, writeFileSync, renameSync } from 'node:fs';
 import type { SearchParams } from '../../../shared/contract.ts';
+import { isDiscoverableHostShape } from './host-allow.ts';
 
 export type ShopPlatform = 'vtex' | 'shopify' | 'woo' | 'tiendanube' | 'oscommerce' | 'unknown';
 
@@ -52,22 +53,26 @@ function loadArShops(): ArShopEntry[] {
   return _arShopsCache;
 }
 
-/** Read-modify-write atomically (tmp+rename); safe for concurrent Node/Python adds. */
+/** Read-modify-write atomically (tmp+rename); safe for concurrent Node/Python adds.
+ * §V32: structural allowlist only here (sync path). DNS/private IP checked async
+ * via `registerDiscoveredShopSafe` when callers can await.
+ */
 export function registerDiscoveredShop(host: string, category: string = 'general'): void {
   const clean = host.replace(/^www\./, '').toLowerCase();
-  if (clean === '') return;
+  if (clean === '' || !isDiscoverableHostShape(clean)) return;
   const shops = loadArShops();
   if (shops.some((s) => s.host === clean)) return;
+  // Discovered hosts start alive:false until probe confirms (§V32 untrusted).
   _arShopsCache = [
     ...shops,
-    { host: clean, category, curated: false, entry: null, platform: 'unknown', alive: true },
+    { host: clean, category, curated: false, entry: null, platform: 'unknown', alive: false },
   ];
   const tmp = `${arShopsPath()}.tmp`;
   const data = JSON.stringify({ version: INDEX_VERSION, shops: _arShopsCache }, null, 2);
   try {
     writeFileSync(tmp, data, 'utf8');
     renameSync(tmp, arShopsPath());
-  } catch (err) {
+  } catch {
     // Non-fatal: index is advisory.
   }
 }
@@ -383,7 +388,30 @@ export function buildSeedUrls(params: SearchParams): string[] {
     }
   }
 
-  const indexSeeds = [...sameEntry, ...sameNull, ...otherEntry, ...otherNull].slice(0, 20);
+  const apiFirst = (urls: string[]): string[] => {
+    const api: string[] = [];
+    const html: string[] = [];
+    for (const u of urls) {
+      if (
+        u.includes('catalog_system/pub/products/search') ||
+        u.includes('/wp-json/wc/') ||
+        u.includes('suggest.json') ||
+        u.includes('/products.json')
+      ) {
+        api.push(u);
+      } else {
+        html.push(u);
+      }
+    }
+    return [...api, ...html];
+  };
+
+  const indexSeeds = [
+    ...apiFirst(sameEntry),
+    ...apiFirst(sameNull),
+    ...apiFirst(otherEntry),
+    ...apiFirst(otherNull),
+  ].slice(0, 20);
 
   return [
     ...hubs,

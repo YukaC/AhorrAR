@@ -14,6 +14,9 @@ services:
       - .env
     environment:
       MELI_TOKEN_FILE: /data/meli_tokens.json
+      # glibc arena cap — also set in .env; reinforce here for Micro (§V33 ops)
+      MALLOC_ARENA_MAX: ${MALLOC_ARENA_MAX:-2}
+      FETCH_MAX_BYTES: ${FETCH_MAX_BYTES:-2000000}
     volumes:
       - meli_data:/data
     restart: unless-stopped

@@ -7,6 +7,15 @@
 import { isChallengePage } from './parsers/vtex.ts';
 
 const HTTP_TIMEOUT_MS = 12_000;
+const DEFAULT_FETCH_MAX_BYTES = 2_000_000;
+
+export function fetchMaxBytes(): number {
+  const raw = process.env['FETCH_MAX_BYTES'];
+  if (!raw) return DEFAULT_FETCH_MAX_BYTES;
+  const n = Number.parseInt(raw, 10);
+  if (!Number.isFinite(n)) return DEFAULT_FETCH_MAX_BYTES;
+  return Math.min(8_000_000, Math.max(64_000, n));
+}
 
 export class Semaphore {
   private active = 0;
@@ -86,7 +95,10 @@ export async function httpGetText(
     });
     if (!res.ok) return null;
     const contentType = res.headers.get('content-type') ?? '';
-    const text = await res.text();
+    const maxBytes = fetchMaxBytes();
+    const buf = await res.arrayBuffer();
+    const slice = buf.byteLength > maxBytes ? buf.slice(0, maxBytes) : buf;
+    const text = new TextDecoder('utf-8', { fatal: false }).decode(slice);
     if (!httpBodyLooksUseful(text, contentType)) return null;
     return { text, finalUrl: res.url || url, contentType };
   } catch {

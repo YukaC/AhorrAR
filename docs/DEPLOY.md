@@ -1,33 +1,35 @@
-# Deploy — Vercel (UI) + Render Free (API puente) · OCI Always Free (DISABLED hasta cupo A1)
+# Deploy — Vercel (UI) + OCI Micro (API primario) · Render backup · A1 DISABLED
 
-> **Estado vivo:** [`docs/PROD.md`](PROD.md) · OCI: [`deploy/oci/DISABLED.md`](../deploy/oci/DISABLED.md) / [`deploy/oci/STATUS.md`](../deploy/oci/STATUS.md)
+> **Estado vivo:** [`docs/PROD.md`](PROD.md) · Micro: [`deploy/oci/STATUS.md`](../deploy/oci/STATUS.md) · A1: [`deploy/oci/DISABLED.md`](../deploy/oci/DISABLED.md)
 
 ## URLs canónicas
 
 | Qué | URL |
 |---|---|
 | UI (prod) | https://ahorrarg.vercel.app |
-| API health (**activo ahora**: Render) | `https://ahorrar-api.onrender.com/api/health` |
-| API health (OCI, cuando haya A1) | `https://<IP>.sslip.io/api/health` |
+| API health (**primario**: OCI Micro) | `https://147.15.72.239.sslip.io/api/health` |
+| API health (**backup**: Render Free) | `https://ahorrar-api.onrender.com/api/health` |
 | API health (Fly) | ~~https://ahorrar-api.fly.dev/api/health~~ **caído** (no usar) |
 | Repo | https://github.com/YukaC/AhorrAR |
 
 Aliases Vercel (`ahorrar-wine.vercel.app`, `*-yukas-projects-*.vercel.app`, …) → **308** → `ahorrarg.vercel.app`.
 
-## Arquitectura (hoy — puente Render)
+## Arquitectura (hoy — OCI Micro)
 
 ```
 Browser → Vercel Hobby  https://ahorrarg.vercel.app
-              │  VITE_API_BASE=https://ahorrar-api.onrender.com
+              │  VITE_API_BASE=https://147.15.72.239.sslip.io
               │  VITE_FREE_HOST=1
               ▼
-         Render Free Docker  Node :4000 + Scrapling :4100
-              perfil 512 MB — render.yaml · sleep ~15m
+         OCI E2.1.Micro  Docker Node :4000 + Scrapling :4100 + Caddy :443
+              perfil slim ~1 GB — deploy/oci/docker-compose.micro.yml
 ```
 
-**OCI Always Free** (Ampere A1 full profile) está **preparado pero DISABLED** hasta que Oracle tenga host capacity en `sa-saopaulo-1`. Ver `deploy/oci/`.
+**Backup:** Render Free (cold start). Revert: [`deploy/oci/REVERT-RENDER.md`](../deploy/oci/REVERT-RENDER.md).
 
-## Arquitectura (objetivo — OCI)
+**OCI A1 Flex** (Ampere, perfil full) está **preparado pero DISABLED** hasta cupo en `sa-saopaulo-1`. Ver `deploy/oci/DISABLED.md`.
+
+## Arquitectura (objetivo — A1 cuando haya cupo)
 
 ```
 Browser → Vercel Hobby

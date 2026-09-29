@@ -10,7 +10,7 @@ Comparador de precios **live** en Argentina ([demo](https://ahorrarg.vercel.app)
 Ingresás un producto y el sistema rankea ofertas **reales** con envío confirmado,
 imagen y link + calendario comercial AR. Stack: Scrapling + Express + React · SSE en vivo · tiendas AR (VTEX/Woo/Shopify).
 
-**Repo:** [github.com/YukaC/AhorrAR](https://github.com/YukaC/AhorrAR) · **UI:** https://ahorrarg.vercel.app · **API:** https://ahorrar-api.fly.dev
+**Repo:** [github.com/YukaC/AhorrAR](https://github.com/YukaC/AhorrAR) · **UI:** https://ahorrarg.vercel.app · **API:** https://147.15.72.239.sslip.io (OCI Micro)
 
 ## Arquitectura
 
@@ -59,19 +59,21 @@ Env útil (`backend/.env.example`):
 
 ## Deploy (prod)
 
-Live: **https://ahorrarg.vercel.app** (Vercel) + **https://ahorrar-api.fly.dev** (Fly).
+Live: **https://ahorrarg.vercel.app** (Vercel) + **https://147.15.72.239.sslip.io** (OCI Micro E2.1).
 
-Detalle en [`docs/DEPLOY.md`](docs/DEPLOY.md):
+| Rol | Host |
+|---|---|
+| UI | Vercel Hobby |
+| API **primario** | OCI Micro (`147.15.72.239.sslip.io`) |
+| API **backup** | Render Free (`ahorrar-api.onrender.com`) |
+| Fly | **muerto** — no usar |
 
-- **Vercel** y **Fly** están conectados al repo GitHub: un push a `main` redeploya UI y API.
-- **OCI Micro (GHCR):** push a `main` (paths Docker/API/scraper) publica `ghcr.io/yukac/ahorrar-api` (`:micro`, `:main`) vía [`.github/workflows/docker-ghcr.yml`](.github/workflows/docker-ghcr.yml).
-- Deploy manual de emergencia:
-  ```bash
-  ./scripts/deploy-api.sh          # Fly (API + Scrapling)
-  ./scripts/deploy-frontend.sh --prod  # Vercel
-  ```
-- Canónico UI: `ahorrarg.vercel.app` (otros aliases del proyecto → 308 ahí).
-- CORS Fly: `CORS_ORIGINS=https://ahorrarg.vercel.app,http://localhost:5173`
+Detalle: [`docs/PROD.md`](docs/PROD.md) · [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
+- Push a `main` → Vercel (UI) + GHCR imagen API ([`.github/workflows/docker-ghcr.yml`](.github/workflows/docker-ghcr.yml)) → pull en Micro.
+- Caps UI en Micro: `VITE_FREE_HOST=1` (25→50). A1 futuro: `VITE_FREE_HOST=0`.
+- Canónico UI: `ahorrarg.vercel.app` (aliases → 308).
+- CORS: `CORS_ORIGINS=https://ahorrarg.vercel.app,http://localhost:5173`
 
 ## Docs
 
@@ -79,6 +81,9 @@ Detalle en [`docs/DEPLOY.md`](docs/DEPLOY.md):
 - Scraper: [`scraper/README.md`](scraper/README.md)
 - API: [`docs/API.md`](docs/API.md)
 - Deploy: [`docs/DEPLOY.md`](docs/DEPLOY.md)
+- Crawl policy: [`docs/CRAWL.md`](docs/CRAWL.md)
+- Golden baseline: [`docs/golden-baseline.md`](docs/golden-baseline.md)
+- ML coverage: [`docs/ML-COVERAGE.md`](docs/ML-COVERAGE.md)
 - Mercado Libre: [`docs/ML.md`](docs/ML.md)
 - Arquitectura: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - Progreso: [`docs/progress.md`](docs/progress.md) · Roadmap: [`ROADMAP.md`](ROADMAP.md)
@@ -90,5 +95,6 @@ Detalle en [`docs/DEPLOY.md`](docs/DEPLOY.md):
 - License: [MIT](LICENSE)
 - Privacy: [PRIVACY.md](PRIVACY.md)
 - Security: [SECURITY.md](SECURITY.md)
+- Crawl policy: [docs/CRAWL.md](docs/CRAWL.md)
 - Third-party notices: [NOTICE](NOTICE)
 - Contributing: [CONTRIBUTING.md](CONTRIBUTING.md)

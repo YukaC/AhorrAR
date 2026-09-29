@@ -7,7 +7,9 @@
 
 ## En una línea
 
-v0.2 · UI Vercel + API **Render Free** (`render.yaml`) · T1–T48 hechos; T17 descartado · ML ON + circuit breaker · wake/keep-warm JS cold start · 0 bugs §B abiertos.
+v0.4 · UI Vercel + API **OCI Micro** · T1–T60 hechos · golden P@10≈0.88 · 0 bugs §B abiertos.
+
+Smoke 2026-09-28: Micro `/api/health` → `ok:true`. Re-probe: alive=80 dead=9.
 
 ## Hecho
 
@@ -51,13 +53,21 @@ v0.2 · UI Vercel + API **Render Free** (`render.yaml`) · T1–T48 hechos; T17 
 - [x] Deploy prod Vercel+Fly conectados a GitHub (`main` → redeploy UI+API)
 - [x] ML ON en prod (`MELI_*` secrets + `INCLUDE_ML=1`; re-consent OK) — §T16 / `docs/ML.md`
 - [x] Dominio canónico UI `ahorrarg.vercel.app` (+ redirects 308)
-- [x] Live bench local (2026-09-24, scraper `:4100`, `includeMl=false`, maxResults=20):
+- [x] Live bench local (2026-09-28, scraper `:4100`, `includeMl=false`, maxResults=20) — post frase-núcleo + notebook-evidence tighten:
 
-  | query | elapsedMs | pagesFetched | #results | min price |
-  |---|---:|---:|---:|---:|
-  | `ryzen 5 5600` | 2001 | 11 | 20 | 226990 |
-  | `perfume bensimon` | 1126 | 6 | 20 | 31843.5 |
-  | `smart tv 55` | 3747 | 8 | 20 | 282999 |
+  | query | elapsedMs | pages | #results | hosts | min price |
+  |---|---:|---:|---:|---:|---:|
+  | `notebook` | 20680 | 32 | 20 | 7 | 26950† |
+  | `ryzen 5 5600` | 23572 | 30 | 20 | 7 | 229499 |
+  | `perfume bensimon` | 19505 | 21 | 20 | 5 | 31843.5 |
+  | `smart tv 55` | 11719 | 25 | 20 | 5 | 454537 |
+  | `heladera` | 24515 | 26 | 20 | 11 | 2796† |
+  | `cable` | 21466 | 37 | 20 | 6 | 2585 |
+  | `iphone 15` | 13244 | 25 | 12 | 2 | 1468514 |
+  | `mouse` | 25594 | 35 | 20 | 7 | 4990† |
+
+  † min crudo aún puede ser accesorio (`porta notebook`, `organizador heladera`, `mouse pad`) — top-3 de notebook/perfume/TV/ryzen OK.  
+  vs 2026-09-24 (ryzen/perfume/TV ~1–4 s): ahora ~12–24 s / más pages (deadline 30 s + más seeds API). Perfume min estable.
 
 ## Bugs conocidos
 
