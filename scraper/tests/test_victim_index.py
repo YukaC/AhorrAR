@@ -135,9 +135,97 @@ class ProbeFilterTest(unittest.TestCase):
         self.assertEqual(len(out), 1)
 
     def test_probe_budget_micro_factor(self) -> None:
-        self.assertEqual(probe_budget(10, set_full=False), 20)  # default factor 2
-        self.assertGreaterEqual(probe_budget(0, set_full=True), 2)
+        # Per-page hard cap (PROBE_PER_PAGE default 3) bounds fan-out.
+        self.assertEqual(probe_budget(10, set_full=False), 3)
+        self.assertEqual(probe_budget(0, set_full=True), 3)
+        with patch.dict("os.environ", {"PROBE_PER_PAGE": "8", "PROBE_BUDGET_FACTOR": "2"}):
+            self.assertEqual(probe_budget(10, set_full=False), 8)
 
 
-if __name__ == "__main__":
-    unittest.main()
+class RetainedSetSatisfiedTest(unittest.TestCase):
+    def test_false_until_cupo_full(self) -> None:
+        results = [
+            _offer("A", 100, "a.com.ar"),
+            _offer("B", 200, "b.com.ar"),
+            _offer("C", 300, "c.com.ar"),
+        ]
+        from ahorrar_scraper.crawl import is_retained_set_satisfied
+
+        self.assertFalse(
+            is_retained_set_satisfied(results, [], "cable", max_results=4, k_hosts=4)
+        )
+
+    def test_false_until_k_hosts(self) -> None:
+        from ahorrar_scraper.crawl import is_retained_set_satisfied
+
+        results = [
+            _offer("A", 100, "a.com.ar"),
+            _offer("A2", 110, "a.com.ar"),
+            _offer("B", 200, "b.com.ar"),
+            _offer("C", 300, "c.com.ar"),
+        ]
+        # 3 hosts only
+        self.assertFalse(
+            is_retained_set_satisfied(results, [], "cable", max_results=4, k_hosts=4)
+        )
+
+    def test_true_when_full_diverse_no_pending(self) -> None:
+        from ahorrar_scraper.crawl import is_retained_set_satisfied
+
+        results = [
+            _offer("A", 100, "a.com.ar"),
+            _offer("B", 200, "b.com.ar"),
+            _offer("C", 300, "c.com.ar"),
+            _offer("D", 400, "d.com.ar"),
+        ]
+        self.assertTrue(
+            is_retained_set_satisfied(results, [], "cable", max_results=4, k_hosts=4)
+        )
+
+    def test_false_when_pending_improves_tier_price(self) -> None:
+        from ahorrar_scraper.crawl import is_retained_set_satisfied
+
+        results = [
+            _offer("Cable USB A", 100, "a.com.ar"),
+            _offer("Cable USB B", 200, "b.com.ar"),
+            _offer("Cable USB C", 300, "c.com.ar"),
+            _offer("Cable USB D", 400, "d.com.ar"),
+        ]
+        better = [_offer("Cable USB Cheap", 50, "a.com.ar")]
+        self.assertFalse(
+            is_retained_set_satisfied(
+                results, better, "cable", max_results=4, k_hosts=4
+            )
+        )
+
+    def test_true_when_pending_cannot_improve(self) -> None:
+        from ahorrar_scraper.crawl import is_retained_set_satisfied
+
+        results = [
+            _offer("Cable USB A", 100, "a.com.ar"),
+            _offer("Cable USB B", 200, "b.com.ar"),
+            _offer("Cable USB C", 300, "c.com.ar"),
+            _offer("Cable USB D", 400, "d.com.ar"),
+        ]
+        worse = [_offer("Cable USB Expensive", 999, "a.com.ar")]
+        self.assertTrue(
+            is_retained_set_satisfied(
+                results, worse, "cable", max_results=4, k_hosts=4
+            )
+        )
+
+    def test_new_host_pending_blocks_satisfied(self) -> None:
+        from ahorrar_scraper.crawl import is_retained_set_satisfied
+
+        results = [
+            _offer("Cable USB A", 100, "a.com.ar"),
+            _offer("Cable USB B", 200, "b.com.ar"),
+            _offer("Cable USB C", 300, "c.com.ar"),
+            _offer("Cable USB D", 400, "d.com.ar"),
+        ]
+        new_host = [_offer("Cable USB E", 500, "e.com.ar")]
+        self.assertFalse(
+            is_retained_set_satisfied(
+                results, new_host, "cable", max_results=4, k_hosts=4
+            )
+        )

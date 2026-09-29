@@ -6,7 +6,7 @@ Comparador de precios AR: [PRODUCTO] → crawler LIVE rankea ofertas REALES (pre
 §C
 - stack: Node 26 TS API/UI + **Scrapling Python PRIMARY** (`scraper/`) · Express 5 · React 19 · Vite 7 · Tailwind 4
 - monorepo: backend/ + frontend/ + scraper/ + shared/contract.ts
-- crawl PRIMARY: Scrapling `FetcherSession` per worker (TLS impersonate rotativo) · fetch kinds `hub|api|html` · SERP + VTEX/Woo/Shopify JSON · early-stop agresivo · `STEALTH_FETCH` gated (default off prod; browser cascade solo local/opt-in) · ⊥ `capture_xhr`/Spiders (ROADMAP)
+- crawl PRIMARY: Scrapling `FetcherSession` per worker (TLS impersonate rotativo) · fetch kinds `hub|api|html` · SERP + VTEX/Woo/Shopify JSON · early-stop agresivo · **corte adaptativo por yield de host** (N vacíos/errores · streak=1 si set satisfecho · skip barren untried · `HOST_BUDGET_S`; ⊥ índice) · `STEALTH_FETCH` gated (default off prod; browser cascade solo local/opt-in) · ⊥ `capture_xhr`/Spiders (ROADMAP)
 - discovery AR: hubs SERP + VTEX + guessSearchUrls platform-aware (índice `platform`+`entry` → 1 URL; `alive:false` ⊥ seed) + **índice curado v3 `shared/ar-shops.json`** (gaming/perfumeria/electro/moda/bazar · `platform`/`alive`/`entry`) · probe offline `scripts/probe_ar_shops.py` · auto-expansión: tienda nueva con results se agrega al índice (persistida) · ⊥ indexar resultados directos del índice (siempre crawlear via guess URLs)
 - **streaming SSE**: `POST :4100/crawl/stream` → ndjson eventos (offer/progress/done) · backend reenvía `SearchProgress.results` (parciales) por SSE · frontend renderiza cards a medida llegan (skeleton real) · top-N caps UI 25→50→100 · ML share ≤50% on balance con resto
 - ranking: reputación tienda (curated) + precio + bonus financiación cuotas sin interés `installments` · VTEX `Installments` parse · **title relevance tier** (primario > débil/secundario, §V28)
@@ -33,7 +33,7 @@ cmd: `npm run dev` (scraper+backend+frontend) · `cd scraper && uv sync && uv ru
 cmd: `npm --prefix frontend run build` → tsc --noEmit && vite build && node scripts/prerender-home.mjs (prerender+check)
 env: PORT · HOST · CORS_ORIGINS · CRAWLER · SCRAPLING_URL · INCLUDE_ML · MELI_* · STEALTH_FETCH · STEALTH_PROXY
 deploy: Vercel UI + **OCI Micro** API primario (`147.15.72.239.sslip.io`) · Render Free **backup** · A1 ARM DISABLED cupo · Fly muerto · docs/PROD.md · deploy/oci/MICRO-PLAN.md
-docs: `docs/ARCHITECTURE.md` (vista ampliada) · `docs/progress.md` (estado narrativo) · `docs/testing-strategy.md` (mapa test→§V) · `docs/decisions/*.md` (ADRs) · `docs/ATTRIBUTIONS.md` (inspiraciones/licencias terceros) · `AGENTS.md` (instrucciones de sesión) · `ROADMAP.md` · `CHANGELOG.md` · `DONT_DO.md` (decisiones no-repetición)
+docs: `docs/ARCHITECTURE.md` · `docs/progress.md` · `docs/testing-strategy.md` · `docs/CRAWL.md` (política crawl/opt-out) · `docs/decisions/*.md` · `docs/ATTRIBUTIONS.md` · `AGENTS.md` · `ROADMAP.md` · `CHANGELOG.md` · `DONT_DO.md` · `docs/golden-baseline.md` (T58)
 
 §V
 V1: ∀ result publicado → shipping.confirmed=true ∧ country=Query.country
@@ -65,6 +65,11 @@ V26: ∀ fallo ML API (401/403/429/≥400/network/shape) → circuit breaker cue
 V27: ∀ query categoría primaria sola → title exige evidencia de clase (sinónimo ∨ señales dominio: perfume→EDP/ml≠beauty-adjacent) ∧ ⊥ listing secundario estructural (lead funda/crema/RAM… ∨ "para X") salvo query pida secundario · paridad Node↔Python
 V28: ranking ! title relevance tier (gap ≫ precio): match primario fuerte antes que débil/secundario · gate binario universal · `rankByPriority(..., product)` · paridad score Node↔Python
 V29: ∀ result publicado → `isRelevantResult` (gate ∧ score≥publishFloorFor) · category-only → RELEVANCE_PUBLISH_CATEGORY (0.72) · branded/model → RELEVANCE_PUBLISH (0.55) · ⊥ publicar match débil · cross-class conflict (query familia A ∧ title lead familia B⇒drop) · token whole-word · paridad Node↔Python
+V30: bajo cap → set retenido orden `(tier ↑, precio ↑)` ∧ ≥K hosts (K=4) · ⊥ descartar oferta de tier/precio mejor por orden de llegada (keep/replace) · early-stop / skip mid-crawl probes / stop barren fishing solo si **set satisfecho** = cupo lleno ∧ ≥K hosts ∧ ⊥ candidato pendiente que mejore (tier,precio) (misma cota `filter_probe_candidates`) · mid-crawl PDP probes cap `PROBE_PER_PAGE` · **trade-off**: solo top-3 PDP verify al final → posiciones 4–N pueden incluir PDP muerto (HTML/Woo); VTEX API rows ya validados · deadline `CRAWL_DEADLINE_S`
+V31: frase núcleo = tokens antes del 1er conector lingüístico universal (`de|para|con|sin|compatible|repuesto|accesorio|kit|…`) ∧ strip `(…)` / cola `no|excepto` · query debe caer en núcleo (secundario-intent: el sustantivo en núcleo, ⊥ apagar filtro) · cobertura sustantivo: match solo-marca insuficiente si falta noun/sinónimo/class-evidence · mediana confiable = subset con hit de núcleo (⊥ score gate) · señales conjunto (storeRank/cat) · sin features → gate V29 · solo **degrada** tier V28 · ⊥ promover V29-reject · si hits núcleo < ~8 → skip señales de conjunto
+V32: ∀ host persistido por discovery → TLD/allowlist ∧ ⊥ IP/DNS privado (anti-SSRF) · discovered no confiable hasta probe
+V33: ∀ fetch body → tope bytes (`FETCH_MAX_BYTES`) · stream cortado · ⊥ OOM por HTML gigante
+V34: ∀ búsqueda Scrapling → tras N fetches consecutivos sin oferta parseada ∨ http≥400/timeout en un host → ⊥ encolar más URLs de ese host en ESA búsqueda · host con ≥1 oferta ⊥ cortar · si hosts productivos < K_cut (default 2, env `HOST_MIN_PRODUCTIVE`; ≠ K=4 retención V30) ⊥ cortar más · presupuesto `HOST_BUDGET_S`/host · registro in-mem (host,categoría) ofertas|vacío+razón · ⊥ borrar del índice (degraded/recheck aparte)
 
 §T
 id|status|task|cites
@@ -118,6 +123,17 @@ T47|x|buscador realista: isRelevantResult publish floor + cross-class family con
 T48|x|Render Free 512MB: render.yaml (FETCH_WORKERS=2, MAX_NODES techo) + nodesBudgetFor ceiling + caches acotados + api-wake/focus + caps 25→50|§I,V5,V16,V17
 T49|x|OCI Micro E2.1 primario: reserved IP + compose.micro + GHCR workflow + bootstrap + Vercel cutover; Render backup; A1 opcional|§I
 T50|x|dual publish floor: category-only 0.72 / branded 0.55 + UI specificity hint|V29,V28
+T51|x|docs prod Micro: README/DEPLOY/progress/ROADMAP/MICRO-PLAN + docs/CRAWL.md política crawl/opt-out|§I
+T52|x|re-probe ar-shops.json + reminder cron liviano + refuerzo moda/bazar vivos|V19
+T53|x|E2E Playwright SSE mock UI|V16,V9
+T54|x|runbook cutover A1 (VITE_FREE_HOST=0 perfil full)|§I
+T55|x|perf Micro: price-first + corte yield (V34) + set-satisfecho explícito (V30 trade-off top-3 verify) · iphone wall≤15s · P@10 golden 8q=1.0 · residual wall ryzen/notebook/tv/zapatillas → T61|V30,V34
+T56|x|relevancia adaptativa query-agnostic (por oferta + conjunto Node) guardrails V28/V29|V31,V28,V29
+T57|x|ML cobertura honest docs desde golden T58 · decidir cuenta vendedora|V15
+T58|x|golden set fixtures HTTP 8–10 queries etiquetadas + métricas precision@10/min-price/hosts/ML|V29,V17
+T59|x|defensas Micro: FETCH_MAX_BYTES + validate discover hosts SSRF + MALLOC_ARENA confirm|V32,V33
+T60|x|stock Woo/Shopify audit + dedupe variantes (host, título sin variante) pre-cap|V30,V1
+T61|.|degraded+recheck + residual Micro wall (ryzen/notebook/zapatillas/tv bajo set-satisfecho estricto)|V19,V34
 
 §B
 id|date|cause|fix

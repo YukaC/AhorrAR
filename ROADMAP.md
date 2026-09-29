@@ -5,24 +5,26 @@
 > Este doc comunica dirección y prioridades. Sin datos inventados: cada ítem referencia
 > una feature/issue o una tarea de §T.
 
-## Ahora (v0.2)
+## Ahora (v0.2 → v0.4 Micro)
 
-- [x] Despliegue a producción (Fly API + Vercel web, GitHub → auto-deploy) — ref `docs/DEPLOY.md` · UI https://ahorrarg.vercel.app
+- [x] Despliegue a producción — **hoy:** Vercel UI + OCI Micro API · Render backup · Fly muerto — ref `docs/PROD.md`
 - [x] ML ON en prod (`MELI_*` secrets + `INCLUDE_ML=1`) — §T16 / `docs/ML.md`
-- [x] ML auto-refresh on 401 + Fly volume token file — §T38
+- [x] ML auto-refresh on 401 + token file volume — §T38
 - [x] Señal real de envío gratis + pill UI — §T37
 - [x] ML circuit breaker (degradación con gracia) — §T43 · fallback HTML **descartado por ToS ML** — §T17
 - [x] Relevance anti-accesorio + class evidence — §T44–T45 / §V27/§V28
 - [x] UI result caps 25→50→100 + SearchBar sync — §T46
 
-## Luego (v0.3)
+## Luego (v0.4 pulido)
 
-- [x] Caché de resultados por producto (TTL + SWR) — §T25
-- [x] Índice `ar-shops.json` v3 platform/alive + seeds platform-aware + parsers Woo/Shopify — §T31/T32
-- [ ] Cubrir más categorías/templates en `shared/ar-shops.json` (moda, bazar) + re-probe periódico — ref §T22/V19
-- [ ] Suite E2E automatizada (Playwright) sobre el flujo live SSE — ref `docs/testing-strategy.md`
-- [ ] Stage Docker opcional con browsers si se quiere `STEALTH_FETCH=1` en un entorno no-Fly — §T33 / `docs/DEPLOY.md`
-- [x] **Filtro “Envío gratis” con señal real:** `shipping.free` desde VTEX `ShippingSLA[].Price==0` y ML `free_shipping` (gana sobre regex del hint) · pill SortBar re-activado · paridad Node↔Python (fixture contrato con ShippingSLA) — §T37 / §V25
+- [x] Golden set + métricas (precision@10, min-price rel, hosts, ML) — §T58
+- [x] Defensas Micro (bytes cap, discover SSRF) + stock/dedupe variantes — §T59/T60
+- [x] Re-probe periódico `ar-shops.json` — §T52 (`scripts/reprobe-ar-shops.sh`)
+- [x] Relevancia adaptativa query-agnostic — §T56 / §V31
+- [x] Perf price-first + corte yield + set-satisfecho explícito — §T55 / §V30 / §V34
+- [ ] Degraded+recheck + residual Micro wall — §T61 / §V19 / §V34
+- [x] Suite E2E Playwright SSE — §T53
+- [ ] Stage Docker opcional browsers `STEALTH_FETCH=1` — diferido Micro
 
 ## Más adelante
 
