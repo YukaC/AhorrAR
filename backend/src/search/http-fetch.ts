@@ -1,12 +1,19 @@
 /**
- * HTTP fast path (aiohttp-style): undici fetch without Playwright.
+ * HTTP fast path (aiohttp-style): undici-free http(s) without Playwright.
  * Used for SERP HTML, VTEX JSON APIs, ML JSON API (when not 403).
  * Returns null when the response is useless → caller falls back to browser.
+ *
+ * §V32: every hop (initial + redirects) passes assertFetchAllowed; connect uses
+ * pinnedLookup so DNS rebinding between resolve and TCP is blocked.
  */
 
+import http from 'node:http';
+import https from 'node:https';
 import { isChallengePage } from './parsers/vtex.ts';
+import { assertFetchAllowed, pinnedLookup } from './host-allow.ts';
 
 const HTTP_TIMEOUT_MS = 12_000;
+const MAX_REDIRECTS = 5;
 
 export class Semaphore {
   private active = 0;
@@ -69,26 +76,74 @@ export function httpBodyLooksUseful(body: string, contentType: string): boolean 
   return body.length > 2_000;
 }
 
+function requestOnce(
+  url: string,
+  userAgent: string,
+): Promise<{ status: number; headers: http.IncomingHttpHeaders; body: string; finalUrl: string }> {
+  return new Promise((resolve, reject) => {
+    let parsed: URL;
+    try {
+      parsed = new URL(url);
+    } catch (err) {
+      reject(err);
+      return;
+    }
+    const lib = parsed.protocol === 'https:' ? https : http;
+    const req = lib.request(
+      url,
+      {
+        method: 'GET',
+        lookup: pinnedLookup,
+        timeout: HTTP_TIMEOUT_MS,
+        headers: {
+          'User-Agent': userAgent,
+          Accept: 'text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'es-AR,es;q=0.9,en;q=0.8',
+          Host: parsed.host,
+        },
+      },
+      (res) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (c: Buffer) => chunks.push(c));
+        res.on('end', () => {
+          resolve({
+            status: res.statusCode ?? 0,
+            headers: res.headers,
+            body: Buffer.concat(chunks).toString('utf8'),
+            finalUrl: url,
+          });
+        });
+      },
+    );
+    req.on('timeout', () => {
+      req.destroy(new Error('timeout'));
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
 export async function httpGetText(
   url: string,
   userAgent: string,
 ): Promise<{ text: string; finalUrl: string; contentType: string } | null> {
   try {
-    const res = await fetch(url, {
-      method: 'GET',
-      redirect: 'follow',
-      signal: AbortSignal.timeout(HTTP_TIMEOUT_MS),
-      headers: {
-        'User-Agent': userAgent,
-        Accept: 'text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'es-AR,es;q=0.9,en;q=0.8',
-      },
-    });
-    if (!res.ok) return null;
-    const contentType = res.headers.get('content-type') ?? '';
-    const text = await res.text();
-    if (!httpBodyLooksUseful(text, contentType)) return null;
-    return { text, finalUrl: res.url || url, contentType };
+    let current = url;
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+      if (!(await assertFetchAllowed(current))) return null;
+      const res = await requestOnce(current, userAgent);
+      if (res.status >= 300 && res.status < 400) {
+        const loc = res.headers.location;
+        if (typeof loc !== 'string' || loc === '') return null;
+        current = new URL(loc, current).toString();
+        continue;
+      }
+      if (res.status < 200 || res.status >= 300) return null;
+      const contentType = String(res.headers['content-type'] ?? '');
+      if (!httpBodyLooksUseful(res.body, contentType)) return null;
+      return { text: res.body, finalUrl: current, contentType };
+    }
+    return null;
   } catch {
     return null;
   }

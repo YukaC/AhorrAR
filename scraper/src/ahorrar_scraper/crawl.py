@@ -468,6 +468,10 @@ class _FetchPool:
 
     def fetch_one(self, url: str, timeout_s: float) -> tuple[str, str] | None:
         """Synchronous single fetch with a custom timeout (sitemap probes)."""
+        from .host_allow import assert_fetch_allowed
+
+        if not assert_fetch_allowed(url):
+            return None
         session = self._session_q.get()
         try:
             try:
@@ -480,8 +484,11 @@ class _FetchPool:
             text = _page_body_text(page)
             if status >= 400 or len(text) < 40:
                 return None
-            final = getattr(page, "url", None) or url
-            return str(final), text
+            final = str(getattr(page, "url", None) or url)
+            # Re-validate redirect target (§V32) — public host → private IP bypass.
+            if final != url and not assert_fetch_allowed(final):
+                return None
+            return final, text
         finally:
             self._session_q.put(session)
 
@@ -656,12 +663,17 @@ class _FetchPool:
 
     def _fetch(self, url: str, session: Any) -> PageFetch:
         """Fetch one URL; always returns PageFetch with classified reason (§V34)."""
+        from .host_allow import assert_fetch_allowed
+
         kind = _fetch_kind(url)
         host = host_of(url)
         t0 = time.perf_counter()
         if host in self._blacklisted_hosts:
             log.info("skip blacklisted host: %s", host)
             return PageFetch(url, "", reason="blacklist", elapsed_s=0.0)
+        if not assert_fetch_allowed(url):
+            log.info("ssrf block: %s", url)
+            return PageFetch(url, "", reason="ssrf_block", elapsed_s=0.0)
         try:
             page = session.get(url, timeout=FETCH_TIMEOUT_S[kind])
             elapsed = time.perf_counter() - t0
@@ -669,6 +681,10 @@ class _FetchPool:
                 return PageFetch(url, "", reason="timeout", elapsed_s=elapsed)
             status = _page_status(page)
             text = _page_body_text(page)
+            final = str(getattr(page, "url", None) or url)
+            if final != url and not assert_fetch_allowed(final):
+                log.info("ssrf redirect block: %s → %s", url, final)
+                return PageFetch(url, "", reason="ssrf_redirect", elapsed_s=elapsed)
             is_challenge = looks_like_challenge(text) if text else False
             needs_stealth = status >= 403 or is_challenge
 
@@ -695,8 +711,7 @@ class _FetchPool:
                 return PageFetch(url, text, status=status, reason="empty", elapsed_s=elapsed)
 
             self._reset_challenge(host)
-            final = getattr(page, "url", None) or url
-            return PageFetch(str(final), text, status=status, reason="ok", elapsed_s=elapsed)
+            return PageFetch(final, text, status=status, reason="ok", elapsed_s=elapsed)
         except Exception as exc:  # noqa: BLE001
             log.warning("fetch failed %s: %s", url, exc)
             return PageFetch(
