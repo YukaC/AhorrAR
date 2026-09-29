@@ -97,6 +97,31 @@ Commit bench: `79324e8`. Techo local 15s: notebook p50 15058ms (borde). Techo Mi
 
 `_offer_from_listings` devolvía offer con `price=0.0` si no había listing ARS+shipping. Fix: return `None`. Test: `scraper/tests/test_meli_offer.py` (+3 → Python 80).
 
+
+### Fase 1.3 — Micro fair bench (swap temporal sha-0a0c450 → restore :micro)
+
+| Campo | Valor |
+|---|---|
+| Imagen bench | `ghcr.io/yukac/ahorrar-api:sha-0a0c450` @ `sha256:71b9df03…` |
+| Método | recreate compose api → ×3 cold restart → restore `:micro` |
+| Pin post | `:micro` rev=`1ecd88e…` digest=`sha256:a35d6c038ab6…` RestartCount=0 |
+| Artefacto | `/tmp/ahorrar-bench/t61-micro-fair-bench.jsonl` (+ log) |
+
+| query | wall p50 | baseline | Δ | top3 | hosts |
+|---|---:|---:|---:|:---:|---:|
+| iphone 15 | 17681 | 16100 | +1.6s | ✓ | 2 |
+| smart tv 55 | 22469 | 26100 | −3.6s | ✗ | 7 |
+| ryzen 5 5600 | **32488** | 30100 | +2.4s | ✓ | 7 |
+| perfume | 17989 | 9100 | +8.9s | ✓ | 8 |
+| notebook | **27120** | 17000 | +10.1s | ✗ | 9 |
+| heladera | 16940 | 12700 | +4.2s | ✗ | 10 |
+| zapatillas nike | 18621 | 24600 | −6.0s | ✗ | 3 |
+| cable | **26440** | 8500 | +17.9s | ✓ | 11 |
+
+**Veredicto T61:** NO cumple p50≤25s (ryzen/notebook/cable). 1 ciclo código ya usado (fix ML price=0). Residual → issue. PR sin merge.
+
+Parallel-contended bench (descartado por RAM, artefact `/tmp/ahorrar-bench/t61-micro-parallel-bench.jsonl`) peor aún en perfume/cable.
+
 ### Fase 0.2 — inventario (main `1ecd88e` · stash bak `ea670cd` · T61 `82218a7`)
 >>>>>>> 0a0c450 (fix(T61): drop ML offers without ARS price (§V2))
 
