@@ -22,6 +22,10 @@ export interface GoldenOffer {
   host: string;
   label: GoldenLabel;
   ml?: boolean;
+  /** T60: false ⇒ stock filter should drop before ranking (ignored until T60 wires it). */
+  inStock?: boolean;
+  /** T60: shared key for color/size variant group (same host+base title). */
+  variantGroup?: string;
 }
 
 export interface GoldenQueryFile {

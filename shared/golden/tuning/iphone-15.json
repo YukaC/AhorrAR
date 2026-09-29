@@ -1,17 +1,110 @@
 {
   "query": "iphone 15",
   "offers": [
-    {"name": "Apple iPhone 15 128GB Negro", "price": 1299999, "url": "https://www.fravega.com/p/iphone15-128", "host": "fravega.com", "label": "product"},
-    {"name": "iPhone 15 256GB Azul", "price": 1499999, "url": "https://www.musimundo.com/p/iphone15-256", "host": "musimundo.com", "label": "product"},
-    {"name": "Funda para iPhone 15 silicona", "price": 8999, "url": "https://www.fravega.com/p/funda-iphone15", "host": "fravega.com", "label": "accessory"},
-    {"name": "Vidrio templado iPhone 15", "price": 4500, "url": "https://www.mercadolibre.com.ar/vidrio-15/p/MLA1", "host": "mercadolibre.com.ar", "label": "accessory", "ml": true},
-    {"name": "Cargador compatible con iPhone 15 USB-C", "price": 18999, "url": "https://www.mercadolibre.com.ar/cargador-15/p/MLA2", "host": "mercadolibre.com.ar", "label": "accessory", "ml": true},
-    {"name": "Apple iPhone 15 Plus 128GB", "price": 1399999, "url": "https://www.garbarino.com/p/iphone15plus", "host": "garbarino.com", "label": "product"},
-    {"name": "Case MagSafe para iPhone 15", "price": 32000, "url": "https://www.musimundo.com/p/magsafe-15", "host": "musimundo.com", "label": "accessory"},
-    {"name": "iPhone 15 Pro 128GB Titanio", "price": 1899999, "url": "https://www.fravega.com/p/iphone15pro", "host": "fravega.com", "label": "product"},
-    {"name": "Cable USB-C para iPhone 15", "price": 12000, "url": "https://www.garbarino.com/p/cable-usbc", "host": "garbarino.com", "label": "accessory"},
-    {"name": "Apple iPhone 15 128GB Rosa", "price": 1310000, "url": "https://tienda.movistar.com.ar/p/iphone15", "host": "tienda.movistar.com.ar", "label": "product"},
-    {"name": "Auriculares para iPhone 15", "price": 55000, "url": "https://tienda.movistar.com.ar/p/airpods", "host": "tienda.movistar.com.ar", "label": "accessory"},
-    {"name": "iPhone 15 128GB reacondicionado", "price": 890000, "url": "https://www.mercadolibre.com.ar/iphone15-refurb/p/MLA3", "host": "mercadolibre.com.ar", "label": "product", "ml": true}
+    {
+      "name": "Apple iPhone 15 128GB Negro",
+      "price": 1299999,
+      "url": "https://www.fravega.com/p/iphone15-128",
+      "host": "fravega.com",
+      "label": "product",
+      "variantGroup": "iphone-15-fravega"
+    },
+    {
+      "name": "iPhone 15 256GB Azul",
+      "price": 1499999,
+      "url": "https://www.musimundo.com/p/iphone15-256",
+      "host": "musimundo.com",
+      "label": "product"
+    },
+    {
+      "name": "Funda para iPhone 15 silicona",
+      "price": 8999,
+      "url": "https://www.fravega.com/p/funda-iphone15",
+      "host": "fravega.com",
+      "label": "accessory"
+    },
+    {
+      "name": "Vidrio templado iPhone 15",
+      "price": 4500,
+      "url": "https://www.mercadolibre.com.ar/vidrio-15/p/MLA1",
+      "host": "mercadolibre.com.ar",
+      "label": "accessory",
+      "ml": true
+    },
+    {
+      "name": "Cargador compatible con iPhone 15 USB-C",
+      "price": 18999,
+      "url": "https://www.mercadolibre.com.ar/cargador-15/p/MLA2",
+      "host": "mercadolibre.com.ar",
+      "label": "accessory",
+      "ml": true
+    },
+    {
+      "name": "Apple iPhone 15 Plus 128GB",
+      "price": 1399999,
+      "url": "https://www.garbarino.com/p/iphone15plus",
+      "host": "garbarino.com",
+      "label": "product"
+    },
+    {
+      "name": "Case MagSafe para iPhone 15",
+      "price": 32000,
+      "url": "https://www.musimundo.com/p/magsafe-15",
+      "host": "musimundo.com",
+      "label": "accessory"
+    },
+    {
+      "name": "iPhone 15 Pro 128GB Titanio",
+      "price": 1899999,
+      "url": "https://www.fravega.com/p/iphone15pro",
+      "host": "fravega.com",
+      "label": "product"
+    },
+    {
+      "name": "Cable USB-C para iPhone 15",
+      "price": 12000,
+      "url": "https://www.garbarino.com/p/cable-usbc",
+      "host": "garbarino.com",
+      "label": "accessory"
+    },
+    {
+      "name": "Apple iPhone 15 128GB Rosa",
+      "price": 1310000,
+      "url": "https://tienda.movistar.com.ar/p/iphone15",
+      "host": "tienda.movistar.com.ar",
+      "label": "product"
+    },
+    {
+      "name": "Auriculares para iPhone 15",
+      "price": 55000,
+      "url": "https://tienda.movistar.com.ar/p/airpods",
+      "host": "tienda.movistar.com.ar",
+      "label": "accessory"
+    },
+    {
+      "name": "iPhone 15 128GB reacondicionado",
+      "price": 890000,
+      "url": "https://www.mercadolibre.com.ar/iphone15-refurb/p/MLA3",
+      "host": "mercadolibre.com.ar",
+      "label": "product",
+      "ml": true
+    },
+    {
+      "name": "Apple iPhone 15 256GB Blanco",
+      "price": 1199999,
+      "url": "https://www.fravega.com/p/iphone15-256-blanco",
+      "host": "fravega.com",
+      "label": "product",
+      "variantGroup": "iphone-15-fravega"
+    },
+    {
+      "name": "Apple iPhone 15 128GB Verde",
+      "price": 99999,
+      "url": "https://www.fravega.com/p/iphone15-128-verde-oos",
+      "host": "fravega.com",
+      "label": "product",
+      "inStock": false,
+      "variantGroup": "iphone-15-fravega"
+    }
   ]
 }

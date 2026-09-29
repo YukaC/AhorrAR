@@ -1,0 +1,23 @@
+{
+  "products": [
+    {
+      "title": "Teclado Mecanico OK",
+      "handle": "teclado-ok",
+      "price": "20000",
+      "available": true,
+      "variants": [
+        {"title": "Negro", "available": true, "price": "20000"},
+        {"title": "Blanco", "available": true, "price": "21000"}
+      ]
+    },
+    {
+      "title": "Teclado Mecanico OOS",
+      "handle": "teclado-oos",
+      "price": "10000",
+      "available": false,
+      "variants": [
+        {"title": "Negro", "available": false, "price": "10000"}
+      ]
+    }
+  ]
+}

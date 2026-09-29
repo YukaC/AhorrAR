@@ -1,0 +1,18 @@
+[
+  {
+    "name": "Mouse Gamer In Stock",
+    "permalink": "https://shop.example/product/mouse-ok/",
+    "prices": {"price": "10000", "currency_minor_unit": 2},
+    "is_in_stock": true,
+    "is_purchasable": true,
+    "images": []
+  },
+  {
+    "name": "Mouse Gamer OOS",
+    "permalink": "https://shop.example/product/mouse-oos/",
+    "prices": {"price": "5000", "currency_minor_unit": 2},
+    "is_in_stock": false,
+    "is_purchasable": true,
+    "images": []
+  }
+]
