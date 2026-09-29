@@ -1,17 +1,108 @@
 {
   "query": "perfume",
   "offers": [
-    {"name": "Perfume Carolina Herrera Good Girl EDP 80ml", "price": 189999, "url": "https://farmacity.com.ar/p/ch-gg-80", "host": "farmacity.com.ar", "label": "product"},
-    {"name": "Perfume Bensimon Homme EDT 100ml", "price": 45990, "url": "https://farmacity.com.ar/p/bensimon-100", "host": "farmacity.com.ar", "label": "product"},
-    {"name": "Crema corporal con perfume floral 200ml", "price": 8990, "url": "https://farmacity.com.ar/p/crema-floral", "host": "farmacity.com.ar", "label": "accessory"},
-    {"name": "Muestra tester perfume Good Girl 1.5ml", "price": 2500, "url": "https://farmacity.com.ar/p/tester-gg", "host": "farmacity.com.ar", "label": "accessory"},
-    {"name": "Perfume Dior Sauvage EDP 60ml", "price": 220000, "url": "https://www.fravega.com/p/dior-sauvage-60", "host": "fravega.com", "label": "product"},
-    {"name": "Decant perfume Sauvage 5ml", "price": 12000, "url": "https://tienda-decants.com.ar/p/decant-sauvage", "host": "tienda-decants.com.ar", "label": "accessory"},
-    {"name": "Fragancia femenina Idôle Lancôme 50ml", "price": 175000, "url": "https://www.mercadolibre.com.ar/fragancia-idole/p/MLA1", "host": "mercadolibre.com.ar", "label": "product", "ml": true},
-    {"name": "Body splash perfume vainilla 250ml", "price": 6500, "url": "https://www.mercadolibre.com.ar/splash-vainilla/p/MLA2", "host": "mercadolibre.com.ar", "label": "accessory", "ml": true},
-    {"name": "Perfume Paco Rabanne 1 Million EDT 100ml", "price": 198000, "url": "https://www.musimundo.com/p/1million", "host": "musimundo.com", "label": "product"},
-    {"name": "Atomizador recargable para perfume", "price": 4500, "url": "https://www.musimundo.com/p/atomizador", "host": "musimundo.com", "label": "accessory"},
-    {"name": "Colonia Adidas Move EDT 100ml", "price": 28990, "url": "https://www.easy.com.ar/p/adidas-move", "host": "easy.com.ar", "label": "product"},
-    {"name": "Protectores diarios con perfume suave", "price": 3200, "url": "https://farmacity.com.ar/p/protectores-perfume", "host": "farmacity.com.ar", "label": "accessory"}
+    {
+      "name": "Perfume Carolina Herrera Good Girl EDP 80ml",
+      "price": 189999,
+      "url": "https://farmacity.com.ar/p/ch-gg-80",
+      "host": "farmacity.com.ar",
+      "label": "product",
+      "variantGroup": "ch-gg-farmacity"
+    },
+    {
+      "name": "Perfume Bensimon Homme EDT 100ml",
+      "price": 45990,
+      "url": "https://farmacity.com.ar/p/bensimon-100",
+      "host": "farmacity.com.ar",
+      "label": "product"
+    },
+    {
+      "name": "Crema corporal con perfume floral 200ml",
+      "price": 8990,
+      "url": "https://farmacity.com.ar/p/crema-floral",
+      "host": "farmacity.com.ar",
+      "label": "accessory"
+    },
+    {
+      "name": "Muestra tester perfume Good Girl 1.5ml",
+      "price": 2500,
+      "url": "https://farmacity.com.ar/p/tester-gg",
+      "host": "farmacity.com.ar",
+      "label": "accessory"
+    },
+    {
+      "name": "Perfume Dior Sauvage EDP 60ml",
+      "price": 220000,
+      "url": "https://www.fravega.com/p/dior-sauvage-60",
+      "host": "fravega.com",
+      "label": "product"
+    },
+    {
+      "name": "Decant perfume Sauvage 5ml",
+      "price": 12000,
+      "url": "https://tienda-decants.com.ar/p/decant-sauvage",
+      "host": "tienda-decants.com.ar",
+      "label": "accessory"
+    },
+    {
+      "name": "Fragancia femenina Idôle Lancôme 50ml",
+      "price": 175000,
+      "url": "https://www.mercadolibre.com.ar/fragancia-idole/p/MLA1",
+      "host": "mercadolibre.com.ar",
+      "label": "product",
+      "ml": true
+    },
+    {
+      "name": "Body splash perfume vainilla 250ml",
+      "price": 6500,
+      "url": "https://www.mercadolibre.com.ar/splash-vainilla/p/MLA2",
+      "host": "mercadolibre.com.ar",
+      "label": "accessory",
+      "ml": true
+    },
+    {
+      "name": "Perfume Paco Rabanne 1 Million EDT 100ml",
+      "price": 198000,
+      "url": "https://www.musimundo.com/p/1million",
+      "host": "musimundo.com",
+      "label": "product"
+    },
+    {
+      "name": "Atomizador recargable para perfume",
+      "price": 4500,
+      "url": "https://www.musimundo.com/p/atomizador",
+      "host": "musimundo.com",
+      "label": "accessory"
+    },
+    {
+      "name": "Colonia Adidas Move EDT 100ml",
+      "price": 28990,
+      "url": "https://www.easy.com.ar/p/adidas-move",
+      "host": "easy.com.ar",
+      "label": "product"
+    },
+    {
+      "name": "Protectores diarios con perfume suave",
+      "price": 3200,
+      "url": "https://farmacity.com.ar/p/protectores-perfume",
+      "host": "farmacity.com.ar",
+      "label": "accessory"
+    },
+    {
+      "name": "Perfume Carolina Herrera Good Girl EDP 50ml",
+      "price": 159999,
+      "url": "https://farmacity.com.ar/p/ch-gg-50",
+      "host": "farmacity.com.ar",
+      "label": "product",
+      "variantGroup": "ch-gg-farmacity"
+    },
+    {
+      "name": "Perfume Carolina Herrera Good Girl EDP 80ml (sin stock)",
+      "price": 50000,
+      "url": "https://farmacity.com.ar/p/ch-gg-80-oos",
+      "host": "farmacity.com.ar",
+      "label": "product",
+      "inStock": false
+    }
   ]
 }

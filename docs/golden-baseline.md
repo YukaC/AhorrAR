@@ -48,3 +48,9 @@ Piso plan: tuning P@10 ≥ **0.877**. Holdout baja vs tuning es esperado sin fra
 
 Funnel audit (live): `cd scraper && uv run python ../scripts/audit_offer_funnel.py '<query>'`  
 ML coverage notes: [`docs/ML-COVERAGE.md`](ML-COVERAGE.md)
+
+## T60 hooks (fixtures only — no metric change yet)
+
+- `offer.inStock: false` on tuning `iphone-15` / `perfume` (cheap OOS bait).
+- `offer.variantGroup` + same-host color/capacity pairs (dedupe should keep cheapest when T60 lands).
+- Raw bodies: `shared/golden/parser-stock/{woo,shopify}-oos.json`.

@@ -1,14 +1,29 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "tuningDir": "tuning",
   "holdoutDir": "holdout",
-  "note": "Holdout is sealed for validation — do not tune against it. Tune only on tuning/.",
+  "note": "Holdout is sealed for validation — do not tune against it. Tune only on tuning/. Optional offer.inStock / offer.variantGroup + parser-stock/ are for T60 measurement (ignored by T58 metrics until stock+dedupe wires them).",
   "tuningQueries": [
-    "perfume", "notebook", "ryzen 5 5600", "iphone 15", "zapatillas nike",
-    "funda iphone 15", "cable", "heladera", "smart tv 55", "mouse gamer"
+    "perfume",
+    "notebook",
+    "ryzen 5 5600",
+    "iphone 15",
+    "zapatillas nike",
+    "funda iphone 15",
+    "cable",
+    "heladera",
+    "smart tv 55",
+    "mouse gamer"
   ],
   "holdoutQueries": [
-    "cargador", "mouse", "auriculares bluetooth", "ps5", "monitor 27",
-    "jeans levis", "tablet samsung", "teclado mecanico"
-  ]
+    "cargador",
+    "mouse",
+    "auriculares bluetooth",
+    "ps5",
+    "monitor 27",
+    "jeans levis",
+    "tablet samsung",
+    "teclado mecanico"
+  ],
+  "parserStockDir": "parser-stock"
 }
