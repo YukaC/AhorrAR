@@ -7,7 +7,7 @@
 
 ## En una línea
 
-v0.2 · 4 huecos T61 cerrados · Micro cold 8q OK · digest e9504ec0 restaurado · merge #29 pendiente/en curso · ML ON.
+v0.2 · #29 merged @`cab0797` · floors 175/63/95/1 · digest e9504ec0 · zapatillas → #22 · ML ON.
 
 ## §F — protocolo agente (fin de fase)
 

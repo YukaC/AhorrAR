@@ -125,7 +125,7 @@ T49|x|OCI Micro E2.1 primario: reserved IP + compose.micro + GHCR workflow + boo
 T50|x|dual publish floor: category-only 0.72 / branded 0.55 + UI specificity hint|V29,V28
 T51|x|docs prod Micro: README/DEPLOY/MICRO-PLAN/CRAWL + A1 runbook · merged #35|§I
 T52|x|re-probe mensual + refuerzo electro/bazar · merged #34|V19
-T53|~|E2E Playwright SSE · en PR #29 (rama T61) · ⊥ main (0 specs)|V16,V9
+T53|x|E2E Playwright SSE mock · merged #29 @cab0797|V16,V9
 T54|x|runbook cutover A1 · merged #35|§I
 T55|x|perf Micro: price-first + corte yield (V34) + set-satisfecho (V30) · en main @1ecd88e + tests victim_index/host_yield|V30,V34
 T56|x|relevancia adaptativa + frase núcleo (§V31) · merged #33|V31,V28,V29
