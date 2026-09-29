@@ -7,7 +7,34 @@
 
 ## En una línea
 
-v0.2 · UI Vercel + API **OCI Micro** primario · Render Free backup · Fly retirado · T55 host-yield en PR · ML ON + circuit breaker · 0 bugs §B abiertos.
+v0.2 · Fase 0 re-audit OK (remoto backup+T61+floors) · SPEC honesty PR · ⊥ Fase 1 hasta validación · ML ON · 0 bugs §B abiertos.
+
+## Ledger (evidencia — no afirmar de memoria)
+
+### Fase 0 re-audit (2026-09-29) — gate antes de Fase 1
+
+| Check | Comando | Salida |
+|---|---|---|
+| Backup remoto | `git ls-remote origin refs/heads/backup/wip-stash` | `ea670cd3e09ce0b9f2ed783ad3e228eac84d29d6` |
+| Match | `git rev-parse origin/backup/wip-stash` | mismo `ea670cd…` |
+| Stash (no borrar) | `git stash list` | `@{0}` aside-golden-t56 · `@{1}` wip non-T55 · `@{2}` P0-wip-backup |
+| T61 HEAD | `git rev-parse origin/perf/t61-ml-degraded` | `815d4eb` (≠ claimed `82218a7`; ese es ancestro) |
+| e2e T61 | `git ls-tree -r origin/perf/t61-ml-degraded \| rg e2e\|playwright` | `frontend/e2e/search-sse.spec.ts` + `playwright.config.ts` |
+| e2e main | idem `origin/main` | vacío |
+| Clean dry-run | `git clean -nd` | vacío (nada a borrar) |
+| `git clean` real previo | `rg git clean` en transcript | **no hubo** — claim previo sin evidencia |
+| Floors main `@1ecd88e` | worktree + vitest/unittest | backend **148** · frontend **63** · Python **60** · e2e **0** |
+
+### Inventario (4 cats) — snapshot re-audit
+
+| Ítem | Categoría | Evidencia |
+|---|---|---|
+| T55 / V30 keep / V34 yield / V33 bytes | **en main** | `1ecd88e` + tests |
+| T61 + e2e T53 | **en rama T61** PR #29 | HEAD `815d4eb` |
+| SSRF V32 / stock T60 / golden T58 / T56 / T52 / CRAWL / ML-COVERAGE | **solo stash/backup** (+ PRs #30–#35) | `origin/backup/wip-stash @ ea670cd` |
+| SSRF código en main | **no existe** | `git grep` host-allow/SSRF vacío en main |
+
+**SPEC honesty:** commit en rama `docs/spec-honesty-f0` (solo `SPEC.md`). ⊥ merge sin review.
 
 ## Hecho
 
