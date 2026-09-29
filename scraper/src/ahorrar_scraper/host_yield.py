@@ -70,10 +70,10 @@ def host_budget_s() -> float:
 def host_min_productive() -> int:
     """Do not cut barren hosts while productive count is below this floor.
 
-    Distinct from V30 retain-K (4): cut-floor defaults to 2 so queries with
-    only 3 live shops (e.g. iphone) can still drop proven-empty peers.
+    Same floor as V30 retain-K (4): cutting peers before K productive shops
+    starves variety (funnel finds 3–4 hosts; Micro used to finish with 1–2).
     """
-    return _env_int("HOST_MIN_PRODUCTIVE", 2, min_v=1, max_v=16)
+    return _env_int("HOST_MIN_PRODUCTIVE", 4, min_v=1, max_v=16)
 
 
 def degraded_empty_streak() -> int:

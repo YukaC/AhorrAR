@@ -58,14 +58,20 @@ class HostYieldTrackerTest(unittest.TestCase):
         cut2 = t.record_fetch("empty.com.ar", offers=0, reason="empty")
         self.assertEqual(cut2, "empty")
 
-    def test_default_cut_floor_allows_iphone_style(self) -> None:
-        """With default floor 2, three productive shops can cut barren peers."""
-        t = HostYieldTracker("electro", empty_streak=2, budget_s=60)
-        for i in range(3):
-            t.record_fetch(f"live{i}.com.ar", offers=2, reason="offers")
-        t.record_fetch("dead.com.ar", offers=0, reason="http_error")
+    def test_default_cut_floor_matches_retain_k(self) -> None:
+        """Default HOST_MIN_PRODUCTIVE=4: no cut at 1–2 productive; cut at ≥K."""
+        t = HostYieldTracker("electro", empty_streak=1, budget_s=60)
+        t.record_fetch("live0.com.ar", offers=2, reason="offers")
+        t.record_fetch("live1.com.ar", offers=2, reason="offers")
+        blocked = t.record_fetch("dead.com.ar", offers=0, reason="empty")
+        self.assertIsNone(blocked)
+        self.assertFalse(t.is_cut("dead.com.ar"))
+
+        t.record_fetch("live2.com.ar", offers=2, reason="offers")
+        t.record_fetch("live3.com.ar", offers=2, reason="offers")
         cut = t.record_fetch("dead.com.ar", offers=0, reason="empty")
         self.assertEqual(cut, "empty")
+        self.assertTrue(t.is_cut("dead.com.ar"))
 
     def test_streak_override_cuts_sooner(self) -> None:
         t = HostYieldTracker("electro", empty_streak=3, min_productive=1, budget_s=60)
