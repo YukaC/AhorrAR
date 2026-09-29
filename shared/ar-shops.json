@@ -134,7 +134,7 @@
       "category": "electro",
       "curated": true,
       "entry": "https://shop.lg.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
-      "alive": false,
+      "alive": true,
       "platform": "unknown"
     },
     {
@@ -142,7 +142,7 @@
       "category": "electro",
       "curated": true,
       "entry": "https://store.sony.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
-      "alive": false,
+      "alive": true,
       "platform": "unknown"
     },
     {
@@ -350,7 +350,7 @@
       "category": "bazar",
       "curated": true,
       "entry": "https://www.juleriaque.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
-      "alive": true,
+      "alive": false,
       "platform": "vtex"
     },
     {
@@ -366,7 +366,7 @@
       "category": "bazar",
       "curated": true,
       "entry": "https://www.tramontina.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
-      "alive": false,
+      "alive": true,
       "platform": "vtex"
     },
     {
