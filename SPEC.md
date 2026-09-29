@@ -128,7 +128,7 @@ T52|.|re-probe ar-shops.json + cron · script solo backup/wip-stash + PR #34 · 
 T53|~|E2E Playwright SSE · en PR #29 (rama T61) · ⊥ main (0 specs)|V16,V9
 T54|.|runbook cutover A1 · DISABLED.md en main texto puente Render stale · fix en PR #35|§I
 T55|x|perf Micro: price-first + corte yield (V34) + set-satisfecho (V30) · en main @1ecd88e + tests victim_index/host_yield|V30,V34
-T56|.|relevancia adaptativa + frase núcleo · solo backup/wip-stash + PR #33 · ⊥ main|V31,V28,V29
+T56|~|relevancia adaptativa + frase núcleo · en PR #33 · ⊥ main|V31,V28,V29
 T57|.|ML cobertura honest docs · ML-COVERAGE.md solo backup/wip-stash · ⊥ main|V15
 T58|.|golden set + métricas · shared/golden solo backup/wip-stash + PR #32 · ⊥ main|V29,V17
 T59|x|V33 FETCH_MAX_BYTES + V32 host-allow SSRF (fetch-time gate, redirects, DNS pin/cache) · merged #30 @e5a42f4|V32,V33

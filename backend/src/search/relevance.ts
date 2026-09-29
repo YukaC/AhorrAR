@@ -1,8 +1,8 @@
 /**
  * Query↔title relevance (mirrors scraper/ahorrar_scraper/relevance.py).
  *
- * Realistic-search layers (§V27–§V29):
- *   1. `titleMatchesQuery` — hard structural gate (tokens, secondary, class).
+ * Realistic-search layers (§V27–§V29 + core-phrase §V31):
+ *   1. `titleMatchesQuery` — hard structural gate (tokens, core phrase, class).
  *   2. `titleRelevanceScore` — 0..1 soft score for ranking.
  *   3. `isRelevantResult` — publish only if gate + score ≥ RELEVANCE_PUBLISH
  *      (weak matches never reach the UI, not merely ranked last).
@@ -33,6 +33,26 @@ const STOP = new Set([
   'or',
   'of',
 ]);
+
+/** Universal linguistic connectors — core phrase ends at the first of these. */
+const CORE_CONNECTORS = new Set([
+  'de',
+  'del',
+  'para',
+  'con',
+  'sin',
+  'compatible',
+  'repuesto',
+  'accesorio',
+  'accesorios',
+  'kit',
+  'for',
+  'tipo',
+  'ideal',
+]);
+
+/** Leading promo noise — does not count as core content before a connector. */
+const LEAD_NOISE = new Set(['nuevo', 'nueva', 'new', 'oferta', 'combo', 'pack', 'set', 'promo']);
 
 /** Soft in multi-token queries (brand carries the match). */
 const CATEGORY_OPTIONAL = new Set([
@@ -181,12 +201,16 @@ const SECONDARY_INTENT = new Set([
   'cable',
   'cargador',
   'charger',
+  'mouse',
+  'raton',
+  'mice',
   'dock',
   'hub',
   'mousepad',
   'repuesto',
   'mica',
   'templado',
+  'vidrio',
   'muestra',
   'tester',
   'decant',
@@ -203,7 +227,7 @@ const SECONDARY_INTENT = new Set([
 ]);
 
 const SECONDARY_LEAD_RE =
-  /^(?:funda|fundas|case|cover|sleeve|soporte|soportes|stand|base|cooler|mochila|bolso|maletin|adaptador|cable|cargador|memoria|ram|modulo|dock|hub|mousepad|protectores?|skin|mica|templado|kit|pasta|muestra|tester|decant|atomizador|vaporizador|crema|shampoo|jabon|acondicionador|desodorante|locion|splash|repuesto|compatible|toallas?|toallitas?|panales?|tampones?|mini|miniatura|vial)\b/;
+  /^(?:funda|fundas|case|cover|sleeve|soporte|soportes|stand|base|cooler|mochila|bolso|maletin|adaptador|cable|cargador|memoria|ram|modulo|dock|hub|mousepad|protectores?|skin|mica|templado|vidrio|kit|pasta|muestra|tester|decant|atomizador|vaporizador|crema|shampoo|jabon|acondicionador|desodorante|locion|splash|repuesto|compatible|toallas?|toallitas?|panales?|tampones?|mini|miniatura|vial)\b/;
 
 const SECONDARY_PHRASE_RE =
   /\b(?:funda|sleeve|soporte|cooler\s*pad|cooling\s*pad|pad\s+refriger|memoria\s+ram|ram\s+ddr|sodimm|mochila|bolso|maletin|compatible\s+con|repuesto\s+(?:de|para)|muestra\s+de|tester\s+de|decant\s+de|crema\s+(?:corporal|de\s+manos|hidrat)|body\s+splash|splash\s+corporal|locion\s+corporal|perfume\s+de\s+cartera|travel\s*size)\b/;
@@ -323,7 +347,7 @@ function queryOnlyAsTargetOf(hay: string, tokens: string[]): boolean {
     for (const syn of synonymsFor(tok)) {
       if (syn.length < 4 || !tokenInTitle(hay, syn)) continue;
       const asTarget = new RegExp(
-        `\\b(?:para|compatible\\s+con|repuesto\\s+(?:de|para))\\s+${escapeRe(syn)}\\b`,
+        `\\b(?:para|compatible\\s+con|for|repuesto\\s+(?:de|para)|tipo|similar\\s+a|ideal\\s+para|con)\\s+${escapeRe(syn)}\\b`,
       );
       if (!asTarget.test(hay)) continue;
       const head = new RegExp(`^(?:(?:nuevo|nueva|new)\\s+)?${escapeRe(syn)}\\b`);
@@ -341,8 +365,38 @@ function titleLooksLikeSecondary(hay: string, tokens: string[]): boolean {
   return false;
 }
 
+/**
+ * Core phrase hit, or category class evidence **inside the core** standing in
+ * for a missing noun (e.g. "Dior Sauvage EDP" for "perfume").
+ * Non-category tokens (brand/model) must still land in the core when present.
+ */
+function coreRequirementSatisfied(titleNorm: string, tokens: string[]): boolean {
+  if (queryInCorePhrase(titleNorm, tokens)) return true;
+  const cats = tokens.filter((t) => CATEGORY_OPTIONAL.has(t));
+  if (cats.length === 0) return false;
+  const coreHay = corePhraseTokens(titleNorm).join(' ');
+  if (coreHay.length === 0) return false;
+  if (!cats.some((c) => hasClassEvidence(coreHay, c))) return false;
+  const required = tokens.filter(
+    (t) => !CATEGORY_OPTIONAL.has(t) && !/^\d+$/.test(t) && t.length >= 3,
+  );
+  if (required.length === 0) return true;
+  const core = corePhraseTokens(titleNorm);
+  return required.every((t) =>
+    synonymsFor(t).some((syn) =>
+      core.some((c) => c === syn || c.startsWith(syn) || syn.startsWith(c)),
+    ),
+  );
+}
+
 function isSecondaryNoise(titleNorm: string, tokens: string[]): boolean {
-  if (queryHasSecondaryIntent(tokens)) return false;
+  // Secondary-intent queries (cable, funda, …): require the noun in the core
+  // phrase — do NOT disable the accessory filter.
+  if (queryHasSecondaryIntent(tokens)) {
+    return !queryInCorePhrase(titleNorm, tokens);
+  }
+  // Primary product queries: query must appear in the core (before connectors).
+  if (!coreRequirementSatisfied(titleNorm, tokens)) return true;
   if (!titleLooksLikeSecondary(titleNorm, tokens)) return false;
   if (PRIMARY_LEAD_RE.test(titleNorm)) return false;
   return true;
@@ -379,8 +433,91 @@ function significantTitleTokens(hay: string): string[] {
   return raw.filter((t) => !STOP.has(t) && t.length >= 2);
 }
 
+/** Strip parentheticals and trailing negation clauses from a normalized title. */
+function stripParensAndNegations(hay: string): string {
+  let s = hay.replace(/\([^)]*\)/g, ' ');
+  s = s.replace(/\b(?:no|excepto)\b[\s\S]*$/, ' ');
+  return s.replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Core phrase tokens: content before the first linguistic connector (§V31).
+ * Leading promo noise does not lock the core before a connector (combo de X).
+ */
+export function corePhraseTokens(titleNorm: string): string[] {
+  const cleaned = stripParensAndNegations(titleNorm);
+  const raw = cleaned.match(TOKEN_RE) ?? [];
+  const core: string[] = [];
+  for (const t of raw) {
+    if (CORE_CONNECTORS.has(t)) {
+      const hasContent = core.some((c) => !LEAD_NOISE.has(c));
+      if (hasContent) break;
+      continue;
+    }
+    if (STOP.has(t)) continue;
+    if (t.length < 2 && !/^\d+$/.test(t)) continue;
+    core.push(t);
+  }
+  return core;
+}
+
+/** True when at least one query token/synonym lands inside the core phrase. */
+export function queryInCorePhrase(titleNorm: string, tokens: string[]): boolean {
+  const core = corePhraseTokens(titleNorm);
+  if (core.length === 0) return false;
+  for (const tok of tokens) {
+    for (const syn of synonymsFor(tok)) {
+      if (core.some((c) => c === syn || c.startsWith(syn) || syn.startsWith(c))) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Noun coverage: if the query has a category noun + something else (brand/model),
+ * the title must include that noun (or synonym) — brand-only is not enough.
+ */
+function nounCoverageOk(hay: string, tokens: string[]): boolean {
+  const nouns = tokens.filter((t) => CATEGORY_OPTIONAL.has(t) || SECONDARY_INTENT.has(t));
+  const other = tokens.filter((t) => !nouns.includes(t) && !/^\d+$/.test(t) && t.length >= 3);
+  if (nouns.length === 0 || other.length === 0) return true;
+  // Class evidence (EDP, notebook patterns) may stand in for the category word.
+  return nouns.some(
+    (n) => synonymsFor(n).some((s) => tokenInTitle(hay, s)) || hasClassEvidence(hay, n),
+  );
+}
+
+/** Soft penalty: query hit after N non-noise prior core tokens. */
+function priorTokenPenalty(titleNorm: string, tokens: string[]): number {
+  const core = corePhraseTokens(titleNorm);
+  let firstHit = -1;
+  for (let i = 0; i < core.length; i++) {
+    const c = core[i]!;
+    for (const tok of tokens) {
+      for (const syn of synonymsFor(tok)) {
+        if (c === syn || c.startsWith(syn) || syn.startsWith(c)) {
+          firstHit = i;
+          break;
+        }
+      }
+      if (firstHit >= 0) break;
+    }
+    if (firstHit >= 0) break;
+  }
+  if (firstHit <= 0) return 0;
+  const prior = core.slice(0, firstHit).filter((c) => !LEAD_NOISE.has(c));
+  if (prior.length === 0) return 0;
+  // Accessory/secondary tokens before the hit → strong demotion (vidrio/templado/…).
+  // Brand/category before noun/model ("Lenovo Notebook", "Procesador AMD Ryzen") → mild.
+  if (prior.some((p) => SECONDARY_INTENT.has(p))) {
+    return Math.min(0.6, prior.length * 0.25);
+  }
+  return Math.min(0.2, prior.length * 0.08);
+}
+
 function headMentionsQuery(hay: string, tokens: string[]): boolean {
-  const head = significantTitleTokens(hay).slice(0, 3);
+  // Only the first contentful core tokens count as "head" (not raw title head).
+  const head = corePhraseTokens(hay).filter((c) => !LEAD_NOISE.has(c)).slice(0, 2);
   if (head.length === 0) return false;
   for (const tok of tokens) {
     for (const syn of synonymsFor(tok)) {
@@ -428,6 +565,9 @@ export function titleRelevanceScore(title: string, product: string): number {
   ) {
     score = Math.max(score, headMentionsQuery(hay, tokens) ? 0.85 : 0.65);
   }
+
+  // Apply late-hit penalty after floors so prior tokens can still demote.
+  score -= priorTokenPenalty(hay, tokens);
 
   return Math.max(0, Math.min(1, score));
 }
@@ -478,6 +618,7 @@ export function titleMatchesQuery(title: string, product: string): boolean {
 
   if (isSecondaryNoise(hay, tokens)) return false;
   if (isCrossClassConflict(hay, tokens)) return false;
+  if (!nounCoverageOk(hay, tokens)) return false;
   return true;
 }
 
