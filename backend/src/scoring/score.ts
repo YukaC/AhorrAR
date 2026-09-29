@@ -18,6 +18,7 @@
  */
 
 import type { CountryConfig, ProductResult } from '../../../shared/contract.ts';
+import { adaptivePriceOutlierDemotions } from '../search/adaptive-relevance.ts';
 import { RELEVANCE_STRONG, titleRelevanceScore } from '../search/relevance.ts';
 import { hostOf, isCuratedHost, isKnownShopHost } from '../search/seeds.ts';
 
@@ -74,14 +75,20 @@ export function isLocalResult(result: Pick<ProductResult, 'store'>): boolean {
   return result.store.local === true;
 }
 
-export function scoreFor(result: ProductResult, country: CountryConfig, product?: string): number {
+export function scoreFor(
+  result: ProductResult,
+  country: CountryConfig,
+  product?: string,
+  forceWeakRelevance = false,
+): number {
   const local = isLocalResult(result) || domainAffinity(result.store.siteUrl, country);
   const tier = local ? 0 : TIER_INT;
   const relevance =
     product === undefined || product.trim() === ''
       ? 1
       : titleRelevanceScore(result.name, product);
-  const relevanceTier = relevance >= RELEVANCE_STRONG ? 0 : TIER_WEAK_RELEVANCE;
+  const relevanceTier =
+    forceWeakRelevance || relevance < RELEVANCE_STRONG ? TIER_WEAK_RELEVANCE : 0;
   const discount = reputationDiscount(result) + installmentDiscount(result);
   const effective = result.price * (1 - discount);
   return tier + relevanceTier + PRICE_FACTOR * effective + DEPTH_FACTOR * result.depth;
@@ -91,6 +98,7 @@ export function scoreFor(result: ProductResult, country: CountryConfig, product?
  * Rank by priority, optionally clamping ML share to ≤50% of the top
  * `maxResults` (§V17). Without a cap, behavior matches the pure sort.
  * Pass `product` so title relevance can demote secondary listings (§V28).
+ * §V31: set-level adaptive demotion (price outliers) when enough strong offers.
  */
 export function rankByPriority(
   results: ProductResult[],
@@ -98,7 +106,18 @@ export function rankByPriority(
   capMlShareOf?: number | null,
   product?: string,
 ): ProductResult[] {
-  const ranked = [...results].sort((a, b) => scoreFor(a, country, product) - scoreFor(b, country, product));
+  const demotions =
+    product !== undefined && product.trim() !== ''
+      ? adaptivePriceOutlierDemotions(results, product)
+      : results.map(() => false);
+  const ranked = [...results]
+    .map((r, i) => ({ r, i }))
+    .sort(
+      (a, b) =>
+        scoreFor(a.r, country, product, demotions[a.i]) -
+        scoreFor(b.r, country, product, demotions[b.i]),
+    )
+    .map(({ r }) => r);
   if (capMlShareOf === undefined || capMlShareOf === null || capMlShareOf <= 0) {
     return ranked.map((r, i) => ({ ...r, rank: i + 1 }));
   }
