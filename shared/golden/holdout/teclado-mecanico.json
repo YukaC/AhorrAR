@@ -1,0 +1,15 @@
+{
+  "query": "teclado mecanico",
+  "offers": [
+    {"name": "Teclado mecanico Redragon Kumara RGB", "price": 55999, "url": "https://compragamer.com/p/kumara", "host": "compragamer.com", "label": "product"},
+    {"name": "Teclado mecanico Logitech G Pro X", "price": 189000, "url": "https://www.fullh4rd.com.ar/p/gprox-kb", "host": "fullh4rd.com.ar", "label": "product"},
+    {"name": "Keycaps repuesto teclado mecanico", "price": 22000, "url": "https://compragamer.com/p/keycaps", "host": "compragamer.com", "label": "accessory"},
+    {"name": "Switch pack para teclado mecanico", "price": 18000, "url": "https://www.mercadolibre.com.ar/switches/p/MLA1", "host": "mercadolibre.com.ar", "label": "accessory", "ml": true},
+    {"name": "HyperX Alloy teclado mecanico", "price": 125000, "url": "https://www.fravega.com/p/alloy", "host": "fravega.com", "label": "product"},
+    {"name": "Repos wrist rest para teclado mecanico", "price": 15000, "url": "https://www.fullh4rd.com.ar/p/wrist", "host": "fullh4rd.com.ar", "label": "accessory"},
+    {"name": "Teclado mecanico 60% white", "price": 78000, "url": "https://www.mercadolibre.com.ar/60pct/p/MLA2", "host": "mercadolibre.com.ar", "label": "product", "ml": true},
+    {"name": "Cable coiled para teclado mecanico", "price": 12000, "url": "https://www.venex.com.ar/p/coiled", "host": "venex.com.ar", "label": "accessory"},
+    {"name": "Razer BlackWidow teclado mecanico", "price": 210000, "url": "https://www.musimundo.com/p/blackwidow", "host": "musimundo.com", "label": "product"},
+    {"name": "Funda dust cover teclado mecanico", "price": 5500, "url": "https://www.musimundo.com/p/dust-cover", "host": "musimundo.com", "label": "accessory"}
+  ]
+}

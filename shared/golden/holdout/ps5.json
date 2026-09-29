@@ -1,0 +1,15 @@
+{
+  "query": "ps5",
+  "offers": [
+    {"name": "Consola PlayStation 5 Slim 1TB", "price": 899999, "url": "https://www.fravega.com/p/ps5-slim", "host": "fravega.com", "label": "product"},
+    {"name": "Sony PS5 Digital Edition", "price": 799999, "url": "https://www.musimundo.com/p/ps5-digital", "host": "musimundo.com", "label": "product"},
+    {"name": "Funda silicona para joystick PS5", "price": 8900, "url": "https://www.fravega.com/p/funda-ps5", "host": "fravega.com", "label": "accessory"},
+    {"name": "Base vertical stand compatible PS5", "price": 25000, "url": "https://www.mercadolibre.com.ar/stand-ps5/p/MLA1", "host": "mercadolibre.com.ar", "label": "accessory", "ml": true},
+    {"name": "PlayStation 5 + Spider-Man bundle", "price": 999999, "url": "https://www.garbarino.com/p/ps5-bundle", "host": "garbarino.com", "label": "product"},
+    {"name": "Juego FIFA para PS5", "price": 65000, "url": "https://www.musimundo.com/p/fifa-ps5", "host": "musimundo.com", "label": "accessory"},
+    {"name": "Consola PS5 con lector de discos", "price": 950000, "url": "https://www.mercadolibre.com.ar/ps5-disc/p/MLA2", "host": "mercadolibre.com.ar", "label": "product", "ml": true},
+    {"name": "Cable HDMI 2.1 para PS5", "price": 12000, "url": "https://compragamer.com/p/hdmi-ps5", "host": "compragamer.com", "label": "accessory"},
+    {"name": "DualSense control PS5 blanco", "price": 89500, "url": "https://www.fravega.com/p/dualsense", "host": "fravega.com", "label": "accessory"},
+    {"name": "Sony PlayStation 5 Pro 2TB", "price": 1499999, "url": "https://www.garbarino.com/p/ps5-pro", "host": "garbarino.com", "label": "product"}
+  ]
+}
