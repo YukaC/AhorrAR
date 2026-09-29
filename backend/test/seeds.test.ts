@@ -77,7 +77,7 @@ describe('seeds procedural AR discovery (T12, §V13)', () => {
     expect(categoryFor('bensimon')).toBe('perfumeria');
   });
 
-  it('buildSeedUrls = same-cat hot + hubs + cold + ML último; skips alive:false', () => {
+  it('buildSeedUrls = hubs + curated[:20] + ML último; skips alive:false', () => {
     resetArShopsCacheForTests();
     const seeds = buildSeedUrls({ product: 'bensimon', country: 'AR', maxResults: 5 });
     expect(seeds.some((s) => /duckduckgo\.com/.test(s))).toBe(true);

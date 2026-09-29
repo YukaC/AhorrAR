@@ -37,6 +37,22 @@ v0.2 · 4 huecos T61 cerrados · Micro cold 8q OK · digest e9504ec0 restaurado 
 
 ## Ledger (evidencia — no afirmar de memoria)
 
+### Bisect T61 same-cat (2026-09-29) — criterios ANTES de medir
+
+**Hipótesis:** `ac2eef4` (same-cat seeds first + degraded skip en seeds) deja afuera generalistas → zapatillas/iphone `queue_empty` con n bajo.
+
+**Variable 1 (esta corrida):** revert orden seeds + skip degraded en seeds (Node↔Python). Resto T61 intacto. Rama `bisect/t61-revert-same-cat` @ `cab0797`+revert. **⊥ prod.**
+
+**Éxito (escrito antes de medir):**
+| Query | hosts | n | stop |
+|---|---|---|---|
+| zapatillas nike | ≥3 | (no bajar vs cold cab0797 n=2 mínimo; objetivo ≥ hosts prev cold ≥3) | ⊥ `queue_empty` con n bajo |
+| iphone 15 | ≥3 | ≥7 | ⊥ `queue_empty` con n bajo |
+
+Método: local cold `clear_outcome_registry` + offer cache clear · ML=1 · FW=2 · ×3 · solo esas 2 queries.
+
+
+
 
 ### Micro cold 8q T61 (2026-09-29) — `sha-9f9bee6` · restart-before-each
 
