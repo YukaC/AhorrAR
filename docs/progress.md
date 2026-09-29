@@ -7,7 +7,7 @@
 
 ## En una línea
 
-v0.2 · Fase 0 cerrada (`#36` @ `4854ab9`) · stashes en ramas `backup/*` · Fase 2 #30–#35 merged · floors 175/63/74/0 · T61 residual pendiente · T61 bench paralelo · ML ON · 0 bugs §B abiertos.
+v0.2 · Fase 0 cerrada (`#36` @ `4854ab9`) · stashes en ramas `backup/*` · Fase 2 #30–#35 merged · floors 175/63/74/0 · T61 Micro bench done (residual wall; ⊥ merge) · T61 bench paralelo · ML ON · 0 bugs §B abiertos.
 
 ## §F — protocolo agente (fin de fase)
 
@@ -36,6 +36,20 @@ v0.2 · Fase 0 cerrada (`#36` @ `4854ab9`) · stashes en ramas `backup/*` · Fas
 | Bench DNS-cache effect | ⏳ medir en Micro / local ×3 post-merge |
 
 ## Ledger (evidencia — no afirmar de memoria)
+
+### Micro bench T61 (2026-09-29) — `sha-f74d6f0`
+
+| Query | p50 | Verdict |
+|---|---:|---|
+| ryzen | 9426ms | OK |
+| notebook | 11438ms | OK |
+| iphone | 5116ms | OK (hosts=2) |
+| smart tv | 12225ms | FAIL top3 |
+| perfume | 4243ms | OK |
+| zapatillas | **25579ms** | FAIL ceiling |
+| Restore | registry `:micro` healthy | digest e9504ec0… |
+
+
 
 ### Post-merge Fase 2 (#30–#35) — 2026-09-29
 
