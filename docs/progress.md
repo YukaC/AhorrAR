@@ -121,15 +121,76 @@ v0.2 · Fase 0 cerrada (`#36` @ `4854ab9`) · stashes en ramas `backup/*` · Fas
 
 ## En curso
 
-- Nada en esta rama. Post-merge: T61 degraded + residual wall · holdout · T54 A1 runbook.
+- **Goal plan optimización** (Fase 0 done → Fase 1 T61): backup `ea670cd` · inventario ledger · conteos main 148/63/60/0.
+- **T61** (issue #23): código en `perf/t61-ml-degraded` · **siguiente: mediana local ×3 (ML=1 FW=2)**.
+- Holdout + frase núcleo (#25) · T52 re-probe (#24) · T54 A1 (#26) · zapatillas R@10 (#22) · CodeQL fantasma (#27) · WIP stash en `backup/wip-stash` (no mergear).
 
 ## Falta
 
 - [x] Deploy prod Vercel + API (hoy Micro; históricamente Fly luego Render)
 - [x] ML ON en prod (`MELI_*` secrets + `INCLUDE_ML=1`; re-consent OK) — §T16 / `docs/ML.md`
 - [x] Dominio canónico UI `ahorrarg.vercel.app` (+ redirects 308)
-- [ ] Bench en Micro real post-merge T55
-- [ ] Holdout relevancia / frase núcleo
+- [x] **Bloque 0 cerrado** — T55 merged + gate Micro (`1ecd88e` / PR #21) · SPEC §T55=`x`
+- [ ] **T61** — local×3 → workflow_dispatch tag propio → Micro bench → PR sin merge
+- [ ] Fase 2 PRs desde stash: SSRF → stock/dedupe → golden T58 → T56
+- [ ] T52 / holdout+núcleo / T51 docs / T53 e2e CI / T54 A1
+- [ ] Holdout relevancia / frase núcleo (#25)
+- [x] **Gate Micro post-T55** (2026-09-29, criterio P1.7) — veredicto **quedarse**:
+
+  **Imagen viva:** `revision=1ecd88e…` · digest `sha256:a35d6c038ab6…`  
+  **Rollback pin:** `ghcr.io/yukac/ahorrar-api:sha-42ff331` @ `sha256:1ba2efc43d3402…` (en host)
+
+  **INCLUDE_ML=1** (prod API, cold restart entre passes, mediana ×3, `FETCH_WORKERS=2`):
+
+  | query | wall p50 | walls | ≤15s |
+  |---|---:|---|:---:|
+  | `iphone 15` | 16085 | 9204 / 22472 / 16085 | ✗ |
+  | `smart tv 55` | 26134 | 26134 / 28114 / 22115 | ✗ |
+  | `ryzen 5 5600` | 30063 | 34298 / 30063 / 29086 | ✗ |
+  | `perfume` | 9090 | 11259 / 9090 / 8845 | ✓ |
+  | `notebook` | 16957 | 20054 / 12317 / 16957 | ✗ |
+  | `heladera` | 12744 | 12170 / 17077 / 12744 | ✓ |
+  | `zapatillas nike` | 24637 | 24637 / 21411 / 24833 | ✗ |
+  | `cable` | 8514 | 10245 / 6711 / 8514 | ✓ |
+
+  **INCLUDE_ML=0** (1× in-container; ×3 mediana pendiente en T61):
+
+  | query | wallMs | n | hosts |
+  |---|---:|---:|---:|
+  | `iphone 15` | 13503 | 4 | 2 |
+  | `smart tv 55` | 17232 | 11 | 5 |
+  | `ryzen 5 5600` | 20605 | 20 | 7 |
+  | `perfume` | 5734 | 20 | 7 |
+  | `notebook` | 18569 | 20 | 7 |
+  | `heladera` | 15333 | 20 | 8 |
+  | `zapatillas nike` | 7172 | 6 | 2 |
+  | `cable` | 5685 | 20 | 8 |
+
+  **Memoria (P1.7):** RSS pico **~312 MiB**/768 (ML=1) · **~265 MiB** (ML=0) · OOM=false · RestartCount=0 · swap ~318→407 pico→~342–362.
+
+  **Salvedades (no bloquean):**
+  1. Swap ya ~318 MiB en reposo → Micro usa swap idle; margen chico. Bench fue 1 query a la vez — ⊥ prueba 2 búsquedas concurrentes. Seguir `docker stats` + swap host 1 día de tráfico real antes de dar memoria por resuelta.
+  2. Baseline T61 = **esta** tabla ML=1 ×3 (estado prod actual). No hace falta sha anterior para comparar.
+  3. Techo **15 s no se cumple en prod** (5/8 over). **Techo Micro escrito:** wall p50 ≤**25 s** orientativo + reportar **top-3 estable** (precio/host) junto al wall (lo que ve el usuario). Local FW=2 sigue ≤15 s salvo zapatillas techo 20 s. Residual wall Micro → T61.
+
+  **ML vs wall (no atribuir aún):** zapatillas Micro 24.6 s (ML=1 ×3 p50) vs 7.2 s (ML=0 **1×** sin repetición) — hipótesis parcial `ml_absorb` wait hasta 90 s; local FW=2 ya relativiza (zapatillas ML=0 ~16 s / ML=1 ~19 s, delta chico). **⊥ escribir "ML costaba 18 s"** hasta mediana ×3 en Micro post-fix. T61: join 4 s + `ML_REQUEST_TIMEOUT_S=8` (> join, evita breaker por lentitud normal) + cancel cooperativo + discard late + log `ml_wait_ms`/`ml_arrived`/`ml_offers`/`ml_cancelled_calls`.
+
+  **Cierre T61 (escrito — no estirar):**
+  1. Micro ML=1 · 8 queries · p50 ≤25 s · top-3 estable.
+  2. Cobertura ML no bajo baseline medido (tabla prod) — o caída explicada por `ml_arrived=0`.
+  3. Tests cancel (wall≈timeout, 0 calls post-cancel, breaker=) + degraded (mass / single / recheck+histéresis) verdes.
+  4. E2E Playwright `npm --prefix frontend run test:e2e` verde (T53 restaurado desde stash).
+  5. Si tras **un** ciclo Micro más algo falla → residual a issue nuevo · **T61 se cierra igual**.
+
+  **Nota conteo backend:** `main` y esta rama corren **148** tests Vitest (22 files). El “157” venía de WIP en `stash@{0}` (golden/host-allow/adaptive/dedupe untracked, nunca en main) — no es regresión de este PR.
+
+  **Orden:** tests → mediana local ×3 → imagen tag propio en Micro → merge. Anotar tag corrido abajo.
+
+  **Bench Micro pre-merge (cómo):**
+  1. `workflow_dispatch` del workflow `Docker GHCR` sobre el **branch del PR** → empuja `ghcr.io/yukac/ahorrar-api:sha-<short>` (deploy auto solo corre en `main`).
+  2. En la Micro: anotar pin actual (`:micro` / digest vivo) → pull del tag PR → recreate → bench ML=1 mediana ×3 + grepear logs `ml_wait_ms`/`ml_arrived`/`ml_cancelled_calls`.
+  3. Volver al pin prod. Anotar acá el tag usado.
+  4. Tag PR usado: _(pendiente)_. Pin rollback: `:micro` @ `revision=1ecd88e…` / digest `sha256:a35d6c038ab6…`.
 - [x] Live bench local (histórico 2026-09-24):
 
   | query | elapsedMs | pagesFetched | #results | min price |
@@ -137,6 +198,44 @@ v0.2 · Fase 0 cerrada (`#36` @ `4854ab9`) · stashes en ramas `backup/*` · Fas
   | `ryzen 5 5600` | 2001 | 11 | 20 | 226990 |
   | `perfume bensimon` | 1126 | 6 | 20 | 31843.5 |
   | `smart tv 55` | 3747 | 8 | 20 | 282999 |
+
+
+
+### Fase 1 — T61 (rama `perf/t61-ml-degraded`)
+
+| Afirmación | Evidencia |
+|---|---|
+| PR abierto sin merge | https://github.com/YukaC/AhorrAR/pull/29 |
+| Residual Micro wall | https://github.com/YukaC/AhorrAR/issues/28 (ryzen/notebook/cable >25s fair) |
+| Pin prod intacto | `:micro` @ `1ecd88e` digest `a35d6c038ab6…` · RestartCount=0 |
+| Un ciclo código | `meli_api._offer_from_listings` → None sin ARS+shipping (evita price=0) |
+
+### Fase 2 — WIP stash → PRs (no merge)
+
+| Ítem | PR | Nota |
+|---|---|---|
+| host-allow/SSRF §V32 | #30 | prioridad seguridad |
+| stock + dedupe §T60 | #31 | |
+| golden T58 + holdout sellado | #32 | tuning P@10 baseline 0.877 |
+| frase núcleo + adaptive §V31/T56 | #33 | commit `6ebfbeb` |
+
+### Fase 4 — holdout + núcleo (medida local)
+
+| Split | P@10 | R@10 |
+|---|---:|---:|
+| tuning (post-V31) | 0.983 | 0.943 |
+| holdout | 0.917 | 0.850 |
+| gap | **0.066** | <0.10 → anti-overfit OK |
+
+zapatillas nike R@10=0.60. Conteos rama T56: backend **159** / Python **64** (floors main 148/60).
+
+### Fase 3 — T52 (en curso)
+
+- Script faltante en main: `scripts/reprobe-ar-shops.sh` (ROADMAP lo citaba sin archivo) — se agrega en `chore/t52-index-canary`.
+- Canary ≥2 queries/cat · 2 momentos · streak≥2 para `alive=false` · mass-fail guard 0.55.
+- Revive candidatos (probe dead electro/bazar): `store.sony.com.ar`, `shop.lg.com.ar`, `tramontina.com.ar`.
+- Artefactos: `/tmp/ahorrar-shop-canary-*.json` · log `/tmp/ahorrar-reprobe.log` (completar tras run).
+
 
 ## Bugs conocidos
 
