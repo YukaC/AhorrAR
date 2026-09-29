@@ -390,16 +390,11 @@ export function buildSeedUrls(params: SearchParams): string[] {
     }
   }
 
-  const curatedSame = [...sameEntry, ...sameNull];
-  const curatedOther = [...otherEntry, ...otherNull];
-  // Same-category first (T61 wall); hubs after hot index slice — parity with Python.
-  const hot = curatedSame.slice(0, 14);
-  const cold = curatedOther.slice(0, 6);
+  const indexSeeds = [...sameEntry, ...sameNull, ...otherEntry, ...otherNull].slice(0, 20);
 
   return [
-    ...hot,
     ...hubs,
-    ...cold,
+    ...indexSeeds,
     `https://api.mercadolibre.com/sites/MLA/search?q=${enc}&limit=20`,
     `https://listado.mercadolibre.com.ar/${slug}`,
   ];
