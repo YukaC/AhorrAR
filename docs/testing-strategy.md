@@ -11,9 +11,9 @@
 - **Integration**: contrato `shared/contract.ts` (`contract.test.ts`), API (`api.test.ts`),
   streaming ndjson (`live.test.ts`), seeds e índice (`seeds.test.ts`).
 - **Frontend**: guards de contrato y formatters (`frontend/src/**/*.test.ts`).
-- **E2E**: Playwright SSE (`frontend/e2e/search-sse.spec.ts`) vive en la rama T61 / PR #29
-  (`npm --prefix frontend run test:e2e`). En `main` todavía **0** specs (§T53 pendiente de merge).
-  Mientras tanto: smoke manual curl a `/crawl/stream` y `/api/search/:id/events`.
+- **E2E**: Playwright SSE mock (`frontend/e2e/search-sse.spec.ts`, §T53) — intercepta API +
+  fakes EventSource; verifica que el más barato relevante queda #1 ("Mejor precio").
+  Sin Scrapling/red real. Entra a `main` con PR #29.
 
 ## Frameworks y comandos
 
@@ -21,6 +21,7 @@
 |---|---|---|
 | unit/integration (backend) | Vitest | `npm test` (desde raíz) o `npm --prefix backend run test` |
 | unit (frontend) | Vitest | `npm --prefix frontend run test` |
+| e2e (frontend) | Playwright | `npm --prefix frontend run test:e2e` |
 | typecheck | `tsc --noEmit` | `npm run typecheck` |
 | build | `tsc --noEmit` + vite | `npm run build` |
 | python sanity | `compileall` + REPL | `cd scraper && uv run python -m compileall -q src` |
@@ -29,6 +30,7 @@
 
 | Test | Cubre §V |
 |---|---|
+| `frontend/e2e/search-sse.spec.ts` | V16 (SSE parciales) + ranking #1 más barato (regresión UI) |
 | `backend/test/scoring.test.ts` | V4 (local > intl, tier gap), V17 (ML share ≤50%), V18 (reputación + cuotas bonifican, cap N) |
 | `backend/test/live.test.ts` | V16 (SSE `results` parciales, parse ndjson limpio) |
 | `backend/test/seeds.test.ts` | V19 (índice ar-shops compartido, buildSeedUrls, guessSearchUrls con magento/woo) |
@@ -48,7 +50,7 @@
 
 - GitHub Actions: Docker GHCR (push `main` / `workflow_dispatch`) · CodeQL.
 - Verificación local completa:
-  `npm run typecheck && npm test && npm --prefix frontend run test && npm run build`
+  `npm run typecheck && npm test && npm --prefix frontend run test && npm --prefix frontend run test:e2e && npm run build`
   (+ `cd scraper && uv run python -m unittest discover -s tests -q`).
 
 ## Convenciones
