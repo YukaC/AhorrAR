@@ -7,7 +7,7 @@
 
 ## En una línea
 
-v0.2 · Fase 2 #30–#35 merged · floors 175/63/74/0 · T61 #29 pre-merge: 4 huecos (8q/hosts/registry/digest) · ML ON · 0 bugs §B.
+v0.2 · 4 huecos T61 cerrados · Micro cold 8q OK · digest e9504ec0 restaurado · merge #29 pendiente/en curso · ML ON.
 
 ## §F — protocolo agente (fin de fase)
 
@@ -36,6 +36,29 @@ v0.2 · Fase 2 #30–#35 merged · floors 175/63/74/0 · T61 #29 pre-merge: 4 hu
 | Bench DNS-cache effect | ⏳ medir en Micro / local ×3 post-merge |
 
 ## Ledger (evidencia — no afirmar de memoria)
+
+
+### Micro cold 8q T61 (2026-09-29) — `sha-9f9bee6` · restart-before-each
+
+**Decisión explícita:** swap breve del contenedor prod (retag local `sha-9f9bee6` → `:micro` en VM; GHCR `:micro` intacto) para bench frío. **Ventana:** `2026-09-29T16:20:40Z` → `2026-09-29T16:40:24Z` (~20 min). **Restore verificado:** digest `sha256:e9504ec0086e1e67a23a56c30e796e7ebed684d302a2605d2ab74d5f4a68888d` · rev `e1db4fb…` · RestartCount=0. (Pin previo post-Fase2; `a35d6c…`/`1ecd88e` quedó atrás al rebuild `:micro` tras #30–#35.)
+
+**Cold:** `clear_outcome_registry` (local) / `docker compose restart api` antes de cada búsqueda (Micro). top3_stable = mismo (price,host) entre reps — **no** “top3≈wall”.
+
+| query | Micro p50 | hosts | n | rss | top3 | vs prod ML=1 |
+|---|---:|---:|---:|---:|:---:|---|
+| ryzen | 14.5s | 6 | 12 | 239 | ✓ | 30.1→14.5 |
+| notebook | 16.5s | 6 | 12 | 240 | ✓ | 17.0→16.5 |
+| perfume | 5.6s | 6 | 12 | 223 | ✓ | 9.1→5.6 |
+| iphone | 19.7s | **2** | 2 | 269 | ✓ | 16.1→19.7 · hosts=2 **también en frío** (local frío hosts=3) → ⊥ regresión degraded |
+| smart tv | 10.3s | 5 | 7 | 256 | ≠ | 26.1→10.3 · top3≠ informativo |
+| zapatillas | 31.2s | 3 | 9 | 268 | ≠ | ~flat · residual → #22 / T52 / T56 · stop local=`queue_empty` |
+| heladera | 8.1s | 8 | 20 | 242 | ≠ | OK |
+| cable | 11.9s | 7 | 14 | 294 | ✓ | OK |
+
+rssPeak Micro **300 MiB**. Local cold artifact `/tmp/ahorrar-bench/t61-local-cold-8q.json` · Micro `/tmp/ahorrar-bench/t61-micro-cold-8q.json` (VM).
+
+**Veredicto:** merge #29. Zapatillas/smart-tv top3 → issues #22–#26 + T52/T56. stop_reason shipped (`satisfied|deadline|max_nodes|queue_empty`).
+
 
 ### Micro bench T61 (2026-09-29) — `sha-f74d6f0`
 

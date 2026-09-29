@@ -133,7 +133,7 @@ T57|x|ML cobertura honest docs · ML-COVERAGE.md · merged via #32|V15
 T58|x|golden set + métricas + stock/variant fixtures · merged #32|V29,V17
 T59|x|V33 FETCH_MAX_BYTES + V32 host-allow SSRF (fetch-time gate, redirects, DNS pin/cache) · merged #30 @e5a42f4|V32,V33
 T60|x|stock Woo/Shopify + dedupe variantes · merged #31|V30,V1
-T61|~|PR #29: degraded+ML join+same-cat+e2e+stop_reason · cierre si 8q Micro frío OK (hosts sin caída real, registry reset) · zapatillas residual → #22/#T52/#T56 · merge OK pese a wall≈prod si variedad OK|V19,V34
+T61|x|degraded+ML join+same-cat+e2e+stop_reason · Micro cold 8q · merge #29 · zapatillas residual #22|V19,V34
 
 §B
 id|date|cause|fix
