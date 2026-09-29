@@ -131,7 +131,7 @@ T55|x|perf Micro: price-first + corte yield (V34) + set-satisfecho (V30) · en m
 T56|.|relevancia adaptativa + frase núcleo · solo backup/wip-stash + PR #33 · ⊥ main|V31,V28,V29
 T57|.|ML cobertura honest docs · ML-COVERAGE.md solo backup/wip-stash · ⊥ main|V15
 T58|.|golden set + métricas · shared/golden solo backup/wip-stash + PR #32 · ⊥ main|V29,V17
-T59|~|V33 FETCH_MAX_BYTES en main + test path crawl · V32 host-allow SSRF solo backup + PR #30 · ⊥ SSRF en main|V32,V33
+T59|x|V33 FETCH_MAX_BYTES + V32 host-allow SSRF (fetch-time gate, redirects, DNS pin/cache) · merged #30 @e5a42f4|V32,V33
 T60|.|stock Woo/Shopify + dedupe variantes · solo backup/wip-stash + PR #31 · ⊥ main|V30,V1
 T61|~|en PR #29 (perf/t61-ml-degraded @815d4eb): degraded+ML join+e2e · residual Micro wall → issue #28 · ⊥ merge|V19,V34
 
