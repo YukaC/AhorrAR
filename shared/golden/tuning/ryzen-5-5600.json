@@ -1,0 +1,15 @@
+{
+  "query": "ryzen 5 5600",
+  "offers": [
+    {"name": "AMD Ryzen 5 5600 6 núcleos 12 hilos", "price": 189999, "url": "https://compragamer.com/p/r5-5600", "host": "compragamer.com", "label": "product"},
+    {"name": "Procesador AMD Ryzen 5 5600 BOX", "price": 195000, "url": "https://www.fullh4rd.com.ar/p/r55600", "host": "fullh4rd.com.ar", "label": "product"},
+    {"name": "Cooler para Ryzen 5 5600 stock", "price": 12000, "url": "https://compragamer.com/p/cooler-r5", "host": "compragamer.com", "label": "accessory"},
+    {"name": "Pasta térmica para CPU Ryzen", "price": 4500, "url": "https://www.mercadolibre.com.ar/pasta-ryzen/p/MLA1", "host": "mercadolibre.com.ar", "label": "accessory", "ml": true},
+    {"name": "AMD Ryzen 5 5600X", "price": 229999, "url": "https://www.mercadolibre.com.ar/r5-5600x/p/MLA2", "host": "mercadolibre.com.ar", "label": "product", "ml": true},
+    {"name": "Motherboard AM4 compatible Ryzen 5 5600", "price": 145000, "url": "https://compragamer.com/p/b550", "host": "compragamer.com", "label": "accessory"},
+    {"name": "CPU AMD Ryzen 5 5600 tray", "price": 175000, "url": "https://www.maximus.com.ar/p/r5-5600-tray", "host": "maximus.com.ar", "label": "product"},
+    {"name": "Disipador torre para Ryzen 5", "price": 35000, "url": "https://www.fullh4rd.com.ar/p/disipador", "host": "fullh4rd.com.ar", "label": "accessory"},
+    {"name": "Ryzen 5 5600G APU", "price": 210000, "url": "https://www.venex.com.ar/p/r5-5600g", "host": "venex.com.ar", "label": "product"},
+    {"name": "Cable de poder EPS para Ryzen", "price": 8000, "url": "https://www.venex.com.ar/p/cable-eps", "host": "venex.com.ar", "label": "accessory"}
+  ]
+}

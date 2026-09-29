@@ -1,0 +1,15 @@
+{
+  "query": "cable",
+  "offers": [
+    {"name": "Cable USB-C a USB-C 1m carga rápida", "price": 8999, "url": "https://www.fravega.com/p/cable-usbc", "host": "fravega.com", "label": "product"},
+    {"name": "Cable HDMI 2.1 2 metros", "price": 15999, "url": "https://compragamer.com/p/hdmi21", "host": "compragamer.com", "label": "product"},
+    {"name": "Organizador de cables espiral", "price": 2500, "url": "https://www.mercadolibre.com.ar/organizador/p/MLA1", "host": "mercadolibre.com.ar", "label": "accessory", "ml": true},
+    {"name": "Cable Lightning Apple original 1m", "price": 24999, "url": "https://www.musimundo.com/p/lightning", "host": "musimundo.com", "label": "product"},
+    {"name": "Adaptador HDMI a VGA sin cable", "price": 12000, "url": "https://compragamer.com/p/hdmi-vga", "host": "compragamer.com", "label": "accessory"},
+    {"name": "Cable de red Cat6 5m", "price": 6500, "url": "https://www.mercadolibre.com.ar/cat6/p/MLA2", "host": "mercadolibre.com.ar", "label": "product", "ml": true},
+    {"name": "Cable DisplayPort 1.4", "price": 18999, "url": "https://www.fullh4rd.com.ar/p/dp14", "host": "fullh4rd.com.ar", "label": "product"},
+    {"name": "Clip sujeta cables pack x10", "price": 1800, "url": "https://www.fullh4rd.com.ar/p/clips", "host": "fullh4rd.com.ar", "label": "accessory"},
+    {"name": "Cable USB-A a Micro USB 2m", "price": 4500, "url": "https://www.garbarino.com/p/microusb", "host": "garbarino.com", "label": "product"},
+    {"name": "Enrollador de cable auriculares", "price": 3200, "url": "https://www.garbarino.com/p/enrollador", "host": "garbarino.com", "label": "accessory"}
+  ]
+}

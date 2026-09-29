@@ -1,0 +1,15 @@
+{
+  "query": "jeans levis",
+  "offers": [
+    {"name": "Jeans Levis 501 Original Fit", "price": 89999, "url": "https://www.levi.com.ar/p/501", "host": "levi.com.ar", "label": "product"},
+    {"name": "Levis Jeans 511 Slim hombre", "price": 94999, "url": "https://www.dexter.com.ar/p/511", "host": "dexter.com.ar", "label": "product"},
+    {"name": "Cinturon para jeans Levis", "price": 25000, "url": "https://www.levi.com.ar/p/cinturon", "host": "levi.com.ar", "label": "accessory"},
+    {"name": "Parche reparacion jeans Levis", "price": 3500, "url": "https://www.mercadolibre.com.ar/parche-jeans/p/MLA1", "host": "mercadolibre.com.ar", "label": "accessory", "ml": true},
+    {"name": "Jeans Levis 721 High Rise mujer", "price": 99999, "url": "https://www.stockcenter.com.ar/p/721", "host": "stockcenter.com.ar", "label": "product"},
+    {"name": "Remera Levis logo", "price": 35000, "url": "https://www.dexter.com.ar/p/remera-levis", "host": "dexter.com.ar", "label": "accessory"},
+    {"name": "Levis 505 Regular jeans", "price": 87999, "url": "https://www.mercadolibre.com.ar/505-levis/p/MLA2", "host": "mercadolibre.com.ar", "label": "product", "ml": true},
+    {"name": "Kit lavado para jeans Levis", "price": 8900, "url": "https://www.garbarino.com/p/kit-jeans", "host": "garbarino.com", "label": "accessory"},
+    {"name": "Jeans Levis 512 Bootcut", "price": 92000, "url": "https://www.grid.com.ar/p/512", "host": "grid.com.ar", "label": "product"},
+    {"name": "Bolsa para jeans Levis travel", "price": 12000, "url": "https://www.grid.com.ar/p/bolsa-jeans", "host": "grid.com.ar", "label": "accessory"}
+  ]
+}
