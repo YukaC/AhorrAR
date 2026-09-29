@@ -1,8 +1,10 @@
 # Plan definitivo — Micro OCI primario + Render backup (+ A1 futuro)
 
 Fecha: 2026-09-26  
-Estado: **en curso** — B1 hecho; Fase C/D pendiente. Prod sigue en Render.  
-Contexto vivo: [`docs/PROD.md`](../PROD.md) · [`STATUS.md`](STATUS.md) · [`DISABLED.md`](DISABLED.md) (A1 full).
+
+Estado: **cutover hecho** — API prod = OCI Micro (`147.15.72.239.sslip.io`); Render = backup; Fly retirado.  
+Fases A–E checklist abajo (§D/E) están ✓. A1 (Fase F) sigue bloqueado por cupo — ver [`DISABLED.md`](DISABLED.md).  
+Contexto vivo: [`docs/PROD.md`](../PROD.md) · [`STATUS.md`](STATUS.md) · [`DISABLED.md`](DISABLED.md).
 
 ## 0. Objetivo
 

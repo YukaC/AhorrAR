@@ -6,6 +6,14 @@ Unreleased = lo que aún no se desplegó. Los refs §T apuntan al plan en `SPEC.
 
 ## [WIP]
 
+### Added
+- **Goal plan PRs (sin merge a main):** T61 ML degraded (#29, residual #28) · SSRF host-allow (#30) · stock/dedupe (#31) · golden+holdout (#32) · frase núcleo T56 (#33) · re-probe T52 (#34)
+- **docs/CRAWL.md**: política crawl / opt-out tiendas (§T51)
+- **T52 re-probe**: `scripts/reprobe-ar-shops.sh` canary ≥2q ×2 momentos + mass-fail (§V19)
+
+### Fixed
+- Docs stale: MICRO-PLAN/STATUS/DISABLED alineados a Micro primario (ya no “prod = Render”) · testing-strategy nota E2E T53 (§T51/T53/T54)
+
 ### Changed
 - **Prod API primario = OCI Micro** (`147.15.72.239.sslip.io`); Render Free = backup; **Fly retirado** — docs alineados (`README`/`DEPLOY`/`PROD`/`AGENTS`/`SPEC`)
 - **T55 host-yield cut**: set retenido satisfecho ⇒ skip mid-crawl barren probes; cota `(tier,precio)`; top-3 PDP verify · §V30 · residual wall (zapatillas/TV/notebook/ryzen) → T61 · ver `docs/audit-iphone-latency.md`

@@ -1,8 +1,8 @@
 # OCI migration status — 2026-09-26
 
-> **Prod API hoy:** **Render Free** (puente) — [`docs/PROD.md`](../../docs/PROD.md).  
-> **Siguiente primario:** E2.1.Micro — [`MICRO-PLAN.md`](MICRO-PLAN.md) (cutover pendiente Fase D).  
-> **A1 full:** sigue **bloqueado** por cupo Oracle; upgrade futuro, no bloquea Micro.
+> **Prod API hoy:** **OCI Micro** `147.15.72.239.sslip.io` — [`docs/PROD.md`](../../docs/PROD.md).  
+> **Backup:** Render Free — [`REVERT-RENDER.md`](REVERT-RENDER.md).  
+> **A1 full:** **bloqueado** por cupo Oracle — [`DISABLED.md`](DISABLED.md); no bloquea Micro.
 
 ## Micro E2.1 (primario planificado)
 
