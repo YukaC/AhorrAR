@@ -11,8 +11,9 @@
 - **Integration**: contrato `shared/contract.ts` (`contract.test.ts`), API (`api.test.ts`),
   streaming ndjson (`live.test.ts`), seeds e índice (`seeds.test.ts`).
 - **Frontend**: guards de contrato y formatters (`frontend/src/**/*.test.ts`).
-- **E2E**: manual sobre los procesos dev (curl a `/crawl/stream` y `/api/search/:id/events`).
-  No hay suite E2E automatizada todavía.
+- **E2E**: Playwright SSE (`frontend/e2e/search-sse.spec.ts`) vive en la rama T61 / PR #29
+  (`npm --prefix frontend run test:e2e`). En `main` todavía **0** specs (§T53 pendiente de merge).
+  Mientras tanto: smoke manual curl a `/crawl/stream` y `/api/search/:id/events`.
 
 ## Frameworks y comandos
 
@@ -45,8 +46,10 @@
 
 ## CI
 
-- No hay CI configurado todavía (repo local). Comando de verificación manual completo:
-  `npm run typecheck && npm test && npm --prefix frontend run test && npm run build`.
+- GitHub Actions: Docker GHCR (push `main` / `workflow_dispatch`) · CodeQL.
+- Verificación local completa:
+  `npm run typecheck && npm test && npm --prefix frontend run test && npm run build`
+  (+ `cd scraper && uv run python -m unittest discover -s tests -q`).
 
 ## Convenciones
 
