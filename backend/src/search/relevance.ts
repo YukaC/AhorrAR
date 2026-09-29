@@ -154,10 +154,10 @@ const FRAGRANCE_FAMILY = new Set([
   'colonia',
 ]);
 
-/** Laptop/PC evidence — rejects paper "composition notebook" flood (§V27). */
+/** Laptop evidence — rejects paper notebooks; brands/CPU chips alone are NOT enough. */
 const NOTEBOOK_FAMILY = new Set(['notebook', 'notebooks', 'laptop', 'laptops']);
 const NOTEBOOK_STRONG_RE =
-  /\b(?:intel|amd|ryzen|core\s*i[3579]|celeron|pentium|snapdragon|ssd|hdd|nvme|ddr[45]?|windows|freedos|ubuntu|rtx|gtx|radeon|geforce|lenovo|thinkpad|ideapad|yoga|dell|asus|acer|msi|bangho|pcbox|hp\s+(?:laptop|pavilion|victus|omen|250|255|445)|macbook|chromebook)\b/;
+  /\b(?:notebooks?|laptops?|macbook|chromebook|thinkpad|ideapad|yoga|netbook|ultrabook)\b/;
 const NOTEBOOK_PAPER_RE =
   /\b(?:composition|pastel|journal|diary|graph\s+paper|cuaderno|rayado|espiral|spiral|lined|wide\s+ruled|college\s+ruled|unicorn|for\s+(?:dog|cat)\s+lovers|sketchbook|libreta)\b/;
 

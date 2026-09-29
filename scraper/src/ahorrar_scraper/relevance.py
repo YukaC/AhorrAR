@@ -164,10 +164,7 @@ _HYGIENE_OR_CARE_RE = re.compile(
 
 _NOTEBOOK_FAMILY = frozenset({"notebook", "notebooks", "laptop", "laptops"})
 _NOTEBOOK_STRONG_RE = re.compile(
-    r"\b(?:intel|amd|ryzen|core\s*i[3579]|celeron|pentium|snapdragon|ssd|hdd|nvme|"
-    r"ddr[45]?|windows|freedos|ubuntu|rtx|gtx|radeon|geforce|lenovo|thinkpad|ideapad|"
-    r"yoga|dell|asus|acer|msi|bangho|pcbox|hp\s+(?:laptop|pavilion|victus|omen|250|255|445)|"
-    r"macbook|chromebook)\b"
+    r"\b(?:notebooks?|laptops?|macbook|chromebook|thinkpad|ideapad|yoga|netbook|ultrabook)\b"
 )
 _NOTEBOOK_PAPER_RE = re.compile(
     r"\b(?:composition|pastel|journal|diary|graph\s+paper|cuaderno|rayado|espiral|spiral|"
