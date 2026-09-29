@@ -15,7 +15,7 @@ import queue
 import re
 import threading
 import time
-from collections import deque
+from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 from urllib.parse import urlparse
@@ -103,7 +103,12 @@ def probe_workers() -> int:
     return _env_int("PROBE_WORKERS", 6, min_v=1, max_v=16)
 
 
-# Mirror Node RELEVANCE_STRONG — probe strong matches before weak/cheap accessories.
+def probe_budget_factor() -> int:
+    """Max PDP probes ≈ slots * factor (Micro: 2). Hard cap on probe fan-out."""
+    return _env_int("PROBE_BUDGET_FACTOR", 2, min_v=1, max_v=8)
+
+
+# Mirror Node RELEVANCE_STRONG — strong tier probed before weak/cheap accessories.
 _RELEVANCE_STRONG = 0.55
 
 
@@ -112,16 +117,117 @@ def _offer_price(offer: dict[str, Any]) -> float:
     return float(p) if isinstance(p, (int, float)) else float("inf")
 
 
+def _offer_host(offer: dict[str, Any]) -> str:
+    u = offer.get("url")
+    return host_of(u) if isinstance(u, str) else ""
+
+
 def _offer_tier(offer: dict[str, Any], product: str) -> int:
-    """0 = strong relevance, 1 = weak."""
+    """0 = strong relevance, 1 = weak (higher is worse for retention order)."""
     name = offer.get("name") if isinstance(offer.get("name"), str) else ""
     score = title_relevance_score(name, product) if name else 0.0
     return 0 if score >= _RELEVANCE_STRONG else 1
 
 
 def _probe_sort_key(offer: dict[str, Any], product: str) -> tuple[int, float]:
-    """(tier, price): strong first, then cheapest within tier."""
+    """(tier, price): strong relevance first, then cheapest within tier."""
     return (_offer_tier(offer, product), _offer_price(offer))
+
+
+def _has_parsed_price(offer: dict[str, Any]) -> bool:
+    p = offer.get("price")
+    return isinstance(p, (int, float)) and float(p) > 0
+
+
+def _needs_pdp_probe(offer: dict[str, Any]) -> bool:
+    """PDP probe = dead-link / soft-404 check — not shipping (§V1 uses VTEX ShippingSLA).
+
+    Skip for VTEX catalog API rows (stock+price already validated) except Frávega,
+    whose SPA returns HTTP 200 shells that need GraphQL SKU check.
+    """
+    u = offer.get("url")
+    if not isinstance(u, str):
+        return False
+    if "fravega.com" in host_of(u):
+        return True
+    src = offer.get("sourceUrl")
+    if isinstance(src, str) and "catalog_system/pub/products/search" in src:
+        return False
+    return True
+
+
+def filter_probe_candidates(
+    candidates: list[dict[str, Any]],
+    results: list[dict[str, Any]],
+    product: str,
+    *,
+    max_results: int,
+    k_hosts: int = 4,
+) -> list[dict[str, Any]]:
+    """Drop same-host candidates that cannot improve a full, diverse retained set.
+
+    Retention order is (tier ↑, price ↑). A stronger-tier candidate may be more
+    expensive than the worst retained price and still improve the set.
+    Unpriced candidates and new hosts are never cut by this bound.
+    """
+    if len(results) < max_results:
+        return candidates
+    if _distinct_offer_hosts(results) < k_hosts:
+        return candidates
+    # Worst retained key under the same total order as ranking.
+    worst_key = max((_probe_sort_key(r, product) for r in results), default=(1, 0.0))
+    existing = {_offer_host(r) for r in results}
+    out: list[dict[str, Any]] = []
+    for c in candidates:
+        h = _offer_host(c)
+        if h not in existing:
+            out.append(c)  # new host → variety
+            continue
+        if not _has_parsed_price(c):
+            out.append(c)  # cannot evaluate price bound pre-probe
+            continue
+        if _probe_sort_key(c, product) < worst_key:
+            out.append(c)
+            # else: same/worse (tier, price) on an already-represented host → skip
+    return out
+
+
+def probe_budget(slots: int, *, set_full: bool) -> int:
+    factor = probe_budget_factor()
+    if set_full:
+        return max(factor * 2, factor)
+    return max(slots * factor, 4 if slots > 0 else factor)
+
+
+def verify_top_pdps(
+    results: list[dict[str, Any]],
+    fetch_pool: _FetchPool,
+    product: str,
+    *,
+    k: int = 3,
+) -> int:
+    """Probe the best-k retained PDPs; drop hard-dead URLs. Returns removals.
+
+    Compensates for skipping mid-crawl VTEX API probes — only the visible top
+    pays RTT (typically 3 GETs).
+    """
+    if not results:
+        return 0
+    ranked = sorted(results, key=lambda o: _probe_sort_key(o, product))
+    top = ranked[:k]
+    urls = [o["url"] for o in top if isinstance(o.get("url"), str)]
+    if not urls:
+        return 0
+    alive = fetch_pool.probe_many(urls)
+    dead = {u for u, ok in alive.items() if ok is False}
+    if not dead:
+        return 0
+    before = len(results)
+    results[:] = [o for o in results if o.get("url") not in dead]
+    removed = before - len(results)
+    if removed:
+        log.info("top-%s PDP verify dropped %s dead urls for %r", k, removed, product)
+    return removed
 
 
 _offer_cache = OfferCache(
@@ -145,18 +251,97 @@ def _fetch_kind(url: str) -> str:
     return "html"
 
 
+def fetch_max_bytes() -> int:
+    """Hard body size cap (§V33) — Micro OOM defense."""
+    return _env_int("FETCH_MAX_BYTES", 2_000_000, min_v=64_000, max_v=8_000_000)
+
+
 def _page_body_text(page: Any) -> str:
     body = getattr(page, "body", None)
+    max_b = fetch_max_bytes()
     if isinstance(body, bytes):
+        if len(body) > max_b:
+            body = body[:max_b]
         return body.decode("utf-8", errors="replace")
     if body is None:
         return ""
-    return str(body)
+    text = str(body)
+    if len(text) > max_b:
+        return text[:max_b]
+    return text
 
 
 def _page_status(page: Any) -> int:
     status = getattr(page, "status", None) or getattr(page, "status_code", 200)
     return int(status) if isinstance(status, int) else 200
+
+
+def victim_index(
+    results: list[dict[str, Any]],
+    incoming: dict[str, Any],
+    *,
+    k_hosts: int = 4,
+) -> int | None:
+    """Index to replace under cap, or None to drop incoming (§V30).
+
+    Total order for victim: (1) same-host surplus worst price, (2) worst price overall.
+    Incoming wins if cheaper than victim (or adds a new host while over host-dup).
+    """
+    if not results:
+        return None
+    in_price = _offer_price(incoming)
+    in_host = _offer_host(incoming)
+    # Prefer evicting a duplicate host on the incoming's host if count>1, else any host with count>1
+    host_counts: dict[str, int] = {}
+    for o in results:
+        h = _offer_host(o)
+        host_counts[h] = host_counts.get(h, 0) + 1
+
+    def worse(a: int, b: int) -> bool:
+        return _offer_price(results[a]) > _offer_price(results[b])
+
+    victim: int | None = None
+    # 1) Same host as incoming if that host already present
+    if in_host and host_counts.get(in_host, 0) >= 1:
+        for i, o in enumerate(results):
+            if _offer_host(o) != in_host:
+                continue
+            if victim is None or worse(i, victim):
+                victim = i
+    # 2) Else any host with surplus duplicates
+    if victim is None:
+        for i, o in enumerate(results):
+            h = _offer_host(o)
+            if host_counts.get(h, 0) <= 1:
+                continue
+            if victim is None or worse(i, victim):
+                victim = i
+    # 3) Else most expensive overall
+    if victim is None:
+        victim = 0
+        for i in range(1, len(results)):
+            if worse(i, victim):
+                victim = i
+
+    # Keep K hosts: if replacing would drop below K and incoming doesn't add a new host, refuse
+    hosts_now = { _offer_host(o) for o in results if _offer_host(o) }
+    victim_host = _offer_host(results[victim])
+    hosts_after = set(hosts_now)
+    hosts_after.discard(victim_host)
+    if in_host:
+        hosts_after.add(in_host)
+    if len(hosts_now) >= k_hosts and len(hosts_after) < k_hosts:
+        # Only allow if incoming is strictly cheaper than victim (still may drop host — prefer price)
+        if in_price >= _offer_price(results[victim]):
+            return None
+
+    if in_price < _offer_price(results[victim]):
+        return victim
+    return None
+
+
+def crawl_deadline_s() -> float:
+    return float(_env_int("CRAWL_DEADLINE_S", 30, min_v=5, max_v=120))
 
 
 def _distinct_offer_hosts(results: list[dict[str, Any]]) -> int:
@@ -474,6 +659,8 @@ def crawl(
     results: list[dict[str, Any]] = []
     seen_urls: set[str] = set()
     visited: set[str] = set()
+    probe_attempted: dict[str, int] = defaultdict(int)
+    probe_published: dict[str, int] = defaultdict(int)
     ml_via_api = False
     blocked_ml = False
 
@@ -698,41 +885,77 @@ def crawl(
                     expand_origin(final_url, depth + 1)
                 continue
 
-            # Gate already applied above. Probe strong-tier then cheapest first.
+            # Gate already applied above. Sort strong-tier then cheapest; skip
+            # same-host probes that cannot beat the retained worst price.
             slots = max(0, max_results - len(results))
+            set_full = len(results) >= max_results
             candidates.sort(key=lambda o: _probe_sort_key(o, product))
-            to_probe = candidates[
-                : max(slots * 2, slots)
-            ]  # small overfetch for dead links
-            alive_map = fetch_pool.probe_many(
-                [c["url"] for c in to_probe if isinstance(c.get("url"), str)]
+            candidates = filter_probe_candidates(
+                candidates, results, product, max_results=max_results, k_hosts=4
             )
+            budget = probe_budget(slots, set_full=set_full)
+            shortlist = candidates[:budget]
 
+            need_probe = [c for c in shortlist if _needs_pdp_probe(c)]
+            skip_probe = [c for c in shortlist if not _needs_pdp_probe(c)]
+            probe_attempted[host_of(final_url) or "unknown"] += len(need_probe)
+            alive_map = fetch_pool.probe_many(
+                [c["url"] for c in need_probe if isinstance(c.get("url"), str)]
+            )
+            # VTEX API rows: treat as alive without PDP RTT.
+            for c in skip_probe:
+                u = c.get("url")
+                if isinstance(u, str):
+                    alive_map[u] = True
+
+            to_probe = shortlist
             added: list[dict[str, Any]] = []
             for offer in to_probe:
-                if len(results) >= max_results:
-                    break
                 u = offer.get("url")
                 if not isinstance(u, str) or u in seen_urls:
                     continue
                 if alive_map.get(u, True) is False:
                     seen_urls.add(u)  # remember dead — don't re-queue
                     continue
+                if len(results) < max_results:
+                    seen_urls.add(u)
+                    results.append(offer)
+                    added.append(offer)
+                    explore_offer(offer)
+                    emit_offer(offer)
+                    emit_progress(nodes_visited=len(visited), results_found=len(results))
+                    continue
+                # Cap full: keep/replace by price (§V30)
+                vi = victim_index(results, offer, k_hosts=4)
+                if vi is None:
+                    continue
+                old = results[vi]
+                old_u = old.get("url")
+                if isinstance(old_u, str):
+                    seen_urls.discard(old_u)
                 seen_urls.add(u)
-                results.append(offer)
+                results[vi] = offer
                 added.append(offer)
                 explore_offer(offer)
                 emit_offer(offer)
                 emit_progress(nodes_visited=len(visited), results_found=len(results))
 
-            # Verified offers go to the shared cache for future similar searches.
             if added:
-                host = host_of(final_url)
-                if host:
-                    _offer_cache.add(host, added)
+                h = host_of(final_url) or "unknown"
+                probed_urls = {
+                    c["url"] for c in need_probe if isinstance(c.get("url"), str)
+                }
+                probe_published[h] += sum(
+                    1 for o in added if o.get("url") in probed_urls
+                )
+                # Verified offers go to the shared cache for future similar searches.
+                if h and h != "unknown":
+                    _offer_cache.add(h, added)
 
             if not is_serp(url):
                 expand_origin(final_url, depth + 1)
+
+    deadline = started + crawl_deadline_s()
 
     try:
         batch = take_batch()
@@ -741,7 +964,7 @@ def crawl(
         while (
             (batch or crawl_queue)
             and len(visited) < max_nodes
-            and len(results) < max_results
+            and time.time() < deadline
         ):
             # Sitemap discovery URLs (background worker) get enqueued as they arrive.
             with sitemap_lock:
@@ -759,8 +982,8 @@ def crawl(
             batch = next_batch
             futures = next_futures
 
-            # A3: enough diverse offers + queue is only HTML guesses for expanded hosts
-            # → one more api-only batch, then exit (ML absorb unchanged at end).
+            # Early-stop: cupo lleno + ≥4 hosts + queue only HTML → drain API batch then exit.
+            # Keep crawling while API seeds remain (price discovery).
             if (
                 len(results) >= max_results
                 and _distinct_offer_hosts(results) >= 4
@@ -776,9 +999,15 @@ def crawl(
                         continue
                     visited.add(url)
                     api_only.append((url, d))
-                if api_only and len(results) < max_results:
+                if api_only:
                     process_batch(api_only, launch_batch(api_only))
                 break
+            # Soft stop when full and no queue left
+            if len(results) >= max_results and not crawl_queue and not batch:
+                break
+
+        # Top-3 PDP verify before pool shutdown (covers VTEX API skip).
+        verify_top_pdps(results, fetch_pool, product, k=3)
     finally:
         fetch_pool.shutdown()
 
@@ -787,6 +1016,18 @@ def crawl(
         ml_absorb()
 
     elapsed_ms = int((time.time() - started) * 1000)
+    probed_n = sum(probe_attempted.values())
+    published_n = sum(probe_published.values())
+    yield_pct = round(100.0 * published_n / probed_n, 1) if probed_n else None
+    if probed_n:
+        log.info(
+            "probe yield queried=%s attempted=%s published=%s yieldPct=%s byHost=%s",
+            product,
+            probed_n,
+            published_n,
+            yield_pct,
+            dict(probe_attempted),
+        )
     return {
         "product": product,
         "country": "AR",
@@ -800,6 +1041,10 @@ def crawl(
             "skippedNoShipping": 0,
             "skippedDedupe": 0,
             "elapsedMs": elapsed_ms,
+            "probeAttempted": probed_n,
+            "probePublished": published_n,
+            "probeYieldPct": yield_pct,
+            "probeByHost": dict(probe_attempted),
         },
         "mlBlocked": blocked_ml,
         "mlViaApi": ml_via_api,
