@@ -39,6 +39,26 @@ _STOP = frozenset(
     }
 )
 
+_CORE_CONNECTORS = frozenset(
+    {
+        "de",
+        "del",
+        "para",
+        "con",
+        "sin",
+        "compatible",
+        "repuesto",
+        "accesorio",
+        "accesorios",
+        "kit",
+        "for",
+        "tipo",
+        "ideal",
+    }
+)
+
+_LEAD_NOISE = frozenset({"nuevo", "nueva", "new", "oferta", "combo", "pack", "set", "promo"})
+
 _CATEGORY_OPTIONAL = frozenset(
     {
         "perfume",
@@ -192,12 +212,16 @@ _SECONDARY_INTENT = frozenset(
         "cable",
         "cargador",
         "charger",
+        "mouse",
+        "raton",
+        "mice",
         "dock",
         "hub",
         "mousepad",
         "repuesto",
         "mica",
         "templado",
+        "vidrio",
         "muestra",
         "tester",
         "decant",
@@ -217,7 +241,7 @@ _SECONDARY_INTENT = frozenset(
 _SECONDARY_LEAD_RE = re.compile(
     r"^(?:funda|fundas|case|cover|sleeve|soporte|soportes|stand|base|cooler|mochila|"
     r"bolso|maletin|adaptador|cable|cargador|memoria|ram|modulo|dock|hub|mousepad|"
-    r"protectores?|skin|mica|templado|kit|pasta|muestra|tester|decant|atomizador|"
+    r"protectores?|skin|mica|templado|vidrio|kit|pasta|muestra|tester|decant|atomizador|"
     r"vaporizador|crema|shampoo|jabon|acondicionador|desodorante|locion|splash|"
     r"repuesto|compatible|toallas?|toallitas?|panales?|tampones?|mini|miniatura|vial)\b"
 )
@@ -338,7 +362,7 @@ def _query_only_as_target_of(hay: str, tokens: list[str]) -> bool:
             if len(syn) < 4 or not _token_in_title(hay, syn):
                 continue
             as_target = re.search(
-                rf"\b(?:para|compatible\s+con|repuesto\s+(?:de|para))\s+{re.escape(syn)}\b",
+                rf"\b(?:para|compatible\s+con|for|repuesto\s+(?:de|para)|tipo|similar\s+a|ideal\s+para|con)\s+{re.escape(syn)}\b",
                 hay,
             )
             if not as_target:
@@ -359,9 +383,39 @@ def _title_looks_like_secondary(hay: str, tokens: list[str]) -> bool:
     return False
 
 
-def _is_secondary_noise(title_norm: str, tokens: list[str]) -> bool:
-    if _query_has_secondary_intent(tokens):
+def _core_requirement_satisfied(title_norm: str, tokens: list[str]) -> bool:
+    if query_in_core_phrase(title_norm, tokens):
+        return True
+    cats = [t for t in tokens if t in _CATEGORY_OPTIONAL]
+    if not cats:
         return False
+    core_hay = " ".join(core_phrase_tokens(title_norm))
+    if not core_hay:
+        return False
+    if not any(_has_class_evidence(core_hay, c) for c in cats):
+        return False
+    required = [
+        t for t in tokens if t not in _CATEGORY_OPTIONAL and not t.isdigit() and len(t) >= 3
+    ]
+    if not required:
+        return True
+    core = core_phrase_tokens(title_norm)
+    return all(
+        any(
+            c == syn or c.startswith(syn) or syn.startswith(c)
+            for syn in _synonyms_for(t)
+            for c in core
+        )
+        for t in required
+    )
+
+
+def _is_secondary_noise(title_norm: str, tokens: list[str]) -> bool:
+    # Secondary-intent queries: require noun in core phrase (do not disable filter).
+    if _query_has_secondary_intent(tokens):
+        return not query_in_core_phrase(title_norm, tokens)
+    if not _core_requirement_satisfied(title_norm, tokens):
+        return True
     if not _title_looks_like_secondary(title_norm, tokens):
         return False
     if _PRIMARY_LEAD_RE.match(title_norm):
@@ -400,8 +454,77 @@ def _significant_title_tokens(hay: str) -> list[str]:
     return [t for t in _TOKEN_RE.findall(hay) if t not in _STOP and len(t) >= 2]
 
 
+def _strip_parens_and_negations(hay: str) -> str:
+    s = re.sub(r"\([^)]*\)", " ", hay)
+    s = re.sub(r"\b(?:no|excepto)\b[\s\S]*$", " ", s)
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def core_phrase_tokens(title_norm: str) -> list[str]:
+    cleaned = _strip_parens_and_negations(title_norm)
+    raw = _TOKEN_RE.findall(cleaned)
+    core: list[str] = []
+    for t in raw:
+        if t in _CORE_CONNECTORS:
+            has_content = any(c not in _LEAD_NOISE for c in core)
+            if has_content:
+                break
+            continue
+        if t in _STOP:
+            continue
+        if len(t) < 2 and not t.isdigit():
+            continue
+        core.append(t)
+    return core
+
+
+def query_in_core_phrase(title_norm: str, tokens: list[str]) -> bool:
+    core = core_phrase_tokens(title_norm)
+    if not core:
+        return False
+    for tok in tokens:
+        for syn in _synonyms_for(tok):
+            if any(c == syn or c.startswith(syn) or syn.startswith(c) for c in core):
+                return True
+    return False
+
+
+def _noun_coverage_ok(hay: str, tokens: list[str]) -> bool:
+    nouns = [t for t in tokens if t in _CATEGORY_OPTIONAL or t in _SECONDARY_INTENT]
+    other = [t for t in tokens if t not in nouns and not t.isdigit() and len(t) >= 3]
+    if not nouns or not other:
+        return True
+    return any(
+        any(_token_in_title(hay, s) for s in _synonyms_for(n)) or _has_class_evidence(hay, n)
+        for n in nouns
+    )
+
+
+def _prior_token_penalty(title_norm: str, tokens: list[str]) -> float:
+    core = core_phrase_tokens(title_norm)
+    first_hit = -1
+    for i, c in enumerate(core):
+        for tok in tokens:
+            for syn in _synonyms_for(tok):
+                if c == syn or c.startswith(syn) or syn.startswith(c):
+                    first_hit = i
+                    break
+            if first_hit >= 0:
+                break
+        if first_hit >= 0:
+            break
+    if first_hit <= 0:
+        return 0.0
+    prior = [c for c in core[:first_hit] if c not in _LEAD_NOISE]
+    if not prior:
+        return 0.0
+    if any(p in _SECONDARY_INTENT for p in prior):
+        return min(0.6, len(prior) * 0.25)
+    return min(0.2, len(prior) * 0.08)
+
+
 def _head_mentions_query(hay: str, tokens: list[str]) -> bool:
-    head = _significant_title_tokens(hay)[:3]
+    head = [c for c in core_phrase_tokens(hay) if c not in _LEAD_NOISE][:2]
     if not head:
         return False
     for tok in tokens:
@@ -447,6 +570,8 @@ def title_relevance_score(title: str, product: str) -> float:
         and _title_has_category(hay, alphas[0])
     ):
         score = max(score, 0.85 if _head_mentions_query(hay, tokens) else 0.65)
+
+    score -= _prior_token_penalty(hay, tokens)
 
     return max(0.0, min(1.0, score))
 
@@ -498,6 +623,8 @@ def title_matches_query(title: str, product: str) -> bool:
     if _is_secondary_noise(hay, tokens):
         return False
     if _is_cross_class_conflict(hay, tokens):
+        return False
+    if not _noun_coverage_ok(hay, tokens):
         return False
     return True
 

@@ -128,7 +128,7 @@ T52|x|re-probe ar-shops.json + reminder cron liviano + refuerzo moda/bazar vivos
 T53|x|E2E Playwright SSE mock UI|V16,V9
 T54|x|runbook cutover A1 (VITE_FREE_HOST=0 perfil full)|§I
 T55|x|perf Micro: price-first + corte yield (V34) + set-satisfecho explícito (V30 trade-off top-3 verify) · iphone wall≤15s · P@10 golden 8q=1.0 · residual wall ryzen/notebook/tv/zapatillas → T61|V30,V34
-T56|x|relevancia adaptativa query-agnostic (por oferta + conjunto Node) guardrails V28/V29|V31,V28,V29
+T56|~|relevancia adaptativa + frase núcleo (§V31) Node↔Python · PR feat/t56 · holdout gap P@10 0.066<0.10|V31,V28,V29
 T57|x|ML cobertura honest docs desde golden T58 · decidir cuenta vendedora|V15
 T58|x|golden set fixtures HTTP 8–10 queries etiquetadas + métricas precision@10/min-price/hosts/ML|V29,V17
 T59|x|defensas Micro: FETCH_MAX_BYTES + validate discover hosts SSRF + MALLOC_ARENA confirm|V32,V33
