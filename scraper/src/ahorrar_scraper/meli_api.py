@@ -222,19 +222,23 @@ def _offer_from_listings(product_id: str, detail: dict[str, Any], listings: list
     name = detail.get("name")
     if not isinstance(name, str) or not name.strip():
         return None
+    # No ARS competitor with shipping → do not invent price 0 (§V2).
+    if best is None:
+        return None
 
-    winner = best or {}
-    shipping_raw = winner.get("shipping") if isinstance(winner.get("shipping"), dict) else None
-    price = winner.get("price")
+    shipping_raw = best.get("shipping") if isinstance(best.get("shipping"), dict) else None
+    price = best.get("price")
+    if not isinstance(price, (int, float)) or price <= 0:
+        return None
     return {
         "name": name.strip(),
-        "price": float(price) if isinstance(price, (int, float)) else 0.0,
+        "price": float(price),
         "currency": "ARS",
         "url": f"{CATALOG_URL}{product_id}",
         "image": _picture(detail.get("pictures")),
         "shippingHint": _shipping_hint(shipping_raw),
         "store": {
-            "name": _seller_name(winner.get("seller_id")) or "MercadoLibre",
+            "name": _seller_name(best.get("seller_id")) or "MercadoLibre",
             "logo": None,
             "local": True,
             "siteUrl": "https://www.mercadolibre.com.ar",

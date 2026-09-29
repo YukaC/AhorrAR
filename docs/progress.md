@@ -73,6 +73,32 @@ v0.2 · Fase 2 #30–#35 merged · floors 175/63/74/0 · T61 #29 pre-merge: 4 hu
 | Floors | backend **156** · frontend **63** · Python **68** · e2e **0** (↑ 148/63/60/0) |
 | Gate | private ranges + URL tricks + redirects + DNS pin/cache + fetch-time · shape 94/94 |
 
+<<<<<<< HEAD
+=======
+### Fase 1.1 — mediana local ML=1 FW=2
+
+| Corrida | Artefacto | Notas |
+|---|---|---|
+| ×3 | `/tmp/ahorrar-bench/t61-local-ml1-20260929-010826.json` | wall fail: smart tv, zapatillas; top3 fail: tv/heladera/zapatillas; **varianza >15% todas** |
+| ×5 (protocolo C) | `/tmp/ahorrar-bench/t61-local-ml1-rerun5-20260929-011359.json` | p50: iphone 11.5 · tv 10.8 · ryzen 9.5 · perfume 3.1 · notebook **15.1** · heladera 3.4 · zapatillas 15.8 · cable 3.9 · **0 queries >25s** · top3 fail solo zapatillas · heladera price1=0 (bug ML) |
+
+Commit bench: `79324e8`. Techo local 15s: notebook p50 15058ms (borde). Techo Micro 25s: **PASS p50**.
+
+### Fase 1.2 — workflow_dispatch
+
+| Campo | Valor |
+|---|---|
+| Run | https://github.com/YukaC/AhorrAR/actions/runs/36520707786 |
+| Tags | `ghcr.io/yukac/ahorrar-api:sha-79324e8` · `branch-perf-t61-ml-degraded` |
+| `:micro`/`:main` | **enable=false** · job `deploy-micro` **skipped** |
+| Pin prod intacto | `oci-api-1` image `:micro` rev=`1ecd88e…` digest=`sha256:a35d6c038ab6…` (SSH 2026-09-29) |
+
+### Fase 1.1b — bug price=0 ML (§V2)
+
+`_offer_from_listings` devolvía offer con `price=0.0` si no había listing ARS+shipping. Fix: return `None`. Test: `scraper/tests/test_meli_offer.py` (+3 → Python 80).
+
+### Fase 0.2 — inventario (main `1ecd88e` · stash bak `ea670cd` · T61 `82218a7`)
+>>>>>>> 0a0c450 (fix(T61): drop ML offers without ARS price (§V2))
 
 
 ### Post-Fase 0 (2026-09-29) — backups + #36
