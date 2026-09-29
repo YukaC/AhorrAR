@@ -7,7 +7,19 @@
 
 ## En una línea
 
-v0.2 · **ROLLBACK** prod → `e1db4fb`/`e9504ec0` tras cold 8q en `cab0797` (zapatillas hosts 3→1; iphone wall↑) · #29 sigue en main · floors 175/63/95/1.
+v0.2 · **Plan cerrado** · prod pin `e1db4fb`/`e9504ec0` (SSRF incluido) · main adelante sin deploy · #39 límite conocido.
+
+## Estado de cierre (2026-09-29)
+
+**Producción (Micro):** imagen anclada `ghcr.io/yukac/ahorrar-api@sha256:e9504ec0086e1e67a23a56c30e796e7ebed684d302a2605d2ab74d5f4a68888d` · rev `e1db4fb` · incluye **#30 SSRF** y el stack pre–merge masivo T61 en git (`cab0797` en `:micro` tip, no en VM). El pin en `deploy/oci/.env` evita que CI reemplace el contenedor.
+
+**En `main` sin desplegar:** revert same-cat (#37), stock/dedupe (#31), T56 (#33), índice re-probado T52 (#34), T61 (#29), etc. **No se despliega:** mismo día ryzen hosts 7→5 y heladera 9→5 vs pin (Micro cold ×3). Desplegar bajaría variedad sin beneficio visible acordado.
+
+**#39 (variedad iphone/zapatillas):** funnel **local** 3–4 hosts; Micro (pin o main) 1–2. PR #40 cerrado sin merge (`HOST_MIN_PRODUCTIVE` 2→4 no cambió hosts). `curl -sI` VTEX search (2026-09-29): **Frávega 403 Micro / 206 local**; Carrefour/Cetrogar/sevensport 200/206 en ambos → bloqueo IP datacenter (al menos Frávega). Límite conocido; arreglo ≠ código (proxy = decisión producto). Issue #39 cerrado.
+
+**Smoke manual prod (pin):** artefacto `/tmp/ahorrar-bench/manual-smoke-pin-20260929.json` · 15 queries. Repetido: zapatillas **1 host**; perfume #1 infantil (relevancia); typo `iphoen 15` → 0 results. Sin otro backlog de plan salvo uso real.
+
+**Si algún día se quita el pin:** funnel + Micro cold ryzen/heladera el mismo día; distinguir caída de `n` por stock/dedupe (OK) vs hosts.
 
 ## §F — protocolo agente (fin de fase)
 
