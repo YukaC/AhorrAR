@@ -1,0 +1,15 @@
+{
+  "query": "cargador",
+  "offers": [
+    {"name": "Cargador USB-C 65W GaN carga rápida", "price": 34999, "url": "https://www.fravega.com/p/cargador-65w", "host": "fravega.com", "label": "product"},
+    {"name": "Cargador original Apple 20W USB-C", "price": 28999, "url": "https://www.musimundo.com/p/apple-20w", "host": "musimundo.com", "label": "product"},
+    {"name": "Cable para cargador USB-C 1m", "price": 4500, "url": "https://www.fravega.com/p/cable-cargador", "host": "fravega.com", "label": "accessory"},
+    {"name": "Soporte de mesa para cargador inalambrico", "price": 8900, "url": "https://www.mercadolibre.com.ar/soporte-cargador/p/MLA1", "host": "mercadolibre.com.ar", "label": "accessory", "ml": true},
+    {"name": "Cargador inalambrico MagSafe 15W", "price": 42000, "url": "https://www.garbarino.com/p/magsafe", "host": "garbarino.com", "label": "product"},
+    {"name": "Funda con cargador integrado iPhone", "price": 22000, "url": "https://www.musimundo.com/p/funda-cargador", "host": "musimundo.com", "label": "accessory"},
+    {"name": "Cargador auto 12V USB dual", "price": 12999, "url": "https://www.mercadolibre.com.ar/cargador-auto/p/MLA2", "host": "mercadolibre.com.ar", "label": "product", "ml": true},
+    {"name": "Organizador de cables para cargador", "price": 2500, "url": "https://www.easy.com.ar/p/org-cargador", "host": "easy.com.ar", "label": "accessory"},
+    {"name": "Cargador notebook universal 90W", "price": 45990, "url": "https://compragamer.com/p/nb-charger", "host": "compragamer.com", "label": "product"},
+    {"name": "Repuesto pin punta para cargador notebook", "price": 3200, "url": "https://compragamer.com/p/pin-cargador", "host": "compragamer.com", "label": "accessory"}
+  ]
+}

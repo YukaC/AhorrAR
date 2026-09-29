@@ -1,0 +1,15 @@
+{
+  "query": "smart tv 55",
+  "offers": [
+    {"name": "Smart TV Samsung 55 4K Crystal UHD", "price": 699999, "url": "https://www.fravega.com/p/samsung-55", "host": "fravega.com", "label": "product"},
+    {"name": "Smart TV LG 55 OLED", "price": 1499999, "url": "https://www.musimundo.com/p/lg-oled-55", "host": "musimundo.com", "label": "product"},
+    {"name": "Soporte pared para TV 55 pulgadas", "price": 28999, "url": "https://www.fravega.com/p/soporte-55", "host": "fravega.com", "label": "accessory"},
+    {"name": "Funda / cover protector Smart TV 55", "price": 15000, "url": "https://www.mercadolibre.com.ar/funda-tv55/p/MLA1", "host": "mercadolibre.com.ar", "label": "accessory", "ml": true},
+    {"name": "Smart TV TCL 55 QLED Google TV", "price": 589999, "url": "https://www.garbarino.com/p/tcl-55", "host": "garbarino.com", "label": "product"},
+    {"name": "Control remoto compatible Smart TV 55", "price": 8900, "url": "https://www.mercadolibre.com.ar/remoto-tv/p/MLA2", "host": "mercadolibre.com.ar", "label": "accessory", "ml": true},
+    {"name": "Smart TV Philips 55 Ambilight", "price": 820000, "url": "https://www.easy.com.ar/p/philips-55", "host": "easy.com.ar", "label": "product"},
+    {"name": "Cable HDMI para Smart TV", "price": 7500, "url": "https://www.easy.com.ar/p/hdmi-tv", "host": "easy.com.ar", "label": "accessory"},
+    {"name": "Smart TV Noblex 55 4K", "price": 520000, "url": "https://www.musimundo.com/p/noblex-55", "host": "musimundo.com", "label": "product"},
+    {"name": "Base mesa para TV 55", "price": 45000, "url": "https://www.garbarino.com/p/base-tv", "host": "garbarino.com", "label": "accessory"}
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "query": "zapatillas nike",
+  "offers": [
+    {"name": "Zapatillas Nike Air Max 90 Hombre", "price": 189999, "url": "https://www.nike.com.ar/p/airmax90", "host": "nike.com.ar", "label": "product"},
+    {"name": "Nike Revolution 6 Running", "price": 89999, "url": "https://www.dexter.com.ar/p/rev6", "host": "dexter.com.ar", "label": "product"},
+    {"name": "Cordones para zapatillas Nike", "price": 3500, "url": "https://www.mercadolibre.com.ar/cordones-nike/p/MLA1", "host": "mercadolibre.com.ar", "label": "accessory", "ml": true},
+    {"name": "Plantillas para zapatillas Nike", "price": 8900, "url": "https://www.dexter.com.ar/p/plantillas", "host": "dexter.com.ar", "label": "accessory"},
+    {"name": "Zapatillas Nike Dunk Low", "price": 210000, "url": "https://www.mercadolibre.com.ar/dunk-low/p/MLA2", "host": "mercadolibre.com.ar", "label": "product", "ml": true},
+    {"name": "Medias deportivas Nike", "price": 12000, "url": "https://www.nike.com.ar/p/medias", "host": "nike.com.ar", "label": "accessory"},
+    {"name": "Nike Pegasus 40 hombre", "price": 175000, "url": "https://www.stockcenter.com.ar/p/pegasus40", "host": "stockcenter.com.ar", "label": "product"},
+    {"name": "Bolso para zapatillas Nike", "price": 45000, "url": "https://www.stockcenter.com.ar/p/bolso-nike", "host": "stockcenter.com.ar", "label": "accessory"},
+    {"name": "Zapatillas Nike Court Vision", "price": 129999, "url": "https://www.grid.com.ar/p/court-vision", "host": "grid.com.ar", "label": "product"},
+    {"name": "Limpiador para zapatillas Nike", "price": 6500, "url": "https://www.grid.com.ar/p/limpiador", "host": "grid.com.ar", "label": "accessory"}
+  ]
+}

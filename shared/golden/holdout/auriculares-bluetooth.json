@@ -1,0 +1,15 @@
+{
+  "query": "auriculares bluetooth",
+  "offers": [
+    {"name": "Auriculares Bluetooth Sony WH-CH520", "price": 89999, "url": "https://www.fravega.com/p/sony-ch520", "host": "fravega.com", "label": "product"},
+    {"name": "Auriculares Bluetooth JBL Tune 510BT", "price": 75999, "url": "https://www.musimundo.com/p/jbl-510", "host": "musimundo.com", "label": "product"},
+    {"name": "Funda para auriculares bluetooth", "price": 8900, "url": "https://www.fravega.com/p/funda-auriculares", "host": "fravega.com", "label": "accessory"},
+    {"name": "Almohadillas repuesto auriculares bluetooth", "price": 6500, "url": "https://www.mercadolibre.com.ar/almohadillas/p/MLA1", "host": "mercadolibre.com.ar", "label": "accessory", "ml": true},
+    {"name": "Auriculares Bluetooth Apple AirPods 3", "price": 189999, "url": "https://www.garbarino.com/p/airpods3", "host": "garbarino.com", "label": "product"},
+    {"name": "Cable audio para auriculares bluetooth", "price": 4200, "url": "https://www.musimundo.com/p/cable-audio", "host": "musimundo.com", "label": "accessory"},
+    {"name": "Headset Bluetooth gamer con mic", "price": 110000, "url": "https://compragamer.com/p/bt-headset", "host": "compragamer.com", "label": "product"},
+    {"name": "Soporte stand para auriculares", "price": 15000, "url": "https://compragamer.com/p/stand-auriculares", "host": "compragamer.com", "label": "accessory"},
+    {"name": "Auriculares Bluetooth Xiaomi Redmi Buds", "price": 45000, "url": "https://www.mercadolibre.com.ar/redmi-buds/p/MLA2", "host": "mercadolibre.com.ar", "label": "product", "ml": true},
+    {"name": "Estuche carga compatible auriculares bluetooth", "price": 12000, "url": "https://www.easy.com.ar/p/estuche-bt", "host": "easy.com.ar", "label": "accessory"}
+  ]
+}

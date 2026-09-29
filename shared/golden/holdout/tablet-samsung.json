@@ -1,0 +1,15 @@
+{
+  "query": "tablet samsung",
+  "offers": [
+    {"name": "Samsung Galaxy Tab A9 11 pulgadas", "price": 289999, "url": "https://www.fravega.com/p/tab-a9", "host": "fravega.com", "label": "product"},
+    {"name": "Tablet Samsung Galaxy Tab S9 FE", "price": 549999, "url": "https://www.musimundo.com/p/tab-s9fe", "host": "musimundo.com", "label": "product"},
+    {"name": "Funda para tablet Samsung Tab A9", "price": 18999, "url": "https://www.fravega.com/p/funda-tab", "host": "fravega.com", "label": "accessory"},
+    {"name": "Vidrio templado tablet Samsung", "price": 6500, "url": "https://www.mercadolibre.com.ar/vidrio-tab/p/MLA1", "host": "mercadolibre.com.ar", "label": "accessory", "ml": true},
+    {"name": "Samsung Tablet Galaxy Tab S9 Ultra", "price": 1299999, "url": "https://www.garbarino.com/p/s9-ultra", "host": "garbarino.com", "label": "product"},
+    {"name": "Teclado book cover tablet Samsung", "price": 89000, "url": "https://www.musimundo.com/p/teclado-tab", "host": "musimundo.com", "label": "accessory"},
+    {"name": "Galaxy Tab A8 Samsung 10.5", "price": 249999, "url": "https://www.mercadolibre.com.ar/tab-a8/p/MLA2", "host": "mercadolibre.com.ar", "label": "product", "ml": true},
+    {"name": "Cargador compatible tablet Samsung", "price": 15000, "url": "https://www.easy.com.ar/p/cargador-tab", "host": "easy.com.ar", "label": "accessory"},
+    {"name": "Samsung Galaxy Tab S6 Lite", "price": 319999, "url": "https://tienda.movistar.com.ar/p/s6-lite", "host": "tienda.movistar.com.ar", "label": "product"},
+    {"name": "Soporte mesa para tablet Samsung", "price": 12000, "url": "https://tienda.movistar.com.ar/p/soporte-tab", "host": "tienda.movistar.com.ar", "label": "accessory"}
+  ]
+}

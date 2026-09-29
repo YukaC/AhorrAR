@@ -1,0 +1,15 @@
+{
+  "query": "heladera",
+  "offers": [
+    {"name": "Heladera no frost Whirlpool 400L", "price": 1299999, "url": "https://www.fravega.com/p/whirlpool-400", "host": "fravega.com", "label": "product"},
+    {"name": "Heladera Samsung inverter 360L", "price": 1450000, "url": "https://www.musimundo.com/p/samsung-360", "host": "musimundo.com", "label": "product"},
+    {"name": "Estante repuesto para heladera Whirlpool", "price": 25000, "url": "https://www.mercadolibre.com.ar/estante-heladera/p/MLA1", "host": "mercadolibre.com.ar", "label": "accessory", "ml": true},
+    {"name": "Organizador para heladera pack", "price": 12000, "url": "https://www.fravega.com/p/organizador-heladera", "host": "fravega.com", "label": "accessory"},
+    {"name": "Heladera Patrick ciclica 280L", "price": 780000, "url": "https://www.garbarino.com/p/patrick-280", "host": "garbarino.com", "label": "product"},
+    {"name": "Termostato para heladera universal", "price": 18000, "url": "https://www.mercadolibre.com.ar/termostato/p/MLA2", "host": "mercadolibre.com.ar", "label": "accessory", "ml": true},
+    {"name": "Heladera Gafa HGF3570B blanca", "price": 920000, "url": "https://www.easy.com.ar/p/gafa-3570", "host": "easy.com.ar", "label": "product"},
+    {"name": "Base ruedas para heladera", "price": 15000, "url": "https://www.easy.com.ar/p/base-ruedas", "host": "easy.com.ar", "label": "accessory"},
+    {"name": "Freezer horizontal 200L (no heladera)", "price": 650000, "url": "https://www.musimundo.com/p/freezer-200", "host": "musimundo.com", "label": "accessory"},
+    {"name": "Heladera side by side LG 600L", "price": 2800000, "url": "https://www.fravega.com/p/lg-sbs", "host": "fravega.com", "label": "product"}
+  ]
+}

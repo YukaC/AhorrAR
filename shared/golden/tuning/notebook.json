@@ -1,0 +1,17 @@
+{
+  "query": "notebook",
+  "offers": [
+    {"name": "Notebook Lenovo IdeaPad 15 Intel i5 8GB 512GB", "price": 899999, "url": "https://www.fravega.com/p/ideapad-15", "host": "fravega.com", "label": "product"},
+    {"name": "Notebook HP 15 Ryzen 5 16GB 512SSD", "price": 1099999, "url": "https://www.musimundo.com/p/hp15", "host": "musimundo.com", "label": "product"},
+    {"name": "Funda para notebook 15.6 neoprene", "price": 15999, "url": "https://www.fravega.com/p/funda-15", "host": "fravega.com", "label": "accessory"},
+    {"name": "Cargador compatible con notebook Lenovo 65W", "price": 24999, "url": "https://www.mercadolibre.com.ar/cargador-lenovo/p/MLA1", "host": "mercadolibre.com.ar", "label": "accessory", "ml": true},
+    {"name": "Memoria RAM DDR4 8GB para notebook", "price": 45990, "url": "https://compragamer.com/p/ram-nb", "host": "compragamer.com", "label": "accessory"},
+    {"name": "Notebook Asus VivoBook 14 i7 16GB", "price": 1299999, "url": "https://compragamer.com/p/vivobook", "host": "compragamer.com", "label": "product"},
+    {"name": "Soporte cooler pad para notebook", "price": 18999, "url": "https://www.musimundo.com/p/cooler-pad", "host": "musimundo.com", "label": "accessory"},
+    {"name": "Laptop Dell Inspiron 15 3000", "price": 950000, "url": "https://www.mercadolibre.com.ar/dell-inspiron/p/MLA2", "host": "mercadolibre.com.ar", "label": "product", "ml": true},
+    {"name": "Notebook papel cuaderno A4 80 hojas", "price": 2500, "url": "https://libreria.com.ar/p/cuaderno", "host": "libreria.com.ar", "label": "accessory"},
+    {"name": "Mochila para notebook 15.6", "price": 32999, "url": "https://www.fravega.com/p/mochila-nb", "host": "fravega.com", "label": "accessory"},
+    {"name": "Notebook Acer Aspire 5 Ryzen 7", "price": 1150000, "url": "https://www.garbarino.com/p/aspire5", "host": "garbarino.com", "label": "product"},
+    {"name": "Base refrigerante para laptop", "price": 22000, "url": "https://www.garbarino.com/p/base-refri", "host": "garbarino.com", "label": "accessory"}
+  ]
+}
