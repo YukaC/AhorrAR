@@ -51,6 +51,19 @@ v0.2 · 4 huecos T61 cerrados · Micro cold 8q OK · digest e9504ec0 restaurado 
 
 Método: local cold `clear_outcome_registry` + offer cache clear · ML=1 · FW=2 · ×3 · solo esas 2 queries.
 
+**Resultado variable 1 (local cold ×3, 2026-09-29 ~15:12 AR):**
+
+| query | p50 | hosts | n | stop | vs criterio | vs cab0797 cold |
+|---|---:|---:|---:|---|---|---|
+| zapatillas nike | 21.6s | **3** | 7–9 | deadline/queue_empty | hosts≥3 ✓ · n no bajo ✓ | hosts 1→3 · n 2→7 · **Frávega vuelve** |
+| iphone 15 | 12.9s | **3** | **5** | queue_empty ×3 | hosts≥3 ✓ · n≥7 **✗** | hosts 2→3 · n 2→5 · Frávega vuelve |
+
+ml_arrived 100%. Artefacto `/tmp/ahorrar-bench/bisect-samecat-revert-zapatillas-iphone.json`. Rama `bisect/t61-revert-same-cat` @ `46ee026`.
+
+**Veredicto V1:** same-cat order **sí** era el factor dominante de hosts. Éxito parcial — iphone n aún <7. Siguiente variable si hace falta: degraded flag / ML join. Recomendación: merge revert como commit aparte + issue “same-cat sin excluir generalistas”.
+
+
+
 
 
 
