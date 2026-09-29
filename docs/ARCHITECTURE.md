@@ -122,3 +122,11 @@ Push a `main` → Vercel (UI) + imagen GHCR `:micro` (pull en la VM OCI). Detall
 - Caché de resultados: TTL 15 min + SWR (§T25); clave incluye cap (`:n25`); hosts del índice no re-descubren URL scheme.
 - `crawl/stream` con `maxResults=25` (default UI) y `maxDepth=2`; partials SSE en ~0.5–3 s.
 - ML ON en prod (`INCLUDE_ML=1` + secrets `MELI_*` en Micro). Token ~6h → auto-refresh on 401 + persist (`docs/ML.md`).
+
+## Índice AR (`shared/ar-shops.json`) — re-probe mensual (§T52 / §V19)
+
+- Fuente única Node↔Python. `alive:false` no se seedea.
+- Canary: ≥2 queries por categoría, **dos momentos** con gap; un solo fallo → degraded (streak), no muerte.
+- Guardia mass-fail (≥55% fail en un momento) → no escribe el índice.
+- Script: `./scripts/reprobe-ar-shops.sh [--write]` (wrapper de `scripts/sweep_shop_canary.py`).
+- Cron sugerido (host con deps scraper): `0 4 1 * * cd /path/AhorrAR && ./scripts/reprobe-ar-shops.sh --write`

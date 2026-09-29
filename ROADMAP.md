@@ -17,13 +17,13 @@
 
 ## Luego (v0.4 pulido)
 
-- [x] Golden set + métricas (precision@10, min-price rel, hosts, ML) — §T58
-- [x] Defensas Micro (bytes cap, discover SSRF) + stock/dedupe variantes — §T59/T60
-- [x] Re-probe periódico `ar-shops.json` — §T52 (`scripts/reprobe-ar-shops.sh`)
-- [x] Relevancia adaptativa query-agnostic — §T56 / §V31
+- [ ] Golden set + métricas — §T58 · PR #32 (no en main)
+- [ ] Defensas SSRF + stock/dedupe — §T59/T60 · PRs #30 #31 (no en main)
+- [x] Re-probe periódico `ar-shops.json` — §T52 · `scripts/reprobe-ar-shops.sh` (canary ≥2q ×2 momentos + mass-fail; PR chore/t52)
+- [ ] Relevancia adaptativa + frase núcleo — §T56 / §V31 · PR #33 (no en main)
 - [x] Perf price-first + corte yield + set-satisfecho explícito — §T55 / §V30 / §V34
 - [ ] Degraded+recheck + residual Micro wall — §T61 / §V19 / §V34
-- [x] Suite E2E Playwright SSE — §T53
+- [ ] Suite E2E Playwright SSE — §T53 · en PR #29 (T61), no en main
 - [ ] Stage Docker opcional browsers `STEALTH_FETCH=1` — diferido Micro
 
 ## Más adelante

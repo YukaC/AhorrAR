@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 """Sweep curated ar-shops: SSL / redirect-home / HTTP / empty catalog / ≥1 offer canary.
 
-Updates alive flags in shared/ar-shops.json (does not change entry/platform).
+Category canary uses ≥2 queries (Fase 3 / §T52). A single fail does NOT flip
+alive=false: --write with --state-dir requires TWO moments of failure (degraded).
+Mass-fail guard: if fail rate ≥ MASS_FAIL_RATIO in one moment, skip writes
+(assume network blip).
 
-  cd scraper && uv run python ../scripts/sweep_shop_canary.py [--write]
+  cd scraper && uv run python ../scripts/sweep_shop_canary.py [--write] [--state-dir DIR]
+  See also: scripts/reprobe-ar-shops.sh
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import ssl
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -23,26 +26,30 @@ from scrapling.fetchers import Fetcher
 ROOT = Path(__file__).resolve().parents[1]
 INDEX_PATH = ROOT / "shared" / "ar-shops.json"
 
-# Category → canary query that should yield ≥1 product on a healthy shop.
-CANARY_BY_CAT = {
-    "electro": "cable",
-    "tecnologia": "cable",
-    "notebook": "notebook",
-    "perfume": "perfume",
-    "belleza": "perfume",
-    "moda": "zapatillas",
-    "deportes": "zapatillas",
-    "hogar": "heladera",
-    "general": "cable",
+# Category → ≥2 canary queries (≥1 product expected on a healthy shop).
+CANARY_QUERIES_BY_CAT: dict[str, list[str]] = {
+    "electro": ["cable", "heladera"],
+    "tecnologia": ["cable", "notebook"],
+    "notebook": ["notebook", "cable"],
+    "gaming": ["notebook", "mouse"],
+    "perfume": ["perfume", "colonia"],
+    "perfumeria": ["perfume", "colonia"],
+    "belleza": ["perfume", "colonia"],
+    "moda": ["zapatillas", "remera"],
+    "deportes": ["zapatillas", "remera"],
+    "bazar": ["cacerola", "cubiertos"],
+    "hogar": ["heladera", "cacerola"],
+    "general": ["cable", "notebook"],
 }
 
 WORKERS = 8
 TIMEOUT_S = 10.0
+MASS_FAIL_RATIO = 0.55  # skip index writes if ≥55% of targets fail in one moment
 
 
-def canary_for(shop: dict[str, Any]) -> str:
+def canaries_for(shop: dict[str, Any]) -> list[str]:
     cat = str(shop.get("category") or "general").lower()
-    return CANARY_BY_CAT.get(cat, "cable")
+    return list(CANARY_QUERIES_BY_CAT.get(cat, ["cable", "notebook"]))
 
 
 def entry_url(shop: dict[str, Any], q: str) -> str | None:
@@ -52,8 +59,10 @@ def entry_url(shop: dict[str, Any], q: str) -> str | None:
     host = shop.get("host")
     if not isinstance(host, str) or not host:
         return None
-    # Fallback guesses for curated without template
-    return f"https://www.{host}/api/catalog_system/pub/products/search?ft={quote(q)}&_from=0&_to=11"
+    return (
+        f"https://www.{host}/api/catalog_system/pub/products/search"
+        f"?ft={quote(q)}&_from=0&_to=11"
+    )
 
 
 def _body_text(page: Any) -> str:
@@ -65,9 +74,8 @@ def _body_text(page: Any) -> str:
     return str(body)
 
 
-def classify(shop: dict[str, Any]) -> dict[str, Any]:
+def _classify_url(shop: dict[str, Any], q: str) -> dict[str, Any]:
     host = str(shop.get("host") or "")
-    q = canary_for(shop)
     url = entry_url(shop, q)
     out: dict[str, Any] = {
         "host": host,
@@ -131,7 +139,6 @@ def classify(shop: dict[str, Any]) -> dict[str, Any]:
         out["verdict"] = "http_5xx"
         return out
 
-    # Redirected away from API to site root / bare home
     if "catalog_system" in url and "catalog_system" not in final:
         out["verdict"] = "redirect_home"
         out["detail"] = final[:120]
@@ -141,11 +148,9 @@ def classify(shop: dict[str, Any]) -> dict[str, Any]:
         out["detail"] = final[:120]
         return out
 
-    # VTEX / JSON list
     try:
         data = json.loads(text)
     except json.JSONDecodeError:
-        # HTML search page — treat as weak-ok if status 200 and body large
         if out["status"] in (200, 206) and len(text) > 2000:
             out["verdict"] = "html_ok_unparsed"
             out["detail"] = f"body_len={len(text)}"
@@ -156,14 +161,10 @@ def classify(shop: dict[str, Any]) -> dict[str, Any]:
 
     if isinstance(data, list):
         out["offers"] = len(data)
-        if len(data) == 0:
-            out["verdict"] = "empty_catalog"
-        else:
-            out["verdict"] = "has_offers"
+        out["verdict"] = "has_offers" if data else "empty_catalog"
         return out
 
     if isinstance(data, dict):
-        # Shopify-ish
         products = None
         resources = data.get("resources")
         if isinstance(resources, dict):
@@ -184,47 +185,9 @@ def classify(shop: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--write", action="store_true", help="Mark failing curated hosts alive=false")
-    ap.add_argument("--all-alive", action="store_true", help="Sweep every alive shop, not only curated")
-    args = ap.parse_args()
-
-    data = json.loads(INDEX_PATH.read_text("utf-8"))
-    shops: list[dict[str, Any]] = data.get("shops") or []
-    targets = [
-        s
-        for s in shops
-        if isinstance(s, dict)
-        and s.get("host")
-        and (s.get("curated") if not args.all_alive else s.get("alive"))
-    ]
-
-    print(f"sweeping {len(targets)} shops (write={args.write})\n")
-    results: list[dict[str, Any]] = []
-    t0 = time.time()
-    with ThreadPoolExecutor(max_workers=WORKERS) as pool:
-        futs = {pool.submit(classify, s): s for s in targets}
-        for fut in as_completed(futs):
-            r = fut.result()
-            results.append(r)
-            mark = ""
-            if r["verdict"] not in ("has_offers", "html_ok_unparsed"):
-                mark = " ← FAIL"
-            print(
-                f"{r['host']:32} {r['verdict']:18} offers={r['offers']:<3} "
-                f"status={r['status']} canary={r['canary']}{mark}"
-            )
-
-    by_v: dict[str, list[str]] = {}
-    for r in results:
-        by_v.setdefault(r["verdict"], []).append(r["host"])
-
-    print(f"\n=== summary ({time.time() - t0:.1f}s) ===")
-    for v, hosts in sorted(by_v.items(), key=lambda x: -len(x[1])):
-        print(f"  {v:18} {len(hosts):3}  {', '.join(hosts[:8])}{'…' if len(hosts)>8 else ''}")
-
-    kill_verdicts = {
+OK_VERDICTS = frozenset({"has_offers", "html_ok_unparsed"})
+KILL_VERDICTS = frozenset(
+    {
         "ssl_error",
         "dead_net",
         "fetch_error",
@@ -237,34 +200,196 @@ def main() -> int:
         "not_json",
         "no_entry",
     }
-    to_kill = {r["host"] for r in results if r["verdict"] in kill_verdicts}
-    print(f"\nwould mark alive=false: {len(to_kill)}")
+)
 
-    if args.write and to_kill:
+
+def classify(shop: dict[str, Any]) -> dict[str, Any]:
+    """Run ≥2 canaries; host is OK if ANY query yields offers/html_ok."""
+    host = str(shop.get("host") or "")
+    cat = str(shop.get("category") or "general")
+    queries = canaries_for(shop)
+    per_q: list[dict[str, Any]] = [_classify_url(shop, q) for q in queries]
+    ok_rows = [r for r in per_q if r["verdict"] in OK_VERDICTS]
+    best = ok_rows[0] if ok_rows else per_q[0]
+    return {
+        "host": host,
+        "category": cat,
+        "canary": "+".join(queries),
+        "canaries": per_q,
+        "verdict": best["verdict"] if ok_rows else best["verdict"],
+        "status": best.get("status"),
+        "offers": max((r.get("offers") or 0) for r in per_q),
+        "detail": "" if ok_rows else (best.get("detail") or ""),
+        "ok": bool(ok_rows),
+    }
+
+
+def _load_fail_streaks(state_dir: Path) -> dict[str, int]:
+    path = state_dir / "fail-streaks.json"
+    if not path.is_file():
+        return {}
+    try:
+        raw = json.loads(path.read_text("utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(raw, dict):
+        return {}
+    out: dict[str, int] = {}
+    for k, v in raw.items():
+        if isinstance(k, str) and isinstance(v, int) and v >= 0:
+            out[k] = v
+    return out
+
+
+def _save_fail_streaks(state_dir: Path, streaks: dict[str, int]) -> None:
+    state_dir.mkdir(parents=True, exist_ok=True)
+    path = state_dir / "fail-streaks.json"
+    path.write_text(json.dumps(streaks, ensure_ascii=False, indent=2) + "\n", "utf-8")
+
+
+def _alive_by_category(shops: list[dict[str, Any]]) -> dict[str, list[str]]:
+    by: dict[str, list[str]] = {}
+    for s in shops:
+        if not s.get("alive"):
+            continue
+        cat = str(s.get("category") or "?")
+        host = str(s.get("host") or "")
+        if host:
+            by.setdefault(cat, []).append(host)
+    return by
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument(
+        "--write",
+        action="store_true",
+        help="Flip alive=false only after 2 consecutive fail moments (needs --state-dir)",
+    )
+    ap.add_argument(
+        "--state-dir",
+        type=Path,
+        default=Path("/tmp/ahorrar-canary-state"),
+        help="Persist fail streaks across moments (default /tmp/ahorrar-canary-state)",
+    )
+    ap.add_argument("--all-alive", action="store_true", help="Sweep every alive shop, not only curated")
+    ap.add_argument(
+        "--categories",
+        default="",
+        help="Comma-separated category filter (e.g. electro,bazar). Empty = all",
+    )
+    ap.add_argument(
+        "--moment",
+        default="",
+        help="Label for this moment (stored in artifact)",
+    )
+    ap.add_argument(
+        "--force-kill-once",
+        action="store_true",
+        help="Legacy: mark fail hosts alive=false in one pass (bypass degraded). Prefer default.",
+    )
+    args = ap.parse_args()
+
+    data = json.loads(INDEX_PATH.read_text("utf-8"))
+    shops: list[dict[str, Any]] = data.get("shops") or []
+    cat_filter = {c.strip().lower() for c in args.categories.split(",") if c.strip()}
+    targets = [
+        s
+        for s in shops
+        if isinstance(s, dict)
+        and s.get("host")
+        and (s.get("curated") if not args.all_alive else s.get("alive"))
+        and (not cat_filter or str(s.get("category") or "").lower() in cat_filter)
+    ]
+
+    moment = args.moment or time.strftime("%Y%m%d-%H%M%S")
+    print(f"sweeping {len(targets)} shops moment={moment} write={args.write}\n")
+    results: list[dict[str, Any]] = []
+    t0 = time.time()
+    with ThreadPoolExecutor(max_workers=WORKERS) as pool:
+        futs = {pool.submit(classify, s): s for s in targets}
+        for fut in as_completed(futs):
+            r = fut.result()
+            results.append(r)
+            mark = "" if r["ok"] else " ← FAIL"
+            print(
+                f"{r['host']:32} {r['verdict']:18} offers={r['offers']:<3} "
+                f"status={r['status']} canary={r['canary']}{mark}"
+            )
+
+    by_v: dict[str, list[str]] = {}
+    for r in results:
+        by_v.setdefault(r["verdict"], []).append(r["host"])
+
+    n_fail = sum(1 for r in results if not r["ok"])
+    fail_ratio = (n_fail / len(results)) if results else 0.0
+    mass_fail = fail_ratio >= MASS_FAIL_RATIO
+
+    print(f"\n=== summary ({time.time() - t0:.1f}s) moment={moment} ===")
+    for v, hosts in sorted(by_v.items(), key=lambda x: -len(x[1])):
+        print(f"  {v:18} {len(hosts):3}  {', '.join(hosts[:8])}{'…' if len(hosts) > 8 else ''}")
+    print(f"  fail_ratio={fail_ratio:.2f} mass_fail={mass_fail} (guard≥{MASS_FAIL_RATIO})")
+
+    failing_now = {r["host"] for r in results if not r["ok"] and r["verdict"] in KILL_VERDICTS}
+    ok_now = {r["host"] for r in results if r["ok"]}
+
+    streaks = _load_fail_streaks(args.state_dir)
+    if mass_fail:
+        print("MASS FAIL guard: not updating fail streaks / not writing index")
+    else:
+        for h in ok_now:
+            streaks[h] = 0
+        for h in failing_now:
+            streaks[h] = streaks.get(h, 0) + 1
+        _save_fail_streaks(args.state_dir, streaks)
+
+    to_kill = {
+        h
+        for h in failing_now
+        if (args.force_kill_once and not mass_fail) or (streaks.get(h, 0) >= 2 and not mass_fail)
+    }
+    print(f"\nwould mark alive=false (streak≥2 or force): {len(to_kill)} → {sorted(to_kill)[:12]}")
+
+    if args.write and to_kill and not mass_fail:
         changed = 0
         for s in shops:
             h = s.get("host")
             if h in to_kill and s.get("alive") is not False:
                 s["alive"] = False
                 changed += 1
-            # Ensure cetrogar.com.ar stays true if has_offers
-        for s in shops:
-            if s.get("host") == "cetrogar.com.ar":
-                s["host"] = "cetrogar.com.ar"
-                s["entry"] = (
-                    "https://www.cetrogar.com.ar/api/catalog_system/pub/products/search"
-                    "?ft={q}&_from=0&_to=11"
-                )
-                s["curated"] = True
-                s["platform"] = "vtex"
-                # keep alive per sweep result
         tmp = INDEX_PATH.with_suffix(".json.tmp")
         tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", "utf-8")
         tmp.replace(INDEX_PATH)
         print(f"wrote {INDEX_PATH} (alive flips={changed})")
+    elif args.write and mass_fail:
+        print("skipped --write due to mass-fail guard")
 
-    out_path = Path("/tmp/ahorrar-shop-canary.json")
-    out_path.write_text(json.dumps({"results": results, "by_verdict": by_v}, ensure_ascii=False, indent=2), "utf-8")
+    alive_map = _alive_by_category(shops)
+    print("\n=== alive hosts by category (index after pass) ===")
+    shortfalls: list[str] = []
+    for cat, hosts in sorted(alive_map.items()):
+        flag = "OK" if len(hosts) >= 4 else "SHORT"
+        if len(hosts) < 4:
+            shortfalls.append(f"{cat}:{len(hosts)}")
+        print(f"  {cat:12} n={len(hosts):2} [{flag}] {', '.join(hosts[:6])}{'…' if len(hosts) > 6 else ''}")
+    if shortfalls:
+        print(f"SHORTFALL (<4 alive): {', '.join(shortfalls)}")
+    else:
+        print("all categories ≥4 alive hosts")
+
+    artifact = {
+        "moment": moment,
+        "fail_ratio": fail_ratio,
+        "mass_fail": mass_fail,
+        "to_kill": sorted(to_kill),
+        "streaks": streaks,
+        "alive_by_category": alive_map,
+        "shortfalls": shortfalls,
+        "results": results,
+        "by_verdict": by_v,
+    }
+    out_path = Path(f"/tmp/ahorrar-shop-canary-{moment}.json")
+    out_path.write_text(json.dumps(artifact, ensure_ascii=False, indent=2), "utf-8")
     print(f"artifact {out_path}")
     return 0
 
