@@ -134,6 +134,7 @@ T58|x|golden set + métricas + stock/variant fixtures · merged #32|V29,V17
 T59|x|V33 FETCH_MAX_BYTES + V32 host-allow SSRF (fetch-time gate, redirects, DNS pin/cache) · merged #30 @e5a42f4|V32,V33
 T60|x|stock Woo/Shopify + dedupe variantes · merged #31|V30,V1
 T61|x|degraded+ML join+same-cat+e2e+stop_reason · Micro cold 8q · merge #29 · zapatillas residual #22|V19,V34
+T62|x|hostYieldCut K=4 intent (#40) refutado · #39 límite IP/datacenter · PR cerrado|V34
 
 §B
 id|date|cause|fix
@@ -150,3 +151,4 @@ B10|2026-09-25|filtro anti-accesorio era category-specific; perfume soft-pass + 
 B11|2026-09-25|`hay.includes("perfume")` + soft OR titleHasCategory → "Protectores Diarios… Con Perfume" (Farmacity) pasaba gate; secondary lead solo `protector` singular ⊥ `protectores`|V28: fragrance evidence estricta (⊥ adjunct "con perfume", ⊥ hygiene) + protectores?/toallas en secondary lead
 B12|2026-09-25|matches débiles se demoteaban en ranking pero seguían publicándose → UI "sucia"; sin rechazo cross-class (perfume↔notebook/zapatilla)|V29: isRelevantResult publish floor + family conflict + whole-word
 B13|2026-09-27|perfume: palabra sola pasaba (capilar/mini); notebook: cuadernos papel con lead Notebook|V27: fragrance alien/sample + notebook PC evidence (Node↔Python); tests relevance
+B14|2026-09-29|HOST_MIN_PRODUCTIVE default 2 dejaba cortar barren con 1–2 hosts productivos → Micro zapatillas/iphone 1–2 hosts pese a funnel 3–4 (#39)|V34: intento K_cut=4 refutado (#40); causa real Frávega 403 IP Micro
