@@ -1,22 +1,29 @@
-"""Per-search host yield cut + in-memory (host, category) outcomes (§V34).
+"""Per-search host yield cut + in-memory (host, category) outcomes (§V34 / §T61).
 
 Within one crawl: stop enqueueing a barren/failing host after N consecutive
 empty/error fetches, or when its fetch-time budget is exhausted. Hosts that
 already produced offers are never cut. If fewer than K productive hosts exist,
 do not cut further (preserve variety seeking).
 
-Across searches: append compact outcomes to an in-memory registry so a later
-`degraded` pass can count repeated empties without a second mechanism.
+Across searches: append compact outcomes to an in-memory registry. Hosts with
+a barren streak are `degraded` until a **confirmed offers** outcome (hysteresis —
+TTL alone does not clear). After `DEGRADED_TTL_S`, a rate-limited passive
+recheck may probe the host (`DEGRADED_RECHECK_MAX_PER_HOUR`). Mass-fail guard:
+if ≥ ratio of **attempted** hosts in one search are barren (≥ min hosts), skip
+writing barren outcomes (local outage). ⊥ mutate `alive` in the index.
 """
 
 from __future__ import annotations
 
+import logging
 import os
 import threading
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from typing import Any, Literal
+
+log = logging.getLogger("ahorrar.host_yield")
 
 OutcomeReason = Literal[
     "offers",
@@ -56,8 +63,8 @@ def host_empty_streak() -> int:
 
 
 def host_budget_s() -> float:
-    """Max cumulative fetch seconds per host in one search (default 8)."""
-    return _env_float("HOST_BUDGET_S", 8.0, min_v=1.0, max_v=60.0)
+    """Max cumulative fetch seconds per host in one search (default 5)."""
+    return _env_float("HOST_BUDGET_S", 5.0, min_v=1.0, max_v=60.0)
 
 
 def host_min_productive() -> int:
@@ -67,6 +74,35 @@ def host_min_productive() -> int:
     only 3 live shops (e.g. iphone) can still drop proven-empty peers.
     """
     return _env_int("HOST_MIN_PRODUCTIVE", 2, min_v=1, max_v=16)
+
+
+def degraded_empty_streak() -> int:
+    """Consecutive non-offer outcomes before skipping a host across searches."""
+    return _env_int("DEGRADED_EMPTY_STREAK", 2, min_v=1, max_v=8)
+
+
+def degraded_ttl_s() -> float:
+    """Seconds after the last barren outcome before a passive recheck (re-seed)."""
+    return _env_float("DEGRADED_TTL_S", 1800.0, min_v=60.0, max_v=86_400.0)
+
+
+def degraded_mass_fail_ratio() -> float:
+    """If ≥ this fraction of touched hosts are barren in one search, skip degrade.
+
+    Guards against local outages (DNS/red) that would otherwise mark the whole
+    index degraded. Default 0.7 (majority).
+    """
+    return _env_float("DEGRADED_MASS_FAIL_RATIO", 0.7, min_v=0.5, max_v=1.0)
+
+
+def degraded_recheck_max_per_hour() -> int:
+    """Max passive rechecks per (host, category) in a rolling 1h window."""
+    return _env_int("DEGRADED_RECHECK_MAX_PER_HOUR", 2, min_v=1, max_v=24)
+
+
+def degraded_mass_fail_min_hosts() -> int:
+    """Minimum touched hosts before the mass-fail guard applies."""
+    return _env_int("DEGRADED_MASS_FAIL_MIN_HOSTS", 4, min_v=2, max_v=64)
 
 
 @dataclass
@@ -96,16 +132,122 @@ _outcome_registry: dict[tuple[str, str], deque[HostSearchOutcome]] = defaultdict
 )
 _registry_lock = threading.Lock()
 
+# Passive recheck timestamps per (host, category) — rate-limit re-seeds.
+_RECHECK_WINDOW_S = 3600.0
+_recheck_times: dict[tuple[str, str], deque[float]] = defaultdict(deque)
+# Episodes already counted this TTL-expiry (keyed by last barren `at`).
+_recheck_episodes: set[tuple[str, str, float]] = set()
+
 
 def clear_outcome_registry() -> None:
     """Test helper."""
     with _registry_lock:
         _outcome_registry.clear()
+        _recheck_times.clear()
+        _recheck_episodes.clear()
 
 
 def outcome_registry_snapshot() -> dict[tuple[str, str], list[HostSearchOutcome]]:
     with _registry_lock:
         return {k: list(v) for k, v in _outcome_registry.items()}
+
+
+def is_degraded(
+    host: str,
+    category: str,
+    *,
+    now: float | None = None,
+    streak: int | None = None,
+    ttl_s: float | None = None,
+) -> bool:
+    """True while recent (host, category) outcomes are a barren streak.
+
+    Hysteresis: TTL alone does **not** clear degraded — only a confirmed offers
+    outcome does. Passive recheck after TTL is `may_passive_recheck` (probe
+    budget), not an exit from degraded.
+    """
+    _ = (now, ttl_s)  # call-site compat; time does not clear (hysteresis)
+    host = host.replace("www.", "", 1).lower().strip()
+    if not host or not category:
+        return False
+    need = streak if streak is not None else degraded_empty_streak()
+    with _registry_lock:
+        outcomes = list(_outcome_registry.get((host, category), ()))
+    if len(outcomes) < need:
+        return False
+    recent = outcomes[-need:]
+    if any(o.reason == "offers" or o.offers > 0 for o in recent):
+        return False
+    return True
+
+
+def may_passive_recheck(
+    host: str,
+    category: str,
+    *,
+    now: float | None = None,
+    streak: int | None = None,
+    ttl_s: float | None = None,
+    consume: bool = True,
+) -> bool:
+    """True when a degraded host may be probed once (TTL expired + budget/h).
+
+    Does not clear degraded — success on that probe (offers flush) does.
+    """
+    host = host.replace("www.", "", 1).lower().strip()
+    if not host or not category:
+        return False
+    if not is_degraded(host, category, streak=streak):
+        return False
+    need = streak if streak is not None else degraded_empty_streak()
+    ttl = ttl_s if ttl_s is not None else degraded_ttl_s()
+    stamp = now if now is not None else time.time()
+    with _registry_lock:
+        outcomes = list(_outcome_registry.get((host, category), ()))
+    if len(outcomes) < need:
+        return False
+    recent = outcomes[-need:]
+    last_at = recent[-1].at
+    if stamp - last_at <= ttl:
+        return False  # still in cooldown before first probe
+    max_rechecks = degraded_recheck_max_per_hour()
+    key = (host, category)
+    episode = (host, category, last_at)
+    with _registry_lock:
+        if episode in _recheck_episodes:
+            return True  # already granted this barren episode (same search ok)
+        times = _recheck_times[key]
+        while times and stamp - times[0] > _RECHECK_WINDOW_S:
+            times.popleft()
+        if len(times) >= max_rechecks:
+            return False
+        if consume:
+            _recheck_episodes.add(episode)
+            times.append(stamp)
+            if len(_recheck_episodes) > 2048:
+                _recheck_episodes.clear()
+    return True
+
+
+def degraded_hosts(
+    category: str,
+    *,
+    now: float | None = None,
+) -> set[str]:
+    """Hosts to skip this search: degraded and not granted a passive recheck."""
+    if not category:
+        return set()
+    stamp = now if now is not None else time.time()
+    out: set[str] = set()
+    with _registry_lock:
+        keys = [k for k in _outcome_registry if k[1] == category]
+    for host, cat in keys:
+        if not is_degraded(host, cat, now=stamp):
+            continue
+        if may_passive_recheck(host, cat, now=stamp, consume=True):
+            continue  # probe this search; stay degraded until offers
+        out.add(host)
+    return out
 
 
 def _classify_search_reason(stats: HostFetchStats) -> OutcomeReason:
@@ -222,6 +364,19 @@ class HostYieldTracker:
                 newly.append(host)
         return newly
 
+    def apply_degraded_cuts(self, *, now: float | None = None) -> list[str]:
+        """Force-cut hosts degraded for this category (cross-search). Bypasses K floor."""
+        newly: list[str] = []
+        for host in degraded_hosts(self.category, now=now):
+            if not host or self.is_cut(host):
+                continue
+            stats = self.stats_for(host)
+            if stats.offers > 0:
+                continue
+            stats.cut_reason = "degraded"
+            newly.append(host)
+        return newly
+
     def summary(self) -> dict[str, Any]:
         by_host: dict[str, dict[str, Any]] = {}
         for host, s in sorted(self._hosts.items()):
@@ -240,18 +395,43 @@ class HostYieldTracker:
         }
 
     def flush_to_registry(self) -> None:
-        """Append one outcome per touched host for future degraded logic."""
+        """Append one outcome per touched host for future degraded logic.
+
+        Mass-fail guard: if a high fraction of touched hosts are barren in the
+        same search (local DNS/red outage), skip writing barren outcomes so we
+        do not degrade the whole index. Offer outcomes still flush (clear prior
+        degraded state for hosts that actually worked).
+        """
         now = time.time()
+        touched = [(h, s) for h, s in self._hosts.items() if s.fetches > 0]
+        if not touched:
+            return
+        barren_n = sum(1 for _h, s in touched if s.offers == 0)
+        min_hosts = degraded_mass_fail_min_hosts()
+        ratio = degraded_mass_fail_ratio()
+        mass_fail = (
+            len(touched) >= min_hosts and (barren_n / len(touched)) >= ratio
+        )
+        if mass_fail:
+            log.info(
+                "degraded mass-fail guard category=%s touched=%d barren=%d "
+                "ratio=%.2f — skip barren registry (local outage?)",
+                self.category,
+                len(touched),
+                barren_n,
+                barren_n / len(touched),
+            )
         with _registry_lock:
-            for host, stats in self._hosts.items():
-                if stats.fetches == 0:
-                    continue
+            for host, stats in touched:
+                reason = _classify_search_reason(stats)
+                if mass_fail and stats.offers == 0:
+                    continue  # do not degrade anyone on mass barren
                 outcome = HostSearchOutcome(
                     host=host,
                     category=self.category,
                     offers=stats.offers,
                     fetches=stats.fetches,
-                    reason=_classify_search_reason(stats),
+                    reason=reason,
                     at=now,
                 )
                 _outcome_registry[(host, self.category)].append(outcome)

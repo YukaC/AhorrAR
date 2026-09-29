@@ -22,6 +22,7 @@ if [[ -d "$ROOT/.git" ]] && [[ "${AHORRAR_GIT_PULL:-1}" == "1" ]]; then
     scripts/oci-anti-idle.sh 2>/dev/null || true
 fi
 
+export AHORRAR_IMAGE="${IMAGE}"
 echo "[micro-pull] pulling ${IMAGE}"
 docker compose -f "$COMPOSE_FILE" --profile caddy pull
 

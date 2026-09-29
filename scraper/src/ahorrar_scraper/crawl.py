@@ -25,7 +25,12 @@ from scrapling.fetchers import FetcherSession
 
 from ahorrar_scraper.host_yield import HostYieldTracker, OutcomeReason
 from ahorrar_scraper.parsers import looks_like_challenge, parse_page
-from ahorrar_scraper.meli_api import meli_token_configured, search_mla
+from ahorrar_scraper.meli_api import (
+    abort_ml_http,
+    consume_ml_run_stats,
+    meli_token_configured,
+    search_mla,
+)
 from ahorrar_scraper.offer_cache import OfferCache
 from ahorrar_scraper.relevance import is_relevant_result, title_relevance_score
 from ahorrar_scraper.seeds import (
@@ -237,10 +242,20 @@ def probe_budget(slots: int, *, set_full: bool) -> int:
     factor = probe_budget_factor()
     # Hard per-listing cap (Micro). Mid-crawl PDP fan-out traded for top-3 verify
     # (§V30): positions 4–N may include a dead HTML/Woo PDP.
-    per_page = _env_int("PROBE_PER_PAGE", 3, min_v=1, max_v=16)
+    per_page = _env_int("PROBE_PER_PAGE", 2, min_v=1, max_v=16)
     if set_full:
         return min(per_page, max(factor * 2, factor))
     return min(per_page, max(slots * factor, 4 if slots > 0 else factor))
+
+
+def soft_probe_skip_floor(max_results: int) -> int:
+    """Min retained offers before mid-crawl PDP probes may be skipped (T61 wall)."""
+    return max(8, (max_results * 3) // 5)
+
+
+def soft_host_floor() -> int:
+    """Min distinct hosts for soft early-stop (default 3; retain-K stays 4)."""
+    return _env_int("SOFT_HOST_FLOOR", 3, min_v=2, max_v=8)
 
 
 def verify_top_pdps(
@@ -386,6 +401,21 @@ def victim_index(
 
 def crawl_deadline_s() -> float:
     return float(_env_int("CRAWL_DEADLINE_S", 30, min_v=5, max_v=120))
+
+
+def ml_join_timeout_s() -> float:
+    """Max seconds to wait for ML after BFS ends (default 4). ⊥ bloquear wall.
+
+    ML already runs concurrent with BFS; this only caps the final join. Slow ML
+    without HTTP error does not trip the circuit breaker — we abandon the wait.
+    """
+    raw = os.environ.get("ML_JOIN_TIMEOUT_S", "").strip()
+    if not raw:
+        return 4.0
+    try:
+        return max(0.5, min(30.0, float(raw)))
+    except ValueError:
+        return 4.0
 
 
 def _distinct_offer_hosts(results: list[dict[str, Any]]) -> int:
@@ -737,7 +767,17 @@ def crawl(
     probe_published: dict[str, int] = defaultdict(int)
     ml_via_api = False
     blocked_ml = False
+    ml_joined = False
+    ml_arrived = 0  # 1 if join absorbed offers or timed out cleanly after worker done
     yield_tracker = HostYieldTracker(category_for(product))
+    degraded_cut = yield_tracker.apply_degraded_cuts()
+    if degraded_cut:
+        log.info(
+            "degraded skip %s host(s) for %r: %s",
+            len(degraded_cut),
+            product,
+            ",".join(sorted(degraded_cut)[:8]),
+        )
 
     def emit_offer(offer: dict[str, Any]) -> None:
         if callable(on_offer):
@@ -804,9 +844,14 @@ def crawl(
     ml_cap = max(1, int(max_results * 0.5))
     ml_pool: ThreadPoolExecutor | None = None
     ml_future: Any = None
+    ml_stop = threading.Event()
+    ml_started_mono = 0.0
     if want_ml:
         ml_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="ml")
-        ml_future = ml_pool.submit(search_mla, product, limit=min(50, ml_cap * 3))
+        ml_started_mono = time.monotonic()
+        ml_future = ml_pool.submit(
+            search_mla, product, limit=min(50, ml_cap * 3), stop_event=ml_stop
+        )
     elif include_ml:
         log.info(
             "include_ml pedido pero MELI_ACCESS_TOKEN ausente — skip ML (no HTML scrape)"
@@ -898,18 +943,74 @@ def crawl(
         for guess in guess_search_urls(origin, product):
             enqueue(guess, depth)
 
-    def ml_absorb() -> None:
-        """Merge ML offers (capped) into results once the worker finishes."""
-        nonlocal ml_via_api
-        if ml_future is None:
+    def ml_absorb(*, wait_s: float | None = None) -> None:
+        """Merge ML offers (capped) into results. wait_s=None → only if already done.
+
+        On join timeout: stop_event + abort_ml_http + discard late offers (explicit
+        policy — not an accident of Future.cancel failing on a running worker).
+        """
+        nonlocal ml_via_api, ml_joined, ml_arrived
+        if ml_future is None or ml_joined:
             return
+
+        def _wait_ms() -> int:
+            if ml_started_mono <= 0:
+                return 0
+            return int((time.monotonic() - ml_started_mono) * 1000)
+
+        def _abandon_ml(*, reason: str) -> None:
+            """Stop N+1, close HTTP, discard anything that arrives later.
+
+            In-flight HTTP may still complete within ML_REQUEST_TIMEOUT_S; that
+            result is discarded (ml_joined=True). Cooperative cancel only.
+            """
+            nonlocal ml_joined, ml_arrived
+            ml_joined = True
+            ml_arrived = 0
+            ml_stop.set()
+            abort_ml_http()
+            ml_future.cancel()
+            if ml_pool is not None:
+                ml_pool.shutdown(wait=False, cancel_futures=True)
+            # Brief yield so the ML worker can observe stop and tally cancels
+            # (does not wait for hung HTTP — abort_ml_http already closed sockets).
+            for _ in range(15):
+                if ml_future.done():
+                    break
+                time.sleep(0.02)
+            stats = consume_ml_run_stats()
+            log.info(
+                "ML join product=%r ml_wait_ms=%d ml_arrived=0 ml_offers=0 "
+                "ml_cancelled_calls=%d discarded=1 reason=%s "
+                "(policy: late ML dropped; in-flight may finish ≤request timeout)",
+                product,
+                _wait_ms(),
+                stats.get("cancelled_calls", 0),
+                reason,
+            )
+
         try:
-            offers = ml_future.result(timeout=90)
+            if wait_s is None:
+                if not ml_future.done():
+                    return
+                offers = ml_future.result(timeout=0)
+            else:
+                offers = ml_future.result(timeout=max(0.05, wait_s))
+        except TimeoutError:
+            _abandon_ml(reason="join_timeout")
+            return
         except Exception as exc:  # noqa: BLE001
             log.warning("ML search falló: %s", exc)
+            ml_joined = True
+            ml_arrived = 0
+            ml_stop.set()
+            if ml_pool is not None:
+                ml_pool.shutdown(wait=False, cancel_futures=True)
             return
+        ml_joined = True
+        ml_arrived = 1
         if ml_pool is not None:
-            ml_pool.shutdown(wait=False)
+            ml_pool.shutdown(wait=False, cancel_futures=True)
         ml_count = 0
         for offer in offers:
             u = offer.get("url")
@@ -926,6 +1027,17 @@ def crawl(
             ml_via_api = True
             emit_offer(offer)
             emit_progress(nodes_visited=len(visited), results_found=len(results))
+        stats = consume_ml_run_stats()
+        log.info(
+            "ML join product=%r ml_wait_ms=%d ml_arrived=1 ml_offers=%d ml_cap=%d "
+            "ml_fill_pct=%d ml_cancelled_calls=%d",
+            product,
+            _wait_ms(),
+            ml_count,
+            ml_cap,
+            int(100 * ml_count / ml_cap) if ml_cap else 0,
+            stats.get("cancelled_calls", 0),
+        )
 
     def _search_satisfied(pending: list[dict[str, Any]] | None = None) -> bool:
         """Cupo lleno ∧ ≥K hosts ∧ no pending improver (tier, precio) — §V30."""
@@ -1106,8 +1218,13 @@ def crawl(
 
             need_probe = [c for c in shortlist if _needs_pdp_probe(c)]
             skip_probe = [c for c in shortlist if not _needs_pdp_probe(c)]
-            # Mid-crawl PDP skip only when retained set is locked (§V30).
-            if _search_satisfied(pending_before_filter):
+            # Mid-crawl PDP skip when retained set is locked (§V30) OR soft floor:
+            # ≥K hosts ∧ ≥60% cupo — probes dominate notebook/ryzen wall (T61).
+            soft_skip = (
+                _distinct_offer_hosts(results) >= soft_host_floor()
+                and len(results) >= soft_probe_skip_floor(max_results)
+            )
+            if soft_skip or _search_satisfied(pending_before_filter):
                 skip_probe = list(shortlist)
                 need_probe = []
             probe_attempted[host_of(final_url) or "unknown"] += len(need_probe)
@@ -1168,6 +1285,9 @@ def crawl(
                 expand_origin(final_url, depth + 1)
 
     deadline = started + crawl_deadline_s()
+    # Why the BFS loop exited — cheap residual diagnostics (T61).
+    # satisfied = soft floor / retained set / early-stop / cupo+empty queue
+    stop_reason = "queue_empty"
 
     try:
         batch = take_batch()
@@ -1194,6 +1314,21 @@ def crawl(
             batch = next_batch
             futures = next_futures
 
+            # Opportunistic ML absorb if worker already finished (no extra wait).
+            ml_absorb(wait_s=None)
+
+            # Soft floor (T61): variety + majority of cupo → stop fishing, top-3 verify later.
+            soft_floor = (
+                _distinct_offer_hosts(results) >= soft_host_floor()
+                and len(results) >= soft_probe_skip_floor(max_results)
+            )
+            if soft_floor:
+                crawl_queue.clear()
+                batch = []
+                futures = {}
+                stop_reason = "satisfied"
+                break
+
             # Retained-set locked: no productive/SERP work left → stop fishing barren.
             if _search_satisfied([]):
                 _prune_queue_untried_barren()
@@ -1206,6 +1341,7 @@ def crawl(
                     for u, _d in batch
                 )
                 if not has_useful and not batch_useful:
+                    stop_reason = "satisfied"
                     break
 
             # Early-stop: cupo lleno + ≥4 hosts + queue only HTML → drain API batch then exit.
@@ -1227,19 +1363,30 @@ def crawl(
                     api_only.append((url, d))
                 if api_only:
                     process_batch(api_only, launch_batch(api_only))
+                stop_reason = "satisfied"
                 break
             # Soft stop when full and no queue left
             if len(results) >= max_results and not crawl_queue and not batch:
+                stop_reason = "satisfied"
                 break
+
+        else:
+            # while-else: condition failed (not an explicit break)
+            if len(visited) >= max_nodes:
+                stop_reason = "max_nodes"
+            elif time.time() >= deadline:
+                stop_reason = "deadline"
+            elif not batch and not crawl_queue:
+                stop_reason = "queue_empty"
 
         # Top-3 PDP verify before pool shutdown (covers VTEX API skip).
         verify_top_pdps(results, fetch_pool, product, k=3)
     finally:
         fetch_pool.shutdown()
 
-    # ML se absorbe al final (cap aparte, nunca bloquea el primer resultado).
+    # ML join capped (ML_JOIN_TIMEOUT_S). Late offers discarded; work aborted.
     if ml_future is not None:
-        ml_absorb()
+        ml_absorb(wait_s=ml_join_timeout_s())
 
     yield_tracker.flush_to_registry()
     yield_summary = yield_tracker.summary()
@@ -1264,6 +1411,14 @@ def crawl(
             yield_pct,
             dict(probe_attempted),
         )
+    log.info(
+        "crawl stop product=%r stop_reason=%s wall_ms=%d hosts=%d n=%d",
+        product,
+        stop_reason,
+        elapsed_ms,
+        _distinct_offer_hosts(results),
+        len(results),
+    )
     return {
         "product": product,
         "country": "AR",
@@ -1282,6 +1437,8 @@ def crawl(
             "probeYieldPct": yield_pct,
             "probeByHost": dict(probe_attempted),
             "hostYield": yield_summary,
+            "stopReason": stop_reason,
+            "mlArrived": ml_arrived,
         },
         "mlBlocked": blocked_ml,
         "mlViaApi": ml_via_api,

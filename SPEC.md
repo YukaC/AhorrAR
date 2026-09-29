@@ -69,7 +69,7 @@ V30: bajo cap → set retenido orden `(tier ↑, precio ↑)` ∧ ≥K hosts (K=
 V31: frase núcleo = tokens antes del 1er conector lingüístico universal (`de|para|con|sin|compatible|repuesto|accesorio|kit|…`) ∧ strip `(…)` / cola `no|excepto` · query debe caer en núcleo (secundario-intent: el sustantivo en núcleo, ⊥ apagar filtro) · cobertura sustantivo: match solo-marca insuficiente si falta noun/sinónimo/class-evidence · mediana confiable = subset con hit de núcleo (⊥ score gate) · señales conjunto (storeRank/cat) · sin features → gate V29 · solo **degrada** tier V28 · ⊥ promover V29-reject · si hits núcleo < ~8 → skip señales de conjunto
 V32: ∀ host persistido por discovery → TLD/allowlist ∧ ⊥ IP/DNS privado (anti-SSRF) · discovered no confiable hasta probe
 V33: ∀ fetch body → tope bytes (`FETCH_MAX_BYTES`) · stream cortado · ⊥ OOM por HTML gigante
-V34: ∀ búsqueda Scrapling → tras N fetches consecutivos sin oferta parseada ∨ http≥400/timeout en un host → ⊥ encolar más URLs de ese host en ESA búsqueda · host con ≥1 oferta ⊥ cortar · si hosts productivos < K_cut (default 2, env `HOST_MIN_PRODUCTIVE`; ≠ K=4 retención V30) ⊥ cortar más · presupuesto `HOST_BUDGET_S`/host · registro in-mem (host,categoría) ofertas|vacío+razón · ⊥ borrar del índice (degraded/recheck aparte)
+V34: ∀ búsqueda Scrapling → tras N fetches consecutivos sin oferta parseada ∨ http≥400/timeout en un host → ⊥ encolar más URLs de ese host en ESA búsqueda · host con ≥1 oferta ⊥ cortar · si hosts productivos < K_cut (default 2, env `HOST_MIN_PRODUCTIVE`; ≠ K=4 retención V30) ⊥ cortar más · presupuesto `HOST_BUDGET_S`/host (default 5) · registro in-mem (host,categoría) ofertas|vacío+razón · **degraded**: ≥`DEGRADED_EMPTY_STREAK` barren → skip hasta **éxito offers** (histéresis: TTL ⊥ limpia) · recheck pasivo post-`DEGRADED_TTL_S` ≤`DEGRADED_RECHECK_MAX_PER_HOUR`/h · **mass-fail**: fracción barren sobre **hosts intentados** (≥`DEGRADED_MASS_FAIL_MIN_HOSTS` ∧ ≥`DEGRADED_MASS_FAIL_RATIO`) → ⊥ registrar barren · ⊥ borrar/`alive:false` · soft early-stop: ≥`SOFT_HOST_FLOOR` ∧ ≥60% cupo · **ML join**: `ML_JOIN_TIMEOUT_S` (4) + `ML_REQUEST_TIMEOUT_S` (8, > join) · cancel cooperativo (Event+shutdown cancel_futures+close httpx) · in-flight abort via close · **descartar** late · log `ml_wait_ms`/`ml_arrived`/`ml_offers`/`ml_cancelled_calls` · cancel/abort ⊥ circuit breaker · timeout de red sin cancel sí cuenta V26
 
 §T
 id|status|task|cites
@@ -133,7 +133,7 @@ T57|x|ML cobertura honest docs · ML-COVERAGE.md · merged via #32|V15
 T58|x|golden set + métricas + stock/variant fixtures · merged #32|V29,V17
 T59|x|V33 FETCH_MAX_BYTES + V32 host-allow SSRF (fetch-time gate, redirects, DNS pin/cache) · merged #30 @e5a42f4|V32,V33
 T60|x|stock Woo/Shopify + dedupe variantes · merged #31|V30,V1
-T61|~|en PR #29 (perf/t61-ml-degraded @815d4eb): degraded+ML join+e2e · residual Micro wall → issue #28 · ⊥ merge|V19,V34
+T61|x|degraded+ML join+same-cat+e2e+stop_reason · Micro cold 8q · merge #29 · zapatillas residual #22|V19,V34
 
 §B
 id|date|cause|fix

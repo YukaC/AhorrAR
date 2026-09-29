@@ -752,6 +752,22 @@
       "entry": null,
       "platform": "unknown",
       "alive": false
+    },
+    {
+      "host": "nike.com.ar",
+      "category": "general",
+      "curated": false,
+      "entry": null,
+      "platform": "unknown",
+      "alive": true
+    },
+    {
+      "host": "sportline.com.ar",
+      "category": "general",
+      "curated": false,
+      "entry": null,
+      "platform": "unknown",
+      "alive": true
     }
   ]
 }

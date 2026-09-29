@@ -49,10 +49,13 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: ${{ env.IMAGE }}
+          # :micro / :main only on main — workflow_dispatch from a PR branch must
+          # not retarget prod pins (Micro pulls :micro).
           tags: |
-            type=raw,value=micro
-            type=raw,value=main
+            type=raw,value=micro,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
             type=sha,prefix=sha-,format=short
+            type=ref,event=branch,prefix=branch-,enable=${{ github.ref != 'refs/heads/main' }}
 
       - name: Build and push
         uses: docker/build-push-action@v7

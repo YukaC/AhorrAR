@@ -7,7 +7,7 @@
 
 ## En una línea
 
-v0.2 · Fase 0 cerrada (`#36` @ `4854ab9`) · stashes en ramas `backup/*` · Fase 2 #30–#35 merged · floors 175/63/74/0 · T61 Micro bench done (residual wall; ⊥ merge) · T61 bench paralelo · ML ON · 0 bugs §B abiertos.
+v0.2 · 4 huecos T61 cerrados · Micro cold 8q OK · digest e9504ec0 restaurado · merge #29 pendiente/en curso · ML ON.
 
 ## §F — protocolo agente (fin de fase)
 
@@ -36,6 +36,29 @@ v0.2 · Fase 0 cerrada (`#36` @ `4854ab9`) · stashes en ramas `backup/*` · Fas
 | Bench DNS-cache effect | ⏳ medir en Micro / local ×3 post-merge |
 
 ## Ledger (evidencia — no afirmar de memoria)
+
+
+### Micro cold 8q T61 (2026-09-29) — `sha-9f9bee6` · restart-before-each
+
+**Decisión explícita:** swap breve del contenedor prod (retag local `sha-9f9bee6` → `:micro` en VM; GHCR `:micro` intacto) para bench frío. **Ventana:** `2026-09-29T16:20:40Z` → `2026-09-29T16:40:24Z` (~20 min). **Restore verificado:** digest `sha256:e9504ec0086e1e67a23a56c30e796e7ebed684d302a2605d2ab74d5f4a68888d` · rev `e1db4fb…` · RestartCount=0. (Pin previo post-Fase2; `a35d6c…`/`1ecd88e` quedó atrás al rebuild `:micro` tras #30–#35.)
+
+**Cold:** `clear_outcome_registry` (local) / `docker compose restart api` antes de cada búsqueda (Micro). top3_stable = mismo (price,host) entre reps — **no** “top3≈wall”.
+
+| query | Micro p50 | hosts | n | rss | top3 | vs prod ML=1 |
+|---|---:|---:|---:|---:|:---:|---|
+| ryzen | 14.5s | 6 | 12 | 239 | ✓ | 30.1→14.5 |
+| notebook | 16.5s | 6 | 12 | 240 | ✓ | 17.0→16.5 |
+| perfume | 5.6s | 6 | 12 | 223 | ✓ | 9.1→5.6 |
+| iphone | 19.7s | **2** | 2 | 269 | ✓ | 16.1→19.7 · hosts=2 **también en frío** (local frío hosts=3) → ⊥ regresión degraded |
+| smart tv | 10.3s | 5 | 7 | 256 | ≠ | 26.1→10.3 · top3≠ informativo |
+| zapatillas | 31.2s | 3 | 9 | 268 | ≠ | ~flat · residual → #22 / T52 / T56 · stop local=`queue_empty` |
+| heladera | 8.1s | 8 | 20 | 242 | ≠ | OK |
+| cable | 11.9s | 7 | 14 | 294 | ✓ | OK |
+
+rssPeak Micro **300 MiB**. Local cold artifact `/tmp/ahorrar-bench/t61-local-cold-8q.json` · Micro `/tmp/ahorrar-bench/t61-micro-cold-8q.json` (VM).
+
+**Veredicto:** merge #29. Zapatillas/smart-tv top3 → issues #22–#26 + T52/T56. stop_reason shipped (`satisfied|deadline|max_nodes|queue_empty`).
+
 
 ### Micro bench T61 (2026-09-29) — `sha-f74d6f0`
 
@@ -73,6 +96,54 @@ v0.2 · Fase 0 cerrada (`#36` @ `4854ab9`) · stashes en ramas `backup/*` · Fas
 | Floors | backend **156** · frontend **63** · Python **68** · e2e **0** (↑ 148/63/60/0) |
 | Gate | private ranges + URL tricks + redirects + DNS pin/cache + fetch-time · shape 94/94 |
 
+### Fase 1.1 — mediana local ML=1 FW=2
+
+| Corrida | Artefacto | Notas |
+|---|---|---|
+| ×3 | `/tmp/ahorrar-bench/t61-local-ml1-20260929-010826.json` | wall fail: smart tv, zapatillas; top3 fail: tv/heladera/zapatillas; **varianza >15% todas** |
+| ×5 (protocolo C) | `/tmp/ahorrar-bench/t61-local-ml1-rerun5-20260929-011359.json` | p50: iphone 11.5 · tv 10.8 · ryzen 9.5 · perfume 3.1 · notebook **15.1** · heladera 3.4 · zapatillas 15.8 · cable 3.9 · **0 queries >25s** · top3 fail solo zapatillas · heladera price1=0 (bug ML) |
+
+Commit bench: `79324e8`. Techo local 15s: notebook p50 15058ms (borde). Techo Micro 25s: **PASS p50**.
+
+### Fase 1.2 — workflow_dispatch
+
+| Campo | Valor |
+|---|---|
+| Run | https://github.com/YukaC/AhorrAR/actions/runs/36520707786 |
+| Tags | `ghcr.io/yukac/ahorrar-api:sha-79324e8` · `branch-perf-t61-ml-degraded` |
+| `:micro`/`:main` | **enable=false** · job `deploy-micro` **skipped** |
+| Pin prod intacto | `oci-api-1` image `:micro` rev=`1ecd88e…` digest=`sha256:a35d6c038ab6…` (SSH 2026-09-29) |
+
+### Fase 1.1b — bug price=0 ML (§V2)
+
+`_offer_from_listings` devolvía offer con `price=0.0` si no había listing ARS+shipping. Fix: return `None`. Test: `scraper/tests/test_meli_offer.py` (+3 → Python 80).
+
+
+### Fase 1.3 — Micro fair bench (swap temporal sha-0a0c450 → restore :micro)
+
+| Campo | Valor |
+|---|---|
+| Imagen bench | `ghcr.io/yukac/ahorrar-api:sha-0a0c450` @ `sha256:71b9df03…` |
+| Método | recreate compose api → ×3 cold restart → restore `:micro` |
+| Pin post | `:micro` rev=`1ecd88e…` digest=`sha256:a35d6c038ab6…` RestartCount=0 |
+| Artefacto | `/tmp/ahorrar-bench/t61-micro-fair-bench.jsonl` (+ log) |
+
+| query | wall p50 | baseline | Δ | top3 | hosts |
+|---|---:|---:|---:|:---:|---:|
+| iphone 15 | 17681 | 16100 | +1.6s | ✓ | 2 |
+| smart tv 55 | 22469 | 26100 | −3.6s | ✗ | 7 |
+| ryzen 5 5600 | **32488** | 30100 | +2.4s | ✓ | 7 |
+| perfume | 17989 | 9100 | +8.9s | ✓ | 8 |
+| notebook | **27120** | 17000 | +10.1s | ✗ | 9 |
+| heladera | 16940 | 12700 | +4.2s | ✗ | 10 |
+| zapatillas nike | 18621 | 24600 | −6.0s | ✗ | 3 |
+| cable | **26440** | 8500 | +17.9s | ✓ | 11 |
+
+**Veredicto T61:** NO cumple p50≤25s (ryzen/notebook/cable). 1 ciclo código ya usado (fix ML price=0). Residual → issue. PR sin merge.
+
+Parallel-contended bench (descartado por RAM, artefact `/tmp/ahorrar-bench/t61-micro-parallel-bench.jsonl`) peor aún en perfume/cable.
+
+### Fase 0.2 — inventario (main `1ecd88e` · stash bak `ea670cd` · T61 `82218a7`)
 
 
 ### Post-Fase 0 (2026-09-29) — backups + #36
@@ -149,9 +220,8 @@ v0.2 · Fase 0 cerrada (`#36` @ `4854ab9`) · stashes en ramas `backup/*` · Fas
 
 ## En curso
 
-- **Goal plan optimización** (Fase 0 done → Fase 1 T61): backup `ea670cd` · inventario ledger · conteos main 148/63/60/0.
-- **T61** (issue #23): código en `perf/t61-ml-degraded` · **siguiente: mediana local ×3 (ML=1 FW=2)**.
-- Holdout + frase núcleo (#25) · T52 re-probe (#24) · T54 A1 (#26) · zapatillas R@10 (#22) · CodeQL fantasma (#27) · WIP stash en `backup/wip-stash` (no mergear).
+- **T61** (#29): 4 huecos pre-merge (8q + hosts iphone + registry frío + digest ledger) · merge si variedad OK.
+- Holdout + frase núcleo (#25) · T52 re-probe (#24) · T54 A1 (#26) · zapatillas R@10 (#22) · CodeQL (#27) · stash en `backup/*`.
 
 ## Falta
 
@@ -159,9 +229,9 @@ v0.2 · Fase 0 cerrada (`#36` @ `4854ab9`) · stashes en ramas `backup/*` · Fas
 - [x] ML ON en prod (`MELI_*` secrets + `INCLUDE_ML=1`; re-consent OK) — §T16 / `docs/ML.md`
 - [x] Dominio canónico UI `ahorrarg.vercel.app` (+ redirects 308)
 - [x] **Bloque 0 cerrado** — T55 merged + gate Micro (`1ecd88e` / PR #21) · SPEC §T55=`x`
-- [ ] **T61** — local×3 → workflow_dispatch tag propio → Micro bench → PR sin merge
-- [ ] Fase 2 PRs desde stash: SSRF → stock/dedupe → golden T58 → T56
-- [ ] T52 / holdout+núcleo / T51 docs / T53 e2e CI / T54 A1
+- [ ] **T61** — 8q Micro frío + stop_reason → merge #29 si iphone variedad OK
+- [x] Fase 2 #30–#35 merged
+- [ ] T52 / holdout+núcleo / T54 A1 · zapatillas → #22
 - [ ] Holdout relevancia / frase núcleo (#25)
 - [x] **Gate Micro post-T55** (2026-09-29, criterio P1.7) — veredicto **quedarse**:
 

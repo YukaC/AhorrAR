@@ -104,6 +104,146 @@ class HostYieldTrackerTest(unittest.TestCase):
         self.assertEqual(snap[("b.com.ar", "electro")][-1].reason, "http_error")
         self.assertGreaterEqual(snap[("b.com.ar", "electro")][-1].fetches, 2)
 
+    def test_is_degraded_hysteresis_ttl_alone_does_not_clear(self) -> None:
+        """TTL unlocks recheck probe; degraded stays until confirmed offers."""
+        from ahorrar_scraper.host_yield import (
+            HostSearchOutcome,
+            is_degraded,
+            may_passive_recheck,
+        )
+        from ahorrar_scraper import host_yield as hy
+
+        now = 1_000_000.0
+        with hy._registry_lock:
+            hy._outcome_registry[("dead.com.ar", "gaming")].extend(
+                [
+                    HostSearchOutcome("dead.com.ar", "gaming", 0, 2, "empty", at=now - 10),
+                    HostSearchOutcome("dead.com.ar", "gaming", 0, 2, "http_error", at=now - 1),
+                ]
+            )
+        self.assertTrue(is_degraded("dead.com.ar", "gaming", now=now, ttl_s=60))
+        # Past TTL: still degraded (hysteresis).
+        self.assertTrue(is_degraded("dead.com.ar", "gaming", now=now + 120, ttl_s=60))
+        # But passive recheck is allowed.
+        self.assertTrue(
+            may_passive_recheck("dead.com.ar", "gaming", now=now + 120, ttl_s=60)
+        )
+
+    def test_is_degraded_clears_on_offers(self) -> None:
+        from ahorrar_scraper.host_yield import HostSearchOutcome, is_degraded
+        from ahorrar_scraper import host_yield as hy
+
+        now = 1_000_000.0
+        with hy._registry_lock:
+            hy._outcome_registry[("ok.com.ar", "electro")].extend(
+                [
+                    HostSearchOutcome("ok.com.ar", "electro", 0, 1, "empty", at=now - 20),
+                    HostSearchOutcome("ok.com.ar", "electro", 3, 1, "offers", at=now - 1),
+                ]
+            )
+        self.assertFalse(is_degraded("ok.com.ar", "electro", now=now, ttl_s=3600))
+
+    def test_apply_degraded_cuts(self) -> None:
+        from ahorrar_scraper.host_yield import HostSearchOutcome
+        from ahorrar_scraper import host_yield as hy
+
+        now = 1_000_000.0
+        with hy._registry_lock:
+            hy._outcome_registry[("skip.me", "moda")].extend(
+                [
+                    HostSearchOutcome("skip.me", "moda", 0, 2, "empty", at=now - 5),
+                    HostSearchOutcome("skip.me", "moda", 0, 1, "timeout", at=now - 1),
+                ]
+            )
+        t = HostYieldTracker("moda", empty_streak=2, min_productive=99, budget_s=60)
+        newly = t.apply_degraded_cuts(now=now)
+        self.assertEqual(newly, ["skip.me"])
+        self.assertTrue(t.is_cut("skip.me"))
+        self.assertEqual(t.stats_for("skip.me").cut_reason, "degraded")
+
+    def test_mass_fail_skips_barren_registry(self) -> None:
+        """Local outage: majority of *attempted* hosts barren → nobody degrades."""
+        t = HostYieldTracker("electro", empty_streak=2, min_productive=1, budget_s=60)
+        t.record_fetch("lonely.com.ar", offers=1, reason="offers")
+        for i in range(4):
+            t.record_fetch(f"dead{i}.com.ar", offers=0, reason="http_error")
+        t.flush_to_registry()
+        snap = outcome_registry_snapshot()
+        self.assertIn(("lonely.com.ar", "electro"), snap)
+        for i in range(4):
+            self.assertNotIn((f"dead{i}.com.ar", "electro"), snap)
+        from ahorrar_scraper.host_yield import is_degraded
+
+        for i in range(4):
+            self.assertFalse(is_degraded(f"dead{i}.com.ar", "electro"))
+
+    def test_single_host_repeated_fail_does_degrade(self) -> None:
+        """One host barren across searches (sample not mass) → degraded."""
+        from ahorrar_scraper.host_yield import is_degraded
+
+        for _ in range(2):
+            t = HostYieldTracker("gaming", empty_streak=2, min_productive=1, budget_s=60)
+            t.record_fetch("good.com.ar", offers=2, reason="offers")
+            t.record_fetch("bad.com.ar", offers=0, reason="empty")
+            t.record_fetch("bad.com.ar", offers=0, reason="http_error")
+            t.flush_to_registry()
+        self.assertTrue(is_degraded("bad.com.ar", "gaming"))
+        self.assertFalse(is_degraded("good.com.ar", "gaming"))
+
+    def test_mass_fail_does_not_fire_on_sparse(self) -> None:
+        """Fewer than min attempted hosts → mass guard off; barren still registers."""
+        t = HostYieldTracker("gaming", empty_streak=2, min_productive=1, budget_s=60)
+        t.record_fetch("a.com.ar", offers=1, reason="offers")
+        t.record_fetch("b.com.ar", offers=0, reason="empty")
+        t.flush_to_registry()
+        snap = outcome_registry_snapshot()
+        self.assertIn(("b.com.ar", "gaming"), snap)
+
+    def test_recheck_rate_limit(self) -> None:
+        """After MAX rechecks/hour, no more probes (still degraded until offers)."""
+        from ahorrar_scraper.host_yield import (
+            HostSearchOutcome,
+            degraded_hosts,
+            is_degraded,
+            may_passive_recheck,
+        )
+        from ahorrar_scraper import host_yield as hy
+        import os
+        from unittest.mock import patch
+
+        now = 2_000_000.0
+        with hy._registry_lock:
+            hy._outcome_registry[("flaky.com.ar", "bazar")].extend(
+                [
+                    HostSearchOutcome("flaky.com.ar", "bazar", 0, 1, "empty", at=now - 100),
+                    HostSearchOutcome("flaky.com.ar", "bazar", 0, 1, "empty", at=now - 90),
+                ]
+            )
+        with patch.dict(
+            os.environ,
+            {"DEGRADED_RECHECK_MAX_PER_HOUR": "1", "DEGRADED_TTL_S": "60"},
+        ):
+            self.assertTrue(is_degraded("flaky.com.ar", "bazar"))
+            # TTL expired → first recheck granted (not in degraded_hosts cut set).
+            self.assertTrue(may_passive_recheck("flaky.com.ar", "bazar", now=now))
+            self.assertEqual(degraded_hosts("bazar", now=now), set())
+
+            # Failed recheck → new barren; within TTL → cut again.
+            with hy._registry_lock:
+                hy._outcome_registry[("flaky.com.ar", "bazar")].append(
+                    HostSearchOutcome("flaky.com.ar", "bazar", 0, 1, "empty", at=now + 1)
+                )
+                hy._outcome_registry[("flaky.com.ar", "bazar")].append(
+                    HostSearchOutcome("flaky.com.ar", "bazar", 0, 1, "empty", at=now + 2)
+                )
+            self.assertIn("flaky.com.ar", degraded_hosts("bazar", now=now + 10))
+            # Past TTL but budget exhausted → still cut, no recheck.
+            self.assertFalse(
+                may_passive_recheck("flaky.com.ar", "bazar", now=now + 100)
+            )
+            self.assertIn("flaky.com.ar", degraded_hosts("bazar", now=now + 100))
+            self.assertTrue(is_degraded("flaky.com.ar", "bazar"))
+
     def test_summary_by_host(self) -> None:
         t = HostYieldTracker("gaming", empty_streak=2, min_productive=1, budget_s=60)
         t.record_fetch("x.com.ar", offers=5, reason="offers", elapsed_s=0.5)

@@ -77,7 +77,7 @@ describe('seeds procedural AR discovery (T12, §V13)', () => {
     expect(categoryFor('bensimon')).toBe('perfumeria');
   });
 
-  it('buildSeedUrls = hubs + índice curado + ML último; skips alive:false', () => {
+  it('buildSeedUrls = same-cat hot + hubs + cold + ML último; skips alive:false', () => {
     resetArShopsCacheForTests();
     const seeds = buildSeedUrls({ product: 'bensimon', country: 'AR', maxResults: 5 });
     expect(seeds.some((s) => /duckduckgo\.com/.test(s))).toBe(true);
@@ -87,6 +87,11 @@ describe('seeds procedural AR discovery (T12, §V13)', () => {
     expect(seeds.some((s) => /dead-shop\.com\.ar/.test(s))).toBe(false);
     expect(seeds.some((s) => /api\.mercadolibre\.com/.test(s))).toBe(true);
     expect(seeds.at(-1)).toMatch(/listado\.mercadolibre\.com\.ar/);
+    // Fixture has no perfumeria shops → hubs lead; fravega appears in cold block after hubs.
+    const hubIdx = seeds.findIndex((s) => /duckduckgo\.com/.test(s));
+    const fravegaIdx = seeds.findIndex((s) => /fravega\.com/.test(s));
+    expect(hubIdx).toBe(0);
+    expect(fravegaIdx).toBeGreaterThan(hubIdx);
   });
 
   it('guessSearchUrls unknown: VTEX + Woo + /?s= + /search (máx 4)', () => {
