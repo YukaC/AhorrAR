@@ -10,6 +10,7 @@ import { getCountry } from '../calendar/countries.ts';
 import { rankByPriority } from '../scoring/score.ts';
 import type { AppConfig } from '../config.ts';
 import { bfsSearch } from './bfs.ts';
+import { dedupeVariantsByHost } from './dedupe-variants.ts';
 import { extractPage } from './extractor.ts';
 import { LiveFetcher } from './fetcher.ts';
 import { buildResponse } from './pipeline.ts';
@@ -115,7 +116,12 @@ export function runLegacySearch(
           /* ignore */
         }
       }
-      const ranked = rankByPriority(usable, country, params.maxResults ?? cfg.maxResults, params.product);
+      const ranked = rankByPriority(
+        dedupeVariantsByHost(usable),
+        country,
+        params.maxResults ?? cfg.maxResults,
+        params.product,
+      );
       const event = buildEventInfo(new Date(), params.country);
       const stats: SearchStats = {
         source: 'live',
