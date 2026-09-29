@@ -7,9 +7,19 @@ set -euo pipefail
 ROOT="${AHORRAR_ROOT:-/opt/ahorrar}"
 COMPOSE_DIR="${ROOT}/deploy/oci"
 COMPOSE_FILE="docker-compose.micro.yml"
-IMAGE="${AHORRAR_IMAGE:-ghcr.io/yukac/ahorrar-api:micro}"
 
 cd "$COMPOSE_DIR"
+
+# Honor deploy/oci/.env pin (e.g. digest rollback) before defaulting to :micro.
+# CI SSH does not pass AHORRAR_IMAGE; without this, every deploy-micro
+# would re-pull the floating :micro tag and wipe a local pin.
+if [[ -f .env ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source .env
+  set +a
+fi
+IMAGE="${AHORRAR_IMAGE:-ghcr.io/yukac/ahorrar-api:micro}"
 
 # Optional: refresh compose/scripts from git (never overwrite .env).
 if [[ -d "$ROOT/.git" ]] && [[ "${AHORRAR_GIT_PULL:-1}" == "1" ]]; then
@@ -20,6 +30,14 @@ if [[ -d "$ROOT/.git" ]] && [[ "${AHORRAR_GIT_PULL:-1}" == "1" ]]; then
     scripts/oci-micro-pull.sh \
     scripts/oci-micro-smoke.sh \
     scripts/oci-anti-idle.sh 2>/dev/null || true
+  # Re-source after checkout in case this script was replaced mid-run.
+  if [[ -f .env ]]; then
+    set -a
+    # shellcheck disable=SC1091
+    source .env
+    set +a
+  fi
+  IMAGE="${AHORRAR_IMAGE:-ghcr.io/yukac/ahorrar-api:micro}"
 fi
 
 export AHORRAR_IMAGE="${IMAGE}"

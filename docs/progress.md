@@ -75,7 +75,9 @@ rssPeak **311 MiB** · swapPeak **372 MiB** (bajó a ~328 post-bench) · Restart
 | Motivo | zapatillas hosts med 1≪3 previo · iphone p50 22.6>16.1 · (cable ±0.6s ruido, no cuenta solo) |
 | Destino | rev `e1db4fb0…` · digest `sha256:e9504ec0086e1e67a23a56c30e796e7ebed684d302a2605d2ab74d5f4a68888d` |
 | Ventana | rollback `2026-09-29T18:01:19Z` |
-| Nota | `#29` **sigue en main**/GHCR `:micro` tip; VM local-retag al pin. Próximo `deploy-micro` en main **re-desplegaría** `cab0797+` salvo que pinemos o revirtamos en git. |
+| Nota | `#29` sigue en main; GHCR `:micro` tip aún `cab0797`. VM pin digest `e9504ec0` vía `.env` + pull script sourcea `.env`. |
+**Pin VM:** `deploy/oci/.env` → `AHORRAR_IMAGE=@sha256:e9504ec0…` · `oci-micro-pull.sh` ahora sourcea `.env` para que el próximo `deploy-micro` no pise el rollback.
+
 | Artefacto | `/tmp/ahorrar-bench/t61-prod-cab0797-cold-8q.json` |
 
 **Fase 2 SSRF (#30):** ya **MERGED** `2026-09-29T11:26:43Z` @ `e5a42f4` (antes de #29). e2e piso **1** en progress post-#29.
