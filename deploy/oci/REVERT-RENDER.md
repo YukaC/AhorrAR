@@ -32,7 +32,7 @@ Si Render nunca dejó de tener las URLs ML correctas y solo cambió Vercel: **so
 
 - No apagar el servicio Render (sigue siendo backup).  
 - No borrar la Reserved IP ni la VM Micro (se puede reintentar cutover).  
-- No apuntar Vercel a Fly (`ahorrar-api.fly.dev` — muerto).
+- No apuntar Vercel a Fly (`ahorrar-api.fly.dev` — **retirado**).
 
 ## Volver a Micro
 

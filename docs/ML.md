@@ -55,13 +55,13 @@
 | 3 | Permiso funcional "Publicación y sincronización" Lectura y escritura en app | ✅ `GET /applications/8567113374842839` → `urn:ml:all:publish-sync:/read-write` + `notifications_topics` cargados |
 | 4 | `GET /products/search` + `GET /products/{id}/items` con precios | ✅ 200, precios reales (17 items iPhone, etc.) |
 | 5 | buy box / `sale_price` / `/sites/MLA/search` | ❌ bloqueado por **cuenta no vendedora** (`address_pending`, sin KYC posible). No obstruye el camino 1. |
-| 6 | `INCLUDE_ML=1` en prod | ✅ ON (Fly secrets + `fly.toml`, 2026-09-25) |
+| 6 | `INCLUDE_ML=1` en prod | ✅ ON (OCI Micro compose secrets, 2026-09) |
 
 ## Estado 2026-09-23 (v2 — conclusión final)
 
 - App OK: `blocked:false`, `certification_status:"not_certified"` (irrelevante),
   scopes `publish-sync:/read-write` + `mktp` + `read/write/offline_access`, callback
-  `https://ahorrar-api.fly.dev/webhooks/ml`, tópicos `['items_prices','items',
+  (actualizar a Micro) `https://147.15.72.239.sslip.io/webhooks/ml`, tópicos `['items_prices','items',
   'catalog_item_competition_status']`.
 - **Desbloqueado** con pdp r/w + re-consent: `products/search`, `products/{id}`
   (status real), `products/{id}/items` (precios de competidores), `price_to_win`.
@@ -73,10 +73,10 @@
   `/products/{id}/items`.
 - `scraper/src/ahorrar_scraper/meli_api.py` reescrito a la estrategia de
   competidores; probado end-to-end vía `crawl(include_ml=True)`.
-- ML **ON en prod** (`INCLUDE_ML=1` + secrets Fly). Local: `INCLUDE_ML=0` default en `.env.example`.
+- ML **ON en prod** (`INCLUDE_ML=1` + secrets en OCI Micro). Local: `INCLUDE_ML=0` default en `.env.example`.
 - **Auto-refresh**: si la API responde 401, `meli_auth.refresh_access_token()` rota access
-  (+ refresh) y persiste en `MELI_TOKEN_FILE` (`/data/meli_tokens.json` en Fly volume
-  `meli_data`). No hace falta `fly secrets set` en cada expiry. CLI manual sigue disponible.
+  (+ refresh) y persiste en `MELI_TOKEN_FILE` (`/data/meli_tokens.json` en el volume
+  del compose Micro). No hace falta rotar secrets a mano en cada expiry. CLI manual sigue disponible.
   Stores AR siguen primary; ML cap ≤50% (§V17).
 - Productos catálogo **sin items competidores** (404/`0 items`) se skipean — típico en algunos
   PDPs con cuenta no vendedora; no es fallo del gate OAuth.
@@ -84,7 +84,7 @@
 ## OAuth (PKCE)
 
 - Flujos: **Authorization Code + Refresh Token**, PKCE S256 (obligatorio).
-- Redirect URI: `https://ahorrar-api.fly.dev/auth/ml/callback` (localhost rechazado por ML).
+- Redirect URI: `https://147.15.72.239.sslip.io/auth/ml/callback` (localhost rechazado por ML).
 - Scope: `read offline_access`.
 - CLI: `cd scraper && uv run python scripts/ml_login.py {url|code|refresh}`
   - `url` → imprime authorization URL con `code_challenge` (persiste verifier en `.ml_oauth_state.json`, gitignored)
@@ -99,7 +99,7 @@ MELI_ACCESS_TOKEN=
 MELI_REFRESH_TOKEN=          # refresh one-shot; rotar al renovar
 MELI_APP_ID=
 MELI_CLIENT_SECRET=
-MELI_REDIRECT_URI=https://ahorrar-api.fly.dev/auth/ml/callback
+MELI_REDIRECT_URI=https://147.15.72.239.sslip.io/auth/ml/callback
 MELI_SITE_ID=MLA
 ```
 
@@ -108,15 +108,15 @@ El server Python NO autoload `.env`: exportar antes o cargar con `set -a; . .env
 
 ## PROD checklist (deploy)
 
-1. **Fly secrets** (backend+scraper en `ahorrar-api`): `MELI_ACCESS_TOKEN`,
+1. **Secrets en OCI Micro** (`deploy/oci/docker-compose.micro.yml` / `.env.micro`): `MELI_ACCESS_TOKEN`,
    `MELI_REFRESH_TOKEN`, `MELI_APP_ID`, `MELI_CLIENT_SECRET`, `MELI_REDIRECT_URI`,
-   `MELI_SITE_ID=MLA`, `INCLUDE_ML=1`.
+   `MELI_SITE_ID=MLA`, `INCLUDE_ML=1`. Backup Render: mismos en el dashboard.
 2. **Token lifetime**: access ~6h; **lazy refresh en 401** (automático) + persist volume.
    El refresh token rota → archivo `/data/meli_tokens.json` (no solo secrets estáticos).
 3. **Permisos app DevCenter** (ya aplicados): Publicación y sincronización =
    **Lectura y escritura**; tópicos `item competition`, `items prices` + callback
-   `https://ahorrar-api.fly.dev/webhooks/ml` (stub `POST /webhooks/ml` en backend → 200).
-4. **IP allowlist**: configurar en DevCenter las IPs salientes de Fly si ML exige.
+   `https://147.15.72.239.sslip.io/webhooks/ml` (stub `POST /webhooks/ml` en backend → 200).
+4. **IP allowlist**: configurar en DevCenter la reserved IP de Micro si ML exige.
 5. **Rate limit**: 429 documentado (10k req/h al token). Caché + backoff.
 6. **Homologación / test→prod**: valores de la app actuales cumplen lo necesario
    para `/products/*` con el token del owner.

@@ -27,5 +27,6 @@ Env: `SCRAPER_HOST`, `SCRAPER_PORT` (default 4100).
 - MercadoLibre: **API OAuth only** when `MELI_ACCESS_TOKEN` is set (see [`docs/ML.md`](../docs/ML.md)).
   No HTML listado scrape. Octoparse / random GitHub scrapers are rejected.
 - VTEX catalog JSON + SERP discovery cover non-ML AR retail.
-- In production this service runs inside the same Fly Docker image as the API
-  (`ahorrar-api.fly.dev`); see [`docs/DEPLOY.md`](../docs/DEPLOY.md).
+- In production this service runs in the same Docker compose as the API on
+  **OCI Micro** (`147.15.72.239.sslip.io`); see [`docs/DEPLOY.md`](../docs/DEPLOY.md)
+  · [`docs/PROD.md`](../docs/PROD.md).
