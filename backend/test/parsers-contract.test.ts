@@ -222,19 +222,24 @@ for u in build_seed_urls(sys.argv[1]):
       .map((l) => JSON.parse(l) as string);
   }
 
-  it('query gaming → mismos hubs + 20 curados en el mismo orden; gaming primero', () => {
-    const node = buildSeedUrls({ product: 'rx 9060 xt', country: 'AR', maxResults: 5 }).slice(0, 24);
+  it('query gaming → mismos seeds Node↔Python; same-cat antes que hubs', () => {
+    const nodeAll = buildSeedUrls({ product: 'rx 9060 xt', country: 'AR', maxResults: 5 });
+    const node = nodeAll.filter((s) => !/mercadolibre\./.test(s));
     const py = pySeeds('rx 9060 xt');
-    expect(py).toHaveLength(24);
-    expect(node).toEqual(py); // 4 hubs + 20 curados, idénticos y en el mismo orden
-    // categoría-prioridad: la entrada VTEX de compragamer (gaming) va primera
-    expect(node[4]).toMatch(/compragamer\.com\/api\/catalog_system/);
+    expect(node).toEqual(py);
+    // categoría-prioridad: VTEX gaming (compragamer) en el bloque hot, antes de hubs
+    const hubIdx = node.findIndex((s) => /duckduckgo\.com|bing\.com/.test(s));
+    const compraIdx = node.findIndex((s) => /compragamer\.com\/api\/catalog_system/.test(s));
+    expect(compraIdx).toBeGreaterThanOrEqual(0);
+    expect(compraIdx).toBeLessThan(hubIdx);
   });
 
   it('query perfumería → mismos seeds; perfumería primero', () => {
-    const node = buildSeedUrls({ product: 'perfume bensimon', country: 'AR', maxResults: 5 }).slice(0, 24);
+    const nodeAll = buildSeedUrls({ product: 'perfume bensimon', country: 'AR', maxResults: 5 });
+    const node = nodeAll.filter((s) => !/mercadolibre\./.test(s));
     const py = pySeeds('perfume bensimon');
     expect(node).toEqual(py);
-    expect(node.slice(4, 10).join(' ')).toMatch(/farmacity\.com/);
+    const hubIdx = node.findIndex((s) => /duckduckgo\.com|bing\.com/.test(s));
+    expect(node.slice(0, hubIdx).join(' ')).toMatch(/farmacity\.com/);
   });
 });

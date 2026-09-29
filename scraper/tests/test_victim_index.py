@@ -135,9 +135,9 @@ class ProbeFilterTest(unittest.TestCase):
         self.assertEqual(len(out), 1)
 
     def test_probe_budget_micro_factor(self) -> None:
-        # Per-page hard cap (PROBE_PER_PAGE default 3) bounds fan-out.
-        self.assertEqual(probe_budget(10, set_full=False), 3)
-        self.assertEqual(probe_budget(0, set_full=True), 3)
+        # Per-page hard cap (PROBE_PER_PAGE default 2) bounds fan-out.
+        self.assertEqual(probe_budget(10, set_full=False), 2)
+        self.assertEqual(probe_budget(0, set_full=True), 2)
         with patch.dict("os.environ", {"PROBE_PER_PAGE": "8", "PROBE_BUDGET_FACTOR": "2"}):
             self.assertEqual(probe_budget(10, set_full=False), 8)
 

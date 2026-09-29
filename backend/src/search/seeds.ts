@@ -136,6 +136,8 @@ const BLOCKED_HOST_SUFFIXES = [
   'linkedin.com',
   'apple.com',
   'play.google.com',
+  'gob.ar',
+  'gov.ar',
 ];
 
 export function hostOf(url: string): string {
@@ -388,11 +390,16 @@ export function buildSeedUrls(params: SearchParams): string[] {
     }
   }
 
-  const indexSeeds = [...sameEntry, ...sameNull, ...otherEntry, ...otherNull].slice(0, 20);
+  const curatedSame = [...sameEntry, ...sameNull];
+  const curatedOther = [...otherEntry, ...otherNull];
+  // Same-category first (T61 wall); hubs after hot index slice — parity with Python.
+  const hot = curatedSame.slice(0, 14);
+  const cold = curatedOther.slice(0, 6);
 
   return [
+    ...hot,
     ...hubs,
-    ...indexSeeds,
+    ...cold,
     `https://api.mercadolibre.com/sites/MLA/search?q=${enc}&limit=20`,
     `https://listado.mercadolibre.com.ar/${slug}`,
   ];

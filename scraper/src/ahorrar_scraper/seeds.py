@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import quote, urlparse
 
+from ahorrar_scraper.host_yield import is_degraded, may_passive_recheck
+
 AR_SHOPS_JSON = Path(__file__).resolve().parents[3] / "shared" / "ar-shops.json"
 
 INDEX_VERSION = 3
@@ -122,6 +124,8 @@ BLOCKED_SUFFIXES = (
     "linkedin.com",
     "apple.com",
     "play.google.com",
+    "gob.ar",
+    "gov.ar",
 )
 
 SERP_HOSTS = (
@@ -284,6 +288,11 @@ def build_seed_urls(product: str, *, include_ml: bool = False) -> list[str]:
             continue
         if s.get("alive") is False:
             continue
+        host = str(s.get("host", "")).lower()
+        # Cross-search degraded skip (§T61): barren until confirmed offers;
+        # TTL only unlocks a rate-limited passive recheck (hysteresis).
+        if host and is_degraded(host, cat) and not may_passive_recheck(host, cat):
+            continue
         platform = s.get("platform") if isinstance(s.get("platform"), str) else None
         if s.get("entry"):
             item = str(s["entry"]).replace("{q}", enc)
@@ -293,8 +302,13 @@ def build_seed_urls(product: str, *, include_ml: bool = False) -> list[str]:
             items = guess_search_urls(f"https://www.{s['host']}", q, platform)
             target = same_null if s.get("category") == cat else other_null
             target.extend(items)
-    curated = same_entry + same_null + other_entry + other_null
-    seeds = [*hubs, *curated[:20]]
+    curated_same = same_entry + same_null
+    curated_other = other_entry + other_null
+    # Same-category first (T61 wall): price-bearing API/HTML before SERP hubs.
+    # Hubs still run for discovery, but after the hot index slice.
+    hot = curated_same[:14]
+    cold = curated_other[:6]
+    seeds = [*hot, *hubs, *cold]
     if include_ml:
         seeds.append(f"https://api.mercadolibre.com/sites/MLA/search?q={enc}&limit=20")
         seeds.append(f"https://listado.mercadolibre.com.ar/{slug}")
@@ -400,6 +414,8 @@ def sitemap_candidate_hosts(product: str, limit: int | None = None) -> list[str]
         if s.get("category") != cat:
             continue
         host = str(s.get("host", "")).lower()
+        if host and is_degraded(host, cat) and not may_passive_recheck(host, cat):
+            continue
         if host:
             out.append(host)
         if len(out) >= limit:
