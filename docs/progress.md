@@ -7,7 +7,7 @@
 
 ## En una línea
 
-v0.2 · #29 merged @`cab0797` · floors 175/63/95/1 · digest e9504ec0 · zapatillas → #22 · ML ON.
+v0.2 · **ROLLBACK** prod → `e1db4fb`/`e9504ec0` tras cold 8q en `cab0797` (zapatillas hosts 3→1; iphone wall↑) · #29 sigue en main · floors 175/63/95/1.
 
 ## §F — protocolo agente (fin de fase)
 
@@ -36,6 +36,51 @@ v0.2 · #29 merged @`cab0797` · floors 175/63/95/1 · digest e9504ec0 · zapati
 | Bench DNS-cache effect | ⏳ medir en Micro / local ×3 post-merge |
 
 ## Ledger (evidencia — no afirmar de memoria)
+
+### Deploy T61 prod (2026-09-29) — preflight + mechanism
+
+| Campo | Valor |
+|---|---|
+| Rollback pin (pre-T61) | rev `e1db4fb0…` · digest `sha256:e9504ec0086e1e67a23a56c30e796e7ebed684d302a2605d2ab74d5f4a68888d` |
+| Mecanismo deploy | GitHub Actions `Docker GHCR` job **`deploy-micro`** (solo `refs/heads/main`) → SSH `appleboy/ssh-action` → `scripts/oci-micro-pull.sh` (pull `:micro` + compose recreate). **No** Watchtower / cron de pull. Anti-idle cron ≠ deploy. |
+| Run #29 image | https://github.com/YukaC/AhorrAR/actions/runs/36599659920 · `deploy-micro` success 16:46Z |
+| Live ahora | rev **`cab07972…`** · digest `sha256:8a90de96f55073ab77c1eddeda13e6c24d91b424a2f32ede97840c8a68b38e53` · RestartCount=0 · health ok |
+| Criterio rollback | OOM/reinicio · swap creciendo · hosts≪previo · p50 peor que tabla prod en **>1** query → volver a `e9504ec0`/`e1db4fb` |
+
+**Live post-deploy (antes del bench):** rev `cab07972…` · digest `sha256:8a90de96f55073ab77c1eddeda13e6c24d91b424a2f32ede97840c8a68b38e53` · RC=0 · health ok.
+
+### Prod cold 8q en `cab0797` (2026-09-29 17:44–18:00Z) — restart-before-each · ML=1
+
+| query | p50 | hosts | n | stop | rss | vs prod prev |
+|---|---:|---:|---:|---|---:|---|
+| iphone 15 | 22.6s | **2** | 2 | queue_empty | 266 | 16.1→22.6 **worse** · hosts=2 estable en frío (⊥ degraded cross-run) |
+| smart tv 55 | 20.7s | 7 | 10 | queue_empty | 301 | 26.1→20.7 ok |
+| ryzen 5 5600 | 12.9s | 6 | 14 | **satisfied** | 251 | 30.1→12.9 ok |
+| perfume | 5.9s | 6 | 12 | satisfied | 266 | 9.1→5.9 ok · variedad OK |
+| notebook | 15.5s | 6 | 12 | satisfied | 281 | 17.0→15.5 ok |
+| heladera | 10.1s | 8 | 20 | satisfied | 260 | ok |
+| zapatillas nike | 14.4s | **1** | 2 | queue_empty | 261 | wall↓ pero hosts **3→1** (sevensport) · criterio hosts≪previo |
+| cable | 9.1s | 7 | 14 | satisfied | 262 | 8.5→9.1 ruido |
+
+rssPeak **311 MiB** · swapPeak **372 MiB** (bajó a ~328 post-bench) · RestartCount=0 · sin OOM.
+
+**Registro degraded:** cada búsqueda con `compose restart api` → registry in-mem limpio. Confirmado.
+
+**stop_reason:** presente en logs scraper (`satisfied|deadline|max_nodes|queue_empty`); API Node aún no lo expone en `stats`.
+
+### ROLLBACK ejecutado (criterio hosts + wall)
+
+| Campo | Valor |
+|---|---|
+| Motivo | zapatillas hosts med 1≪3 previo · iphone p50 22.6>16.1 · (cable ±0.6s ruido, no cuenta solo) |
+| Destino | rev `e1db4fb0…` · digest `sha256:e9504ec0086e1e67a23a56c30e796e7ebed684d302a2605d2ab74d5f4a68888d` |
+| Ventana | rollback `2026-09-29T18:01:19Z` |
+| Nota | `#29` **sigue en main**/GHCR `:micro` tip; VM local-retag al pin. Próximo `deploy-micro` en main **re-desplegaría** `cab0797+` salvo que pinemos o revirtamos en git. |
+| Artefacto | `/tmp/ahorrar-bench/t61-prod-cab0797-cold-8q.json` |
+
+**Fase 2 SSRF (#30):** ya **MERGED** `2026-09-29T11:26:43Z` @ `e5a42f4` (antes de #29). e2e piso **1** en progress post-#29.
+
+
 
 
 ### Micro cold 8q T61 (2026-09-29) — `sha-9f9bee6` · restart-before-each
