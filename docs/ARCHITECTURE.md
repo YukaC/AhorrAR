@@ -111,13 +111,14 @@ Ver `docs/decisions/` (ADRs).
 | Pieza | URL |
 |---|---|
 | UI | https://ahorrarg.vercel.app |
-| API | https://ahorrar-api.fly.dev |
+| API **primario** | https://147.15.72.239.sslip.io (OCI Micro) |
+| API **backup** | https://ahorrar-api.onrender.com (Render Free) |
 | Repo | https://github.com/YukaC/AhorrAR |
 
-Push a `main` redeploya Vercel + Fly. Detalle: `docs/DEPLOY.md`.
+Push a `main` → Vercel (UI) + imagen GHCR `:micro` (pull en la VM OCI). Detalle: `docs/DEPLOY.md` · estado: `docs/PROD.md`.
 
 ## Deuda / notas
 
 - Caché de resultados: TTL 15 min + SWR (§T25); clave incluye cap (`:n25`); hosts del índice no re-descubren URL scheme.
 - `crawl/stream` con `maxResults=25` (default UI) y `maxDepth=2`; partials SSE en ~0.5–3 s.
-- ML ON en prod (`INCLUDE_ML=1` + secrets `MELI_*`). Token ~6h → auto-refresh on 401 + volume (`docs/ML.md`).
+- ML ON en prod (`INCLUDE_ML=1` + secrets `MELI_*` en Micro). Token ~6h → auto-refresh on 401 + persist (`docs/ML.md`).

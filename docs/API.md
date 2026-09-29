@@ -4,7 +4,7 @@ Single source of truth for types: [`shared/contract.ts`](../shared/contract.ts).
 must match it (checked at runtime by `isSearchResponse` and covered by unit tests).
 
 Base URL (dev): `http://localhost:4000`  
-Base URL (prod): `https://ahorrar-api.fly.dev`
+Base URL (prod): `https://147.15.72.239.sslip.io` (OCI Micro) · backup `https://ahorrar-api.onrender.com`
 
 Live-only: toda búsqueda dispara el crawler real (Playwright/Scrapling). Tests herméticos
 inyectan fixtures; no existe modo mock en runtime.

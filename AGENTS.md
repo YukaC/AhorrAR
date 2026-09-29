@@ -48,7 +48,7 @@ Soy un senior full-stack developer. Prioridades:
 - `shared/contract.ts` — contratos TS compartidos Node↔frontend.
 - `shared/ar-shops.json` — índice curado/descubierto de tiendas AR (Node↔Python, **misma fuente**, §V19).
 - **NO** poner lógica de negocio en componentes de React.
-- Prod: https://ahorrarg.vercel.app · API **Render Free** puente (`render.yaml`; Fly caído) · OCI Always Free **DISABLED** hasta cupo A1 (`deploy/oci/DISABLED.md`) · ML ON · `docs/PROD.md` + `docs/DEPLOY.md`.
+- Prod: https://ahorrarg.vercel.app · API **OCI Micro** primario (`147.15.72.239.sslip.io`) · Render Free **backup** · Fly **retirado** · A1 DISABLED hasta cupo (`deploy/oci/DISABLED.md`) · ML ON · `docs/PROD.md` + `docs/DEPLOY.md`.
 Detalle ampliado: `docs/ARCHITECTURE.md`. Decisiones pasadas: `docs/decisions/`.
 
 ## Reglas

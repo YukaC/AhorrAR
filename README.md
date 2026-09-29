@@ -10,7 +10,7 @@ Comparador de precios **live** en Argentina ([demo](https://ahorrarg.vercel.app)
 Ingresás un producto y el sistema rankea ofertas **reales** con envío confirmado,
 imagen y link + calendario comercial AR. Stack: Scrapling + Express + React · SSE en vivo · tiendas AR (VTEX/Woo/Shopify).
 
-**Repo:** [github.com/YukaC/AhorrAR](https://github.com/YukaC/AhorrAR) · **UI:** https://ahorrarg.vercel.app · **API:** https://ahorrar-api.fly.dev
+**Repo:** [github.com/YukaC/AhorrAR](https://github.com/YukaC/AhorrAR) · **UI:** https://ahorrarg.vercel.app · **API:** https://147.15.72.239.sslip.io (OCI Micro)
 
 ## Arquitectura
 
@@ -59,19 +59,15 @@ Env útil (`backend/.env.example`):
 
 ## Deploy (prod)
 
-Live: **https://ahorrarg.vercel.app** (Vercel) + **https://ahorrar-api.fly.dev** (Fly).
+Live: **https://ahorrarg.vercel.app** (Vercel) + **https://147.15.72.239.sslip.io** (OCI Micro API). Render Free = backup. Fly = retirado.
 
-Detalle en [`docs/DEPLOY.md`](docs/DEPLOY.md):
+Detalle en [`docs/DEPLOY.md`](docs/DEPLOY.md) · estado: [`docs/PROD.md`](docs/PROD.md):
 
-- **Vercel** y **Fly** están conectados al repo GitHub: un push a `main` redeploya UI y API.
-- **OCI Micro (GHCR):** push a `main` (paths Docker/API/scraper) publica `ghcr.io/yukac/ahorrar-api` (`:micro`, `:main`) vía [`.github/workflows/docker-ghcr.yml`](.github/workflows/docker-ghcr.yml).
-- Deploy manual de emergencia:
-  ```bash
-  ./scripts/deploy-api.sh          # Fly (API + Scrapling)
-  ./scripts/deploy-frontend.sh --prod  # Vercel
-  ```
-- Canónico UI: `ahorrarg.vercel.app` (otros aliases del proyecto → 308 ahí).
-- CORS Fly: `CORS_ORIGINS=https://ahorrarg.vercel.app,http://localhost:5173`
+- **Vercel:** push a `main` redeploya la UI.
+- **OCI Micro (GHCR):** push a `main` (paths Docker/API/scraper) publica `ghcr.io/yukac/ahorrar-api` (`:micro`, `:main`) vía [`.github/workflows/docker-ghcr.yml`](.github/workflows/docker-ghcr.yml); el host Micro hace pull + restart.
+- Deploy UI manual: `./scripts/deploy-frontend.sh --prod`
+- Canónico UI: `ahorrarg.vercel.app` (otros aliases → 308 ahí).
+- CORS: `CORS_ORIGINS=https://ahorrarg.vercel.app,http://localhost:5173`
 
 ## Docs
 
