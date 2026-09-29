@@ -1,0 +1,15 @@
+{
+  "query": "mouse gamer",
+  "offers": [
+    {"name": "Mouse gamer Logitech G502 Hero", "price": 89999, "url": "https://compragamer.com/p/g502", "host": "compragamer.com", "label": "product"},
+    {"name": "Mouse gamer Razer DeathAdder V3", "price": 125000, "url": "https://www.fullh4rd.com.ar/p/deathadder", "host": "fullh4rd.com.ar", "label": "product"},
+    {"name": "Mousepad XXL para mouse gamer", "price": 18999, "url": "https://compragamer.com/p/mousepad-xxl", "host": "compragamer.com", "label": "accessory"},
+    {"name": "Pies teflon repuesto mouse gamer", "price": 3500, "url": "https://www.mercadolibre.com.ar/pies-mouse/p/MLA1", "host": "mercadolibre.com.ar", "label": "accessory", "ml": true},
+    {"name": "Mouse gamer Redragon Cobra M711", "price": 45000, "url": "https://www.mercadolibre.com.ar/cobra-m711/p/MLA2", "host": "mercadolibre.com.ar", "label": "product", "ml": true},
+    {"name": "Bungee soporte cable mouse gamer", "price": 12000, "url": "https://www.fullh4rd.com.ar/p/bungee", "host": "fullh4rd.com.ar", "label": "accessory"},
+    {"name": "Mouse gamer inalámbrico Logitech G Pro X", "price": 189000, "url": "https://www.venex.com.ar/p/gprox", "host": "venex.com.ar", "label": "product"},
+    {"name": "Grip tape para mouse gamer", "price": 8000, "url": "https://www.venex.com.ar/p/grip", "host": "venex.com.ar", "label": "accessory"},
+    {"name": "Mouse gamer HyperX Pulsefire", "price": 72000, "url": "https://www.maximus.com.ar/p/pulsefire", "host": "maximus.com.ar", "label": "product"},
+    {"name": "Cable paracord para mouse gamer", "price": 9500, "url": "https://www.maximus.com.ar/p/paracord", "host": "maximus.com.ar", "label": "accessory"}
+  ]
+}

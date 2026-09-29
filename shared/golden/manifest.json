@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 2,
+  "tuningDir": "tuning",
+  "holdoutDir": "holdout",
+  "note": "Holdout is sealed for validation — do not tune against it. Tune only on tuning/.",
+  "tuningQueries": [
+    "perfume", "notebook", "ryzen 5 5600", "iphone 15", "zapatillas nike",
+    "funda iphone 15", "cable", "heladera", "smart tv 55", "mouse gamer"
+  ],
+  "holdoutQueries": [
+    "cargador", "mouse", "auriculares bluetooth", "ps5", "monitor 27",
+    "jeans levis", "tablet samsung", "teclado mecanico"
+  ]
+}

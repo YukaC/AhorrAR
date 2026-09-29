@@ -1,0 +1,15 @@
+{
+  "query": "funda iphone 15",
+  "offers": [
+    {"name": "Funda iPhone 15 silicona transparente", "price": 8999, "url": "https://www.fravega.com/p/funda-15-sil", "host": "fravega.com", "label": "product"},
+    {"name": "Funda MagSafe para iPhone 15", "price": 24999, "url": "https://www.musimundo.com/p/funda-magsafe-15", "host": "musimundo.com", "label": "product"},
+    {"name": "Apple iPhone 15 128GB", "price": 1299999, "url": "https://www.fravega.com/p/iphone15", "host": "fravega.com", "label": "accessory"},
+    {"name": "Case cover iPhone 15 anti-golpe", "price": 12000, "url": "https://www.mercadolibre.com.ar/case-15/p/MLA1", "host": "mercadolibre.com.ar", "label": "product", "ml": true},
+    {"name": "Vidrio templado iPhone 15 pack x2", "price": 5000, "url": "https://www.mercadolibre.com.ar/vidrio/p/MLA2", "host": "mercadolibre.com.ar", "label": "accessory", "ml": true},
+    {"name": "Funda leather iPhone 15 Pro", "price": 45000, "url": "https://tienda.movistar.com.ar/p/leather-15", "host": "tienda.movistar.com.ar", "label": "product"},
+    {"name": "Cargador USB-C iPhone 15", "price": 18000, "url": "https://tienda.movistar.com.ar/p/cargador", "host": "tienda.movistar.com.ar", "label": "accessory"},
+    {"name": "Funda cartera iPhone 15", "price": 15999, "url": "https://www.garbarino.com/p/funda-cartera", "host": "garbarino.com", "label": "product"},
+    {"name": "Ring holder para funda iPhone", "price": 3500, "url": "https://www.garbarino.com/p/ring", "host": "garbarino.com", "label": "accessory"},
+    {"name": "Funda Spigen iPhone 15 Thin Fit", "price": 32000, "url": "https://spigen.com.ar/p/thin-fit-15", "host": "spigen.com.ar", "label": "product"}
+  ]
+}
