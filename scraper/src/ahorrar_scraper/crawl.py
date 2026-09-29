@@ -768,6 +768,7 @@ def crawl(
     ml_via_api = False
     blocked_ml = False
     ml_joined = False
+    ml_arrived = 0  # 1 if join absorbed offers or timed out cleanly after worker done
     yield_tracker = HostYieldTracker(category_for(product))
     degraded_cut = yield_tracker.apply_degraded_cuts()
     if degraded_cut:
@@ -948,7 +949,7 @@ def crawl(
         On join timeout: stop_event + abort_ml_http + discard late offers (explicit
         policy — not an accident of Future.cancel failing on a running worker).
         """
-        nonlocal ml_via_api, ml_joined
+        nonlocal ml_via_api, ml_joined, ml_arrived
         if ml_future is None or ml_joined:
             return
 
@@ -963,8 +964,9 @@ def crawl(
             In-flight HTTP may still complete within ML_REQUEST_TIMEOUT_S; that
             result is discarded (ml_joined=True). Cooperative cancel only.
             """
-            nonlocal ml_joined
+            nonlocal ml_joined, ml_arrived
             ml_joined = True
+            ml_arrived = 0
             ml_stop.set()
             abort_ml_http()
             ml_future.cancel()
@@ -1000,11 +1002,13 @@ def crawl(
         except Exception as exc:  # noqa: BLE001
             log.warning("ML search falló: %s", exc)
             ml_joined = True
+            ml_arrived = 0
             ml_stop.set()
             if ml_pool is not None:
                 ml_pool.shutdown(wait=False, cancel_futures=True)
             return
         ml_joined = True
+        ml_arrived = 1
         if ml_pool is not None:
             ml_pool.shutdown(wait=False, cancel_futures=True)
         ml_count = 0
@@ -1281,6 +1285,9 @@ def crawl(
                 expand_origin(final_url, depth + 1)
 
     deadline = started + crawl_deadline_s()
+    # Why the BFS loop exited — cheap residual diagnostics (T61).
+    # satisfied = soft floor / retained set / early-stop / cupo+empty queue
+    stop_reason = "queue_empty"
 
     try:
         batch = take_batch()
@@ -1319,6 +1326,7 @@ def crawl(
                 crawl_queue.clear()
                 batch = []
                 futures = {}
+                stop_reason = "satisfied"
                 break
 
             # Retained-set locked: no productive/SERP work left → stop fishing barren.
@@ -1333,6 +1341,7 @@ def crawl(
                     for u, _d in batch
                 )
                 if not has_useful and not batch_useful:
+                    stop_reason = "satisfied"
                     break
 
             # Early-stop: cupo lleno + ≥4 hosts + queue only HTML → drain API batch then exit.
@@ -1354,10 +1363,21 @@ def crawl(
                     api_only.append((url, d))
                 if api_only:
                     process_batch(api_only, launch_batch(api_only))
+                stop_reason = "satisfied"
                 break
             # Soft stop when full and no queue left
             if len(results) >= max_results and not crawl_queue and not batch:
+                stop_reason = "satisfied"
                 break
+
+        else:
+            # while-else: condition failed (not an explicit break)
+            if len(visited) >= max_nodes:
+                stop_reason = "max_nodes"
+            elif time.time() >= deadline:
+                stop_reason = "deadline"
+            elif not batch and not crawl_queue:
+                stop_reason = "queue_empty"
 
         # Top-3 PDP verify before pool shutdown (covers VTEX API skip).
         verify_top_pdps(results, fetch_pool, product, k=3)
@@ -1391,6 +1411,14 @@ def crawl(
             yield_pct,
             dict(probe_attempted),
         )
+    log.info(
+        "crawl stop product=%r stop_reason=%s wall_ms=%d hosts=%d n=%d",
+        product,
+        stop_reason,
+        elapsed_ms,
+        _distinct_offer_hosts(results),
+        len(results),
+    )
     return {
         "product": product,
         "country": "AR",
@@ -1409,6 +1437,8 @@ def crawl(
             "probeYieldPct": yield_pct,
             "probeByHost": dict(probe_attempted),
             "hostYield": yield_summary,
+            "stopReason": stop_reason,
+            "mlArrived": ml_arrived,
         },
         "mlBlocked": blocked_ml,
         "mlViaApi": ml_via_api,

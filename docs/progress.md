@@ -73,8 +73,6 @@ v0.2 · Fase 2 #30–#35 merged · floors 175/63/74/0 · T61 #29 pre-merge: 4 hu
 | Floors | backend **156** · frontend **63** · Python **68** · e2e **0** (↑ 148/63/60/0) |
 | Gate | private ranges + URL tricks + redirects + DNS pin/cache + fetch-time · shape 94/94 |
 
-<<<<<<< HEAD
-=======
 ### Fase 1.1 — mediana local ML=1 FW=2
 
 | Corrida | Artefacto | Notas |
@@ -123,7 +121,6 @@ Commit bench: `79324e8`. Techo local 15s: notebook p50 15058ms (borde). Techo Mi
 Parallel-contended bench (descartado por RAM, artefact `/tmp/ahorrar-bench/t61-micro-parallel-bench.jsonl`) peor aún en perfume/cable.
 
 ### Fase 0.2 — inventario (main `1ecd88e` · stash bak `ea670cd` · T61 `82218a7`)
->>>>>>> 0a0c450 (fix(T61): drop ML offers without ARS price (§V2))
 
 
 ### Post-Fase 0 (2026-09-29) — backups + #36
