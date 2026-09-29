@@ -66,9 +66,14 @@ def curated_search_url(host: str, product: str) -> str | None:
 
 
 def discover_shop(host: str, category: str = "general") -> None:
-    """Self-update the shared index: new shop with results gets persisted (§V19)."""
+    """Self-update the shared index: new shop with results gets persisted (§V19).
+
+    §V32: shape allowlist; starts alive=False until probe. Rejects private-looking hosts.
+    """
+    from .host_allow import is_discoverable_host_shape
+
     host = host.replace("www.", "", 1).lower()
-    if not host:
+    if not host or not is_discoverable_host_shape(host):
         return
     shops = _load_ar_shops()
     if any(s.get("host") == host for s in shops):
@@ -80,7 +85,7 @@ def discover_shop(host: str, category: str = "general") -> None:
             "curated": False,
             "entry": None,
             "platform": "unknown",
-            "alive": True,
+            "alive": False,
         }
     )
     path = _shops_path()

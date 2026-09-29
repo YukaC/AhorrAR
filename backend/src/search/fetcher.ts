@@ -9,6 +9,7 @@ import type { Browser, BrowserContext, Page } from 'playwright';
 import { chromium } from 'playwright';
 import { normalizeUrl } from '../normalize/url.ts';
 import { logger } from '../utils/logger.ts';
+import { assertFetchAllowed } from './host-allow.ts';
 import { hrefsFromHtml, httpGetText, looksLikeMlApi, looksLikeVtexApi, prefersHttpFirst, Semaphore } from './http-fetch.ts';
 import { isChallengePage } from './parsers/vtex.ts';
 import { extractDiscoveryLinks, isCrawlWorthy, isPublishableResult, isSerpHub } from './seeds.ts';
@@ -191,6 +192,10 @@ export class LiveFetcher {
     const blocked = blockKey(url);
     if (blocked !== '' && this.blockedHosts.has(blocked)) {
       logger.info(`skip blacklisted host: ${url}`);
+      return null;
+    }
+    if (!(await assertFetchAllowed(url))) {
+      logger.info(`ssrf block: ${url}`);
       return null;
     }
     if (!(await this.robotsAllow(url))) {

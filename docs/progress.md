@@ -7,9 +7,48 @@
 
 ## En una línea
 
-v0.2 · Fase 0 re-audit OK (remoto backup+T61+floors) · SPEC honesty PR · ⊥ Fase 1 hasta validación · ML ON · 0 bugs §B abiertos.
+v0.2 · Fase 0 cerrada (`#36` @ `4854ab9`) · stashes en ramas `backup/*` · Fase 2 SSRF (#30) en curso · T61 bench paralelo · ML ON · 0 bugs §B abiertos.
+
+## §F — protocolo agente (fin de fase)
+
+1. **Auto-avanza entre fases** (F0→F1→F2…) sin pedir OK, salvo que falle un criterio de esta §F.
+2. **Para solo ante merge a `main`** (incl. squash): reportar floors + URL del PR, esperar OK explícito del user, recién ahí `gh pr merge`.
+3. **Criterios que frenan** (no seguir a la fase siguiente):
+   - Evidencia contradictoria / claim sin comando en ledger
+   - Suite por debajo del piso actual (pisos **solo suben** en cada merge a main)
+   - Gate de seguridad incompleto en PRs de riesgo (SSRF = checklist abajo)
+   - Conflicto de rebase no resuelto / CI rojo en el PR a mergear
+4. **Stash:** ⊥ `stash pop` / `stash drop` hasta cerrar el plan. Referir por **hash**, no `stash@{N}`.
+5. **Pisos tests (ratchet):** anotar en ledger tras cada merge; e2e pasa a ≥1 cuando entre #29.
+
+### Gate SSRF (#30) antes de merge
+
+| Requisito | Estado en rama |
+|---|---|
+| Rangos privados IPv4/IPv6 + mapped `::ffff:` + `169.254/16` | ✅ tests Node↔Python |
+| Literales decimal/octal/hex | ✅ |
+| URL tricks (userinfo, non-http) | ✅ |
+| Revalidar redirects | ✅ Node `httpGetText` manual; Python post-fetch `final` |
+| DNS pin + cache TTL 30s | ✅ Node `pinnedLookup`; Python cache (Scrapling no pinneá TCP) |
+| Gate en **fetch** (no solo discovery) | ✅ `fetcher` + `_FetchPool` |
+| Filtro shape sobre índice | ✅ 94 hosts shape OK; 6 ENOTFOUND al DNS (muertos) |
+| Paridad Node↔Python mismos casos | ✅ |
+| Bench DNS-cache effect | ⏳ medir en Micro / local ×3 post-merge |
 
 ## Ledger (evidencia — no afirmar de memoria)
+
+### Post-Fase 0 (2026-09-29) — backups + #36
+
+| Check | Comando | Salida |
+|---|---|---|
+| `#36` merged | `gh pr view 36` | **MERGED** @ `4854ab9` |
+| Backup WIP | `origin/backup/wip-stash` | `ea670cd…` |
+| Backup aside-golden | `origin/backup/stash-aside-golden-t56-measure` | `d031129…` |
+| Backup P0 | `origin/backup/stash-p0-wip-20260928` | `6ce0eeb…` |
+| Stash list (intactos) | `git stash list` | 3 entradas; ⊥ drop |
+| PRs #29–#35 base | `gh pr list` | todos `base=main`, merge-base=`1ecd88e` → **no apilados** |
+| Floors main post-#36 | docs-only | backend **148** · frontend **63** · Python **60** · e2e **0** |
+| Floors rama SSRF (pre-merge) | vitest/unittest | backend **156** · frontend **63** · Python **68** · e2e **0** |
 
 ### Fase 0 re-audit (2026-09-29) — gate antes de Fase 1
 
@@ -31,10 +70,10 @@ v0.2 · Fase 0 re-audit OK (remoto backup+T61+floors) · SPEC honesty PR · ⊥ 
 |---|---|---|
 | T55 / V30 keep / V34 yield / V33 bytes | **en main** | `1ecd88e` + tests |
 | T61 + e2e T53 | **en rama T61** PR #29 | HEAD `815d4eb` |
-| SSRF V32 / stock T60 / golden T58 / T56 / T52 / CRAWL / ML-COVERAGE | **solo stash/backup** (+ PRs #30–#35) | `origin/backup/wip-stash @ ea670cd` |
-| SSRF código en main | **no existe** | `git grep` host-allow/SSRF vacío en main |
+| SSRF V32 / stock T60 / golden T58 / T56 / T52 / CRAWL / ML-COVERAGE | **PRs #30–#35** + backups `backup/*` | stashes intactos; ver hashes arriba |
+| SSRF código en main | **no existe aún** | entra con merge #30 |
 
-**SPEC honesty:** commit en rama `docs/spec-honesty-f0` (solo `SPEC.md`). ⊥ merge sin review.
+**SPEC honesty:** merged via `#36` @ `4854ab9`.
 
 ## Hecho
 
