@@ -222,24 +222,25 @@ for u in build_seed_urls(sys.argv[1]):
       .map((l) => JSON.parse(l) as string);
   }
 
-  it('query gaming → mismos seeds Node↔Python; same-cat antes que hubs', () => {
+  it('query gaming → mismos seeds Node↔Python; hubs antes que curated', () => {
     const nodeAll = buildSeedUrls({ product: 'rx 9060 xt', country: 'AR', maxResults: 5 });
     const node = nodeAll.filter((s) => !/mercadolibre\./.test(s));
     const py = pySeeds('rx 9060 xt');
     expect(node).toEqual(py);
-    // categoría-prioridad: VTEX gaming (compragamer) en el bloque hot, antes de hubs
+    // hubs-first (post same-cat revert): SERP antes del índice; compragamer sigue en mix
     const hubIdx = node.findIndex((s) => /duckduckgo\.com|bing\.com/.test(s));
     const compraIdx = node.findIndex((s) => /compragamer\.com\/api\/catalog_system/.test(s));
-    expect(compraIdx).toBeGreaterThanOrEqual(0);
-    expect(compraIdx).toBeLessThan(hubIdx);
+    expect(hubIdx).toBeGreaterThanOrEqual(0);
+    expect(compraIdx).toBeGreaterThan(hubIdx);
   });
 
-  it('query perfumería → mismos seeds; perfumería primero', () => {
+  it('query perfumería → mismos seeds; hubs primero + farmacity en curated', () => {
     const nodeAll = buildSeedUrls({ product: 'perfume bensimon', country: 'AR', maxResults: 5 });
     const node = nodeAll.filter((s) => !/mercadolibre\./.test(s));
     const py = pySeeds('perfume bensimon');
     expect(node).toEqual(py);
     const hubIdx = node.findIndex((s) => /duckduckgo\.com|bing\.com/.test(s));
-    expect(node.slice(0, hubIdx).join(' ')).toMatch(/farmacity\.com/);
+    expect(hubIdx).toBe(0);
+    expect(node.slice(hubIdx + 1).join(' ')).toMatch(/farmacity\.com/);
   });
 });
