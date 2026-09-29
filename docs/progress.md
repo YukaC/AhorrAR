@@ -7,7 +7,7 @@
 
 ## En una línea
 
-v0.2 · Fase 0 cerrada (`#36` @ `4854ab9`) · stashes en ramas `backup/*` · Fase 2 #30–#35 merged · floors 175/63/74/0 · T61 Micro bench done (residual wall; ⊥ merge) · T61 bench paralelo · ML ON · 0 bugs §B abiertos.
+v0.2 · Fase 2 #30–#35 merged · floors 175/63/74/0 · T61 #29 pre-merge: 4 huecos (8q/hosts/registry/digest) · ML ON · 0 bugs §B.
 
 ## §F — protocolo agente (fin de fase)
 
@@ -149,9 +149,8 @@ v0.2 · Fase 0 cerrada (`#36` @ `4854ab9`) · stashes en ramas `backup/*` · Fas
 
 ## En curso
 
-- **Goal plan optimización** (Fase 0 done → Fase 1 T61): backup `ea670cd` · inventario ledger · conteos main 148/63/60/0.
-- **T61** (issue #23): código en `perf/t61-ml-degraded` · **siguiente: mediana local ×3 (ML=1 FW=2)**.
-- Holdout + frase núcleo (#25) · T52 re-probe (#24) · T54 A1 (#26) · zapatillas R@10 (#22) · CodeQL fantasma (#27) · WIP stash en `backup/wip-stash` (no mergear).
+- **T61** (#29): 4 huecos pre-merge (8q + hosts iphone + registry frío + digest ledger) · merge si variedad OK.
+- Holdout + frase núcleo (#25) · T52 re-probe (#24) · T54 A1 (#26) · zapatillas R@10 (#22) · CodeQL (#27) · stash en `backup/*`.
 
 ## Falta
 
@@ -159,9 +158,9 @@ v0.2 · Fase 0 cerrada (`#36` @ `4854ab9`) · stashes en ramas `backup/*` · Fas
 - [x] ML ON en prod (`MELI_*` secrets + `INCLUDE_ML=1`; re-consent OK) — §T16 / `docs/ML.md`
 - [x] Dominio canónico UI `ahorrarg.vercel.app` (+ redirects 308)
 - [x] **Bloque 0 cerrado** — T55 merged + gate Micro (`1ecd88e` / PR #21) · SPEC §T55=`x`
-- [ ] **T61** — local×3 → workflow_dispatch tag propio → Micro bench → PR sin merge
-- [ ] Fase 2 PRs desde stash: SSRF → stock/dedupe → golden T58 → T56
-- [ ] T52 / holdout+núcleo / T51 docs / T53 e2e CI / T54 A1
+- [ ] **T61** — 8q Micro frío + stop_reason → merge #29 si iphone variedad OK
+- [x] Fase 2 #30–#35 merged
+- [ ] T52 / holdout+núcleo / T54 A1 · zapatillas → #22
 - [ ] Holdout relevancia / frase núcleo (#25)
 - [x] **Gate Micro post-T55** (2026-09-29, criterio P1.7) — veredicto **quedarse**:
 
