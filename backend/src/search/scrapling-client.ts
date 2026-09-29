@@ -8,6 +8,7 @@ import { getCountry } from '../calendar/countries.ts';
 import { buildEventInfo } from '../calendar/events.ts';
 import { rankByPriority } from '../scoring/score.ts';
 import type { AppConfig } from '../config.ts';
+import { dedupeVariantsByHost } from './dedupe-variants.ts';
 import { buildResponse, finalizeRawItem } from './pipeline.ts';
 import type { RawItem, CrawlProgress } from './types.ts';
 import { hostOf, isMarketplaceSeedHost, isSerpHub, registerDiscoveredShop } from './seeds.ts';
@@ -108,7 +109,12 @@ export async function crawlViaScrapling(
     if (done !== null) usable.push(done);
   }
 
-  const ranked = rankByPriority(usable, country, params.maxResults ?? cfg.maxResults, params.product);
+  const ranked = rankByPriority(
+    dedupeVariantsByHost(usable),
+    country,
+    params.maxResults ?? cfg.maxResults,
+    params.product,
+  );
   const stats: SearchStats = {
     source: 'live',
     nodesVisited: payload.stats.nodesVisited,
@@ -183,7 +189,7 @@ export async function crawlViaScraplingStream(
     }
     // Re-rank on every offer so SSE parciales llegan ordenados (§V16/§V18).
     const cap = params.maxResults ?? cfg.maxResults;
-    onPartials(rankByPriority([...usable], country, cap, params.product));
+    onPartials(rankByPriority(dedupeVariantsByHost([...usable]), country, cap, params.product));
   };
 
   try {
@@ -241,7 +247,12 @@ export async function crawlViaScraplingStream(
     return null;
   }
 
-  const ranked = rankByPriority(usable, country, params.maxResults ?? cfg.maxResults, params.product);
+  const ranked = rankByPriority(
+    dedupeVariantsByHost(usable),
+    country,
+    params.maxResults ?? cfg.maxResults,
+    params.product,
+  );
   const stats: SearchStats = {
     source: 'live',
     nodesVisited: statsIn?.nodesVisited ?? usable.length,
