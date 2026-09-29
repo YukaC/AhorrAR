@@ -1,0 +1,15 @@
+{
+  "query": "monitor 27",
+  "offers": [
+    {"name": "Monitor LG 27 pulgadas 4K UHD", "price": 389999, "url": "https://www.fravega.com/p/lg-27-4k", "host": "fravega.com", "label": "product"},
+    {"name": "Monitor Samsung 27 Odyssey gamer", "price": 420000, "url": "https://compragamer.com/p/odyssey-27", "host": "compragamer.com", "label": "product"},
+    {"name": "Soporte brazo para monitor 27", "price": 45000, "url": "https://www.fravega.com/p/brazo-27", "host": "fravega.com", "label": "accessory"},
+    {"name": "Funda cover protector monitor 27", "price": 15000, "url": "https://www.mercadolibre.com.ar/funda-monitor/p/MLA1", "host": "mercadolibre.com.ar", "label": "accessory", "ml": true},
+    {"name": "Dell Monitor 27 USB-C hub", "price": 510000, "url": "https://www.musimundo.com/p/dell-27", "host": "musimundo.com", "label": "product"},
+    {"name": "Cable DisplayPort para monitor 27", "price": 8900, "url": "https://compragamer.com/p/dp-monitor", "host": "compragamer.com", "label": "accessory"},
+    {"name": "Monitor Curvo 27 165Hz", "price": 355000, "url": "https://www.fullh4rd.com.ar/p/curvo-27", "host": "fullh4rd.com.ar", "label": "product"},
+    {"name": "Base mesa compatible monitor 27", "price": 22000, "url": "https://www.garbarino.com/p/base-monitor", "host": "garbarino.com", "label": "accessory"},
+    {"name": "Asus Monitor 27 ProArt", "price": 480000, "url": "https://www.mercadolibre.com.ar/asus-27/p/MLA2", "host": "mercadolibre.com.ar", "label": "product", "ml": true},
+    {"name": "Limpiador kit para monitor 27", "price": 4500, "url": "https://www.easy.com.ar/p/limpiador-monitor", "host": "easy.com.ar", "label": "accessory"}
+  ]
+}

@@ -130,7 +130,7 @@ T54|.|runbook cutover A1 · DISABLED.md en main texto puente Render stale · fix
 T55|x|perf Micro: price-first + corte yield (V34) + set-satisfecho (V30) · en main @1ecd88e + tests victim_index/host_yield|V30,V34
 T56|.|relevancia adaptativa + frase núcleo · solo backup/wip-stash + PR #33 · ⊥ main|V31,V28,V29
 T57|.|ML cobertura honest docs · ML-COVERAGE.md solo backup/wip-stash · ⊥ main|V15
-T58|.|golden set + métricas · shared/golden solo backup/wip-stash + PR #32 · ⊥ main|V29,V17
+T58|~|golden set + métricas · en PR #32 (+ stock/variant fixtures) · ⊥ main|V29,V17
 T59|~|V33 FETCH_MAX_BYTES en main + test path crawl · V32 host-allow SSRF solo backup + PR #30 · ⊥ SSRF en main|V32,V33
 T60|.|stock Woo/Shopify + dedupe variantes · solo backup/wip-stash + PR #31 · ⊥ main|V30,V1
 T61|~|en PR #29 (perf/t61-ml-degraded @815d4eb): degraded+ML join+e2e · residual Micro wall → issue #28 · ⊥ merge|V19,V34
