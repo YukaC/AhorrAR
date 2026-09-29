@@ -25,7 +25,7 @@ from scrapling.fetchers import FetcherSession
 from ahorrar_scraper.parsers import looks_like_challenge, parse_page
 from ahorrar_scraper.meli_api import meli_token_configured, search_mla
 from ahorrar_scraper.offer_cache import OfferCache
-from ahorrar_scraper.relevance import is_relevant_result
+from ahorrar_scraper.relevance import is_relevant_result, title_relevance_score
 from ahorrar_scraper.seeds import (
     ar_shop_hosts,
     build_seed_urls,
@@ -101,6 +101,27 @@ def batch_size() -> int:
 
 def probe_workers() -> int:
     return _env_int("PROBE_WORKERS", 6, min_v=1, max_v=16)
+
+
+# Mirror Node RELEVANCE_STRONG — probe strong matches before weak/cheap accessories.
+_RELEVANCE_STRONG = 0.55
+
+
+def _offer_price(offer: dict[str, Any]) -> float:
+    p = offer.get("price")
+    return float(p) if isinstance(p, (int, float)) else float("inf")
+
+
+def _offer_tier(offer: dict[str, Any], product: str) -> int:
+    """0 = strong relevance, 1 = weak."""
+    name = offer.get("name") if isinstance(offer.get("name"), str) else ""
+    score = title_relevance_score(name, product) if name else 0.0
+    return 0 if score >= _RELEVANCE_STRONG else 1
+
+
+def _probe_sort_key(offer: dict[str, Any], product: str) -> tuple[int, float]:
+    """(tier, price): strong first, then cheapest within tier."""
+    return (_offer_tier(offer, product), _offer_price(offer))
 
 
 _offer_cache = OfferCache(
@@ -677,8 +698,9 @@ def crawl(
                     expand_origin(final_url, depth + 1)
                 continue
 
-            # Probe only as many as we still need (early-stop friendly).
+            # Gate already applied above. Probe strong-tier then cheapest first.
             slots = max(0, max_results - len(results))
+            candidates.sort(key=lambda o: _probe_sort_key(o, product))
             to_probe = candidates[
                 : max(slots * 2, slots)
             ]  # small overfetch for dead links
