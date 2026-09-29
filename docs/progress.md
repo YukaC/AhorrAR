@@ -37,6 +37,34 @@ v0.2 · **ROLLBACK** prod → `e1db4fb`/`e9504ec0` tras cold 8q en `cab0797` (za
 
 ## Ledger (evidencia — no afirmar de memoria)
 
+### Swap log producción (regla: hora · digest antes · digest después · motivo)
+
+| # | Hora UTC | Antes | Después | Motivo |
+|---|---|---|---|---|
+| 1 | 16:20:40Z | `e9504ec0…` / `e1db4fb` | local-retag `sha-9f9bee6` → `:micro` | bench frío pre-merge #29 (GHCR `:micro` no retagueado) |
+| 2 | 16:40:24Z | `sha-9f9bee6` | `e9504ec0…` / `e1db4fb` | restore post-bench pre-merge |
+| 3 | ~16:46Z | `e9504ec0…` | **`8a90de96…` / `cab0797`** | auto `deploy-micro` post-merge #29 (run 36599659920) |
+| 4 | 17:44–18:00Z | (sigue `cab0797`) | — | cold 8q HTTP ×3 restart-each sobre imagen viva |
+| 5 | 18:01:19Z | `8a90de96…` / `cab0797` | **`e9504ec0…` / `e1db4fb`** | **ROLLBACK** tras cold 8q (ver causa abajo) |
+| 6 | 18:03Z | pin `.env` | sigue `e9504ec0…` | deploy-micro del fix pull-script **honró pin** (no re-subió T61) |
+
+**Identidad digest `e9504ec0`:** `docker image inspect` → `Id=sha256:e9504ec0086e1e67a23a56c30e796e7ebed684d302a2605d2ab74d5f4a68888d` = `RepoDigests=[ghcr.io/yukac/ahorrar-api@sha256:e9504ec0…]` · rev `e1db4fb0…`. En imágenes single-manifest el content digest **es** el Id. Sirve para `docker pull …@sha256:e9504ec0…`.
+
+**Identidad `cab0797`:** Id/`8a90de96…` · rev `cab07972…` · RepoDigests vacío en VM (solo quedó por Id post-retag); pull registry fue vía tag `:micro` en deploy #3.
+
+**Causa rollback (no precaución vaga):**
+1. **hosts zapatillas 3→1** vs cold Micro previo `sha-9f9bee6` (criterio “hosts≪previo”).
+2. **iphone p50 22.6s > prod 16.1s** (wall peor).
+3. Script también marcó cable 9.1>8.5 — **ruido**; no alcanza solo.
+4. **No** fue OOM · **no** RestartCount>0 · swap pico 372 y bajó (no runaway).
+
+**Métricas HTTP cold que SÍ hay:** wall · hosts · n · stop_reason (logs) · rss · swap.  
+**Que NO midió este bench HTTP:** P@10 · recall · ml_arrived rate (API Node no expone `stopReason`/`mlArrived` en `stats` aún).
+
+**Auto-deploy hoy:** frenado de facto — `AHORRAR_IMAGE=@sha256:e9504ec0…` en `deploy/oci/.env` + `oci-micro-pull.sh` sourcea `.env`. Un merge a main **no** sube T61 mientras el pin viva. ⊥ Fase 2 hasta decisión redeploy.
+
+
+
 ### Deploy T61 prod (2026-09-29) — preflight + mechanism
 
 | Campo | Valor |
