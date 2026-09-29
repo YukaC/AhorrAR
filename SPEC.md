@@ -123,10 +123,10 @@ T47|x|buscador realista: isRelevantResult publish floor + cross-class family con
 T48|x|Render Free 512MB: render.yaml (FETCH_WORKERS=2, MAX_NODES techo) + nodesBudgetFor ceiling + caches acotados + api-wake/focus + caps 25→50|§I,V5,V16,V17
 T49|x|OCI Micro E2.1 primario: reserved IP + compose.micro + GHCR workflow + bootstrap + Vercel cutover; Render backup; A1 opcional|§I
 T50|x|dual publish floor: category-only 0.72 / branded 0.55 + UI specificity hint|V29,V28
-T51|.|docs prod Micro: README/DEPLOY/MICRO-PLAN/CRAWL alinear con PROD.md · CRAWL.md ⊥ main (PR #35) · MICRO-PLAN en main aún dice Render prod|§I
+T51|~|docs prod Micro · en PR #35 · ⊥ main|§I
 T52|.|re-probe ar-shops.json + cron · script solo backup/wip-stash + PR #34 · ⊥ main|V19
 T53|~|E2E Playwright SSE · en PR #29 (rama T61) · ⊥ main (0 specs)|V16,V9
-T54|.|runbook cutover A1 · DISABLED.md en main texto puente Render stale · fix en PR #35|§I
+T54|~|runbook cutover A1 · en PR #35 · ⊥ main|§I
 T55|x|perf Micro: price-first + corte yield (V34) + set-satisfecho (V30) · en main @1ecd88e + tests victim_index/host_yield|V30,V34
 T56|.|relevancia adaptativa + frase núcleo · solo backup/wip-stash + PR #33 · ⊥ main|V31,V28,V29
 T57|.|ML cobertura honest docs · ML-COVERAGE.md solo backup/wip-stash · ⊥ main|V15
