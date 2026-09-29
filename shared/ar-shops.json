@@ -22,14 +22,14 @@
       "category": "electro",
       "curated": true,
       "entry": "https://www.musimundo.com/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
-      "alive": true,
+      "alive": false,
       "platform": "vtex"
     },
     {
-      "host": "cetrogar.com",
+      "host": "cetrogar.com.ar",
       "category": "electro",
       "curated": true,
-      "entry": "https://www.cetrogar.com/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
+      "entry": "https://www.cetrogar.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
       "alive": true,
       "platform": "vtex"
     },
@@ -62,7 +62,7 @@
       "category": "gaming",
       "curated": true,
       "entry": null,
-      "alive": true,
+      "alive": false,
       "platform": "woo"
     },
     {
@@ -78,7 +78,7 @@
       "category": "gaming",
       "curated": true,
       "entry": null,
-      "alive": true,
+      "alive": false,
       "platform": "unknown"
     },
     {
@@ -86,7 +86,7 @@
       "category": "gaming",
       "curated": true,
       "entry": null,
-      "alive": true,
+      "alive": false,
       "platform": "unknown"
     },
     {
@@ -110,7 +110,7 @@
       "category": "electro",
       "curated": true,
       "entry": null,
-      "alive": true,
+      "alive": false,
       "platform": "unknown"
     },
     {
@@ -158,7 +158,7 @@
       "category": "electro",
       "curated": true,
       "entry": "https://www.grid.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
-      "alive": true,
+      "alive": false,
       "platform": "vtex"
     },
     {
@@ -206,7 +206,7 @@
       "category": "moda",
       "curated": true,
       "entry": "https://www.47street.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
-      "alive": true,
+      "alive": false,
       "platform": "vtex"
     },
     {
@@ -214,7 +214,7 @@
       "category": "moda",
       "curated": true,
       "entry": "https://www.belmo.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
-      "alive": true,
+      "alive": false,
       "platform": "vtex"
     },
     {
@@ -222,7 +222,7 @@
       "category": "moda",
       "curated": true,
       "entry": "https://www.getthelook.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
-      "alive": true,
+      "alive": false,
       "platform": "vtex"
     },
     {
@@ -238,7 +238,7 @@
       "category": "moda",
       "curated": true,
       "entry": "https://www.levi.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
-      "alive": true,
+      "alive": false,
       "platform": "vtex"
     },
     {
@@ -254,7 +254,7 @@
       "category": "moda",
       "curated": true,
       "entry": "https://www.rougemaison.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
-      "alive": true,
+      "alive": false,
       "platform": "vtex"
     },
     {
@@ -326,7 +326,7 @@
       "category": "bazar",
       "curated": true,
       "entry": "https://www.colorshop.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
-      "alive": true,
+      "alive": false,
       "platform": "vtex"
     },
     {
@@ -334,7 +334,7 @@
       "category": "bazar",
       "curated": true,
       "entry": "https://www.desiderata.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
-      "alive": true,
+      "alive": false,
       "platform": "vtex"
     },
     {
@@ -358,7 +358,7 @@
       "category": "bazar",
       "curated": true,
       "entry": "https://www.simmons.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
-      "alive": true,
+      "alive": false,
       "platform": "vtex"
     },
     {
@@ -366,7 +366,7 @@
       "category": "bazar",
       "curated": true,
       "entry": "https://www.tramontina.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
-      "alive": true,
+      "alive": false,
       "platform": "vtex"
     },
     {
@@ -390,7 +390,7 @@
       "category": "gaming",
       "curated": true,
       "entry": null,
-      "alive": true,
+      "alive": false,
       "platform": "woo"
     },
     {
@@ -398,7 +398,7 @@
       "category": "gaming",
       "curated": true,
       "entry": null,
-      "alive": true,
+      "alive": false,
       "platform": "unknown"
     },
     {
@@ -406,7 +406,7 @@
       "category": "gaming",
       "curated": true,
       "entry": null,
-      "alive": true,
+      "alive": false,
       "platform": "unknown"
     },
     {
@@ -422,7 +422,7 @@
       "category": "gaming",
       "curated": true,
       "entry": null,
-      "alive": true,
+      "alive": false,
       "platform": "unknown"
     },
     {
@@ -430,7 +430,7 @@
       "category": "gaming",
       "curated": true,
       "entry": null,
-      "alive": true,
+      "alive": false,
       "platform": "unknown"
     },
     {
@@ -438,7 +438,7 @@
       "category": "gaming",
       "curated": true,
       "entry": null,
-      "alive": true,
+      "alive": false,
       "platform": "unknown"
     },
     {
@@ -462,7 +462,7 @@
       "category": "electro",
       "curated": true,
       "entry": null,
-      "alive": true,
+      "alive": false,
       "platform": "unknown"
     },
     {
@@ -470,7 +470,7 @@
       "category": "electro",
       "curated": true,
       "entry": null,
-      "alive": true,
+      "alive": false,
       "platform": "unknown"
     },
     {
@@ -478,7 +478,7 @@
       "category": "electro",
       "curated": true,
       "entry": null,
-      "alive": true,
+      "alive": false,
       "platform": "unknown"
     },
     {
@@ -486,7 +486,7 @@
       "category": "electro",
       "curated": true,
       "entry": "https://www.bangho.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
-      "alive": true,
+      "alive": false,
       "platform": "vtex"
     },
     {
@@ -534,7 +534,7 @@
       "category": "electro",
       "curated": true,
       "entry": null,
-      "alive": true,
+      "alive": false,
       "platform": "unknown"
     },
     {
@@ -542,7 +542,7 @@
       "category": "electro",
       "curated": true,
       "entry": "https://www.tidi.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
-      "alive": true,
+      "alive": false,
       "platform": "vtex"
     },
     {
@@ -558,7 +558,7 @@
       "category": "general",
       "curated": true,
       "entry": null,
-      "alive": true,
+      "alive": false,
       "platform": "unknown"
     },
     {
@@ -598,7 +598,7 @@
       "category": "general",
       "curated": true,
       "entry": null,
-      "alive": true,
+      "alive": false,
       "platform": "unknown"
     },
     {
@@ -622,7 +622,7 @@
       "category": "moda",
       "curated": true,
       "entry": null,
-      "alive": true,
+      "alive": false,
       "platform": "unknown"
     },
     {
@@ -630,7 +630,7 @@
       "category": "moda",
       "curated": true,
       "entry": null,
-      "alive": true,
+      "alive": false,
       "platform": "unknown"
     },
     {
@@ -638,7 +638,7 @@
       "category": "moda",
       "curated": true,
       "entry": "https://www.beings.com.ar/wp-json/wc/store/v1/products?search={q}&per_page=12",
-      "alive": true,
+      "alive": false,
       "platform": "woo"
     },
     {
@@ -646,7 +646,7 @@
       "category": "moda",
       "curated": true,
       "entry": null,
-      "alive": true,
+      "alive": false,
       "platform": "vtex"
     },
     {
@@ -654,7 +654,7 @@
       "category": "moda",
       "curated": true,
       "entry": null,
-      "alive": true,
+      "alive": false,
       "platform": "vtex"
     },
     {
@@ -662,7 +662,7 @@
       "category": "moda",
       "curated": true,
       "entry": "https://www.mateusports.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
-      "alive": true,
+      "alive": false,
       "platform": "vtex"
     },
     {
@@ -670,7 +670,7 @@
       "category": "moda",
       "curated": true,
       "entry": null,
-      "alive": true,
+      "alive": false,
       "platform": "unknown"
     },
     {
@@ -678,7 +678,7 @@
       "category": "perfumeria",
       "curated": true,
       "entry": null,
-      "alive": true,
+      "alive": false,
       "platform": "unknown"
     },
     {
@@ -702,7 +702,7 @@
       "category": "bazar",
       "curated": true,
       "entry": "https://www.scandinavian.com.ar/api/catalog_system/pub/products/search?ft={q}&_from=0&_to=11",
-      "alive": true,
+      "alive": false,
       "platform": "vtex"
     },
     {
@@ -711,7 +711,47 @@
       "curated": false,
       "entry": null,
       "platform": "unknown",
-      "alive": true
+      "alive": false
+    },
+    {
+      "host": "deffo.com.ar",
+      "category": "general",
+      "curated": false,
+      "entry": null,
+      "platform": "unknown",
+      "alive": false
+    },
+    {
+      "host": "pronotebooks.com.ar",
+      "category": "general",
+      "curated": false,
+      "entry": null,
+      "platform": "unknown",
+      "alive": false
+    },
+    {
+      "host": "pccore.com.ar",
+      "category": "general",
+      "curated": false,
+      "entry": null,
+      "platform": "unknown",
+      "alive": false
+    },
+    {
+      "host": "hardcorecomputacion.com.ar",
+      "category": "general",
+      "curated": false,
+      "entry": null,
+      "platform": "unknown",
+      "alive": false
+    },
+    {
+      "host": "shipin.ar",
+      "category": "general",
+      "curated": false,
+      "entry": null,
+      "platform": "unknown",
+      "alive": false
     }
   ]
 }

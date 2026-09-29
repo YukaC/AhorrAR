@@ -103,7 +103,7 @@ AR_COM_BOOTSTRAP = (
     "compragamer.com",
     "musimundo.com",
     "garbarino.com",
-    "cetrogar.com",
+    "cetrogar.com.ar",
 )
 
 BLOCKED_SUFFIXES = (
@@ -133,7 +133,7 @@ _TRUSTED = frozenset(
         "compragamer.com",
         "musimundo.com",
         "garbarino.com",
-        "cetrogar.com",
+        "cetrogar.com.ar",
     )
 )
 
