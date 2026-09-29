@@ -7,7 +7,17 @@
 
 ## En una línea
 
-v0.2 · **ROLLBACK** prod → `e1db4fb`/`e9504ec0` tras cold 8q en `cab0797` (zapatillas hosts 3→1; iphone wall↑) · #29 sigue en main · floors 175/63/95/1.
+v0.2 · **Plan cerrado** · prod pin `e1db4fb`/`e9504ec0` (SSRF incluido) · main adelante sin deploy · #39 límite conocido.
+
+## Estado de cierre (2026-09-29)
+
+**Producción (Micro):** imagen anclada `ghcr.io/yukac/ahorrar-api@sha256:e9504ec0086e1e67a23a56c30e796e7ebed684d302a2605d2ab74d5f4a68888d` · rev `e1db4fb` · incluye **#30 SSRF** y el stack pre–#29 merge (T55, etc.). El pin en `deploy/oci/.env` evita que CI reemplace el contenedor.
+
+**En `main` sin desplegar:** revert same-cat (#37), stock/dedupe (#31), T56 (#33), índice re-probado T52 (#34), T61 (#29), y el resto post–`e1db4fb`. **No se despliega** porque el mismo día ryzen bajó hosts 7→5 y heladera 9→5 vs el pin (Micro cold ×3); desplegar bajaría variedad sin beneficio visible.
+
+**#39 (variedad iphone/zapatillas):** funnel **local** ve 3–4 hosts; Micro (pin o main) suele terminar 1–2. PR #40 (subir `HOST_MIN_PRODUCTIVE` 2→4) **cerrado sin merge** — no cambió hosts. Chequeo `curl -sI` VTEX search: **Frávega 403 desde Micro, 206 local**; Carrefour/Cetrogar/sevensport 200/206 en ambos. Causa probable: bloqueo/challenge a IP datacenter (OCI) en al menos Frávega; no se arregla con código salvo proxy (decisión de producto). Issue #39 documenta el límite.
+
+**Si algún día se quita el pin:** antes correr funnel + Micro cold de ryzen/heladera el mismo día; si la caída de `n` es solo stock/dedupe, puede ser correcta.
 
 ## §F — protocolo agente (fin de fase)
 
