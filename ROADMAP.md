@@ -7,7 +7,7 @@
 
 ## Ahora (v0.2 → v0.4 Micro)
 
-- [x] Despliegue a producción — **hoy:** Vercel UI + OCI Micro API · Render backup · Fly retirado — ref `docs/PROD.md`
+- [x] Despliegue a producción — **hoy:** Vercel UI + OCI Micro API · Render backup · Fly muerto — ref `docs/PROD.md`
 - [x] ML ON en prod (`MELI_*` secrets + `INCLUDE_ML=1`) — §T16 / `docs/ML.md`
 - [x] ML auto-refresh on 401 + token file volume — §T38
 - [x] Señal real de envío gratis + pill UI — §T37

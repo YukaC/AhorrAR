@@ -66,9 +66,14 @@ def curated_search_url(host: str, product: str) -> str | None:
 
 
 def discover_shop(host: str, category: str = "general") -> None:
-    """Self-update the shared index: new shop with results gets persisted (§V19)."""
+    """Self-update the shared index: new shop with results gets persisted (§V19).
+
+    §V32: shape allowlist; starts alive=False until probe. Rejects private-looking hosts.
+    """
+    from .host_allow import is_discoverable_host_shape
+
     host = host.replace("www.", "", 1).lower()
-    if not host:
+    if not host or not is_discoverable_host_shape(host):
         return
     shops = _load_ar_shops()
     if any(s.get("host") == host for s in shops):
@@ -80,7 +85,7 @@ def discover_shop(host: str, category: str = "general") -> None:
             "curated": False,
             "entry": None,
             "platform": "unknown",
-            "alive": True,
+            "alive": False,
         }
     )
     path = _shops_path()
@@ -288,7 +293,29 @@ def build_seed_urls(product: str, *, include_ml: bool = False) -> list[str]:
             items = guess_search_urls(f"https://www.{s['host']}", q, platform)
             target = same_null if s.get("category") == cat else other_null
             target.extend(items)
-    curated = same_entry + same_null + other_entry + other_null
+
+    def _api_first(urls: list[str]) -> list[str]:
+        """Prefer VTEX/Woo/Shopify API templates before HTML search guesses (T55a)."""
+        api: list[str] = []
+        html: list[str] = []
+        for u in urls:
+            if (
+                "catalog_system/pub/products/search" in u
+                or "/wp-json/wc/" in u
+                or "suggest.json" in u
+                or "/products.json" in u
+            ):
+                api.append(u)
+            else:
+                html.append(u)
+        return api + html
+
+    curated = (
+        _api_first(same_entry)
+        + _api_first(same_null)
+        + _api_first(other_entry)
+        + _api_first(other_null)
+    )
     seeds = [*hubs, *curated[:20]]
     if include_ml:
         seeds.append(f"https://api.mercadolibre.com/sites/MLA/search?q={enc}&limit=20")

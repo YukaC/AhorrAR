@@ -7,7 +7,9 @@
 
 ## En una línea
 
-v0.2 · UI Vercel + API **OCI Micro** primario · Render Free backup · Fly retirado · T55 host-yield en PR · ML ON + circuit breaker · 0 bugs §B abiertos.
+v0.4 · UI Vercel + API **OCI Micro** · T1–T60 hechos · golden P@10≈0.88 · 0 bugs §B abiertos.
+
+Smoke 2026-09-28: Micro `/api/health` → `ok:true`. Re-probe: alive=80 dead=9.
 
 ## Hecho
 
@@ -28,39 +30,44 @@ v0.2 · UI Vercel + API **OCI Micro** primario · Render Free backup · Fly reti
   - `FetcherSession` por worker + kinds `hub|api|html` + early-stop — §T30
   - `ar-shops.json` v3 (`platform`/`alive`/`entry`) + `scripts/probe_ar_shops.py` → 81 alive / 7 dead (vtex 52, woo 9, unknown 26) — §T31
   - Parsers Woo Store API + Shopify suggest/products + seeds platform-aware Node↔Python — §T32
-  - `STEALTH_FETCH` gated (off default prod; nota en `docs/DEPLOY.md`); `capture_xhr` diferido (ROADMAP) — §T33
+  - `STEALTH_FETCH` gated (off default Fly; nota en `docs/DEPLOY.md`); `capture_xhr` diferido (ROADMAP) — §T33
 - [x] Frávega PDP itemId + prerender home SSG + UI polish — §T34–T36
-- [x] **Prod**: https://ahorrarg.vercel.app + OCI Micro `147.15.72.239.sslip.io` · Render backup · Fly retirado · relevance filter · header GitHub repo link
-- [x] **ML ON en prod**: secrets `MELI_*` + `INCLUDE_ML=1` (Micro compose); refresh vía `ml_login.py refresh` — §T16
-- [x] **ML auto-refresh on 401** + persist `/data/meli_tokens.json` — §T38
+- [x] **Prod**: https://ahorrarg.vercel.app + https://ahorrar-api.fly.dev · GitHub `main` → Vercel+Fly · relevance filter · header GitHub repo link
+- [x] **ML ON en prod**: Fly secrets `MELI_*` + `INCLUDE_ML=1` (`fly.toml`); refresh vía `ml_login.py refresh` — §T16
+- [x] **ML auto-refresh on 401** + volume `/data/meli_tokens.json` — §T38
 - [x] **Speed Firecrawl-inspired** (scraper Python): caché ofertas por host (TTL 10min, dedupe, cap 30/host) + sitemap discovery (hosts no-VTEX curados, caché 24h) + probes en paralelo (pipeline 2 etapas) + warm cache populares (`WARM_CACHE=1`) — §T39–T42 · E2E: 2da búsqueda misma query 0 fetches (1008ms vs 2447ms) · **conceptos reimplementados desde cero, sin código de Firecrawl (AGPL-3.0)** — `docs/ATTRIBUTIONS.md` + `NOTICE`
 - [x] **Filtro Envío gratis con señal real**: `shipping.free` desde VTEX `ShippingSLA[].Price==0` y ML `free_shipping` (gana sobre regex del hint) + pill SortBar re-activado + paridad Node↔Python (fixture contrato con ShippingSLA) — §T37 / §V25
 - [x] **ML circuit breaker**: `_CircuitBreaker` en `search_mla` (threshold 3, cooldown 300s, half-open) — 401/403/429/≥400/network/shape cuentan; éxito resetea; skip rápido mientras abierto — §T43 / §V26 · tests unittest 7
-- [x] **Warm cache** (perfil A1 / opt-in): `WARM_CACHE=1` — §T42 · Micro prod suele `WARM_CACHE=0`
+- [x] **Warm cache ON en prod**: `WARM_CACHE=1` en `fly.toml` (pre-calienta 5 búsquedas populares cada 300s) — §T42
 - [x] **Relevance anti-accesorio / class evidence** (Node+Python): categoría sola exige sinónimo; reject funda/RAM/crema/para X; relevance tier en ranking — §T44–T45 / §V27/§V28
 - [x] **UI result caps 25→50→100** + SearchBar sync chips/query + early-stop scraper al cap + caché por cap — §T46 / §V17/§V18
 - [x] **Design system Tailwind v4** (tokens semánticos + Geist + theme View Transition) — polish UI
-- [x] **Render Free 512MB** (backup): `render.yaml` (FETCH_WORKERS=2, MAX_NODES techo) + api-wake/focus + caps 25→50 — §T48
-- [x] **OCI Micro primario** + corte yield/host (T55) — ver `docs/audit-iphone-latency.md`
+- [x] **Render Free 512MB**: `render.yaml` (FETCH_WORKERS=2, MAX_NODES techo) + api-wake/focus + caps 25→50 — §T48
 
 ## En curso
 
-- Nada en esta rama. Post-merge: T61 degraded + residual wall · holdout · T54 A1 runbook.
+- Nada. T17 (fallback HTML ML) **descartado por ToS** — scraping HTML no autorizado; API oficial es el único camino legal. Ver `docs/ML.md`.
 
 ## Falta
 
-- [x] Deploy prod Vercel + API (hoy Micro; históricamente Fly luego Render)
+- [x] Deploy prod Vercel+Fly conectados a GitHub (`main` → redeploy UI+API)
 - [x] ML ON en prod (`MELI_*` secrets + `INCLUDE_ML=1`; re-consent OK) — §T16 / `docs/ML.md`
 - [x] Dominio canónico UI `ahorrarg.vercel.app` (+ redirects 308)
-- [ ] Bench en Micro real post-merge T55
-- [ ] Holdout relevancia / frase núcleo
-- [x] Live bench local (histórico 2026-09-24):
+- [x] Live bench local (2026-09-28, scraper `:4100`, `includeMl=false`, maxResults=20) — post frase-núcleo + notebook-evidence tighten:
 
-  | query | elapsedMs | pagesFetched | #results | min price |
-  |---|---:|---:|---:|---:|
-  | `ryzen 5 5600` | 2001 | 11 | 20 | 226990 |
-  | `perfume bensimon` | 1126 | 6 | 20 | 31843.5 |
-  | `smart tv 55` | 3747 | 8 | 20 | 282999 |
+  | query | elapsedMs | pages | #results | hosts | min price |
+  |---|---:|---:|---:|---:|---:|
+  | `notebook` | 20680 | 32 | 20 | 7 | 26950† |
+  | `ryzen 5 5600` | 23572 | 30 | 20 | 7 | 229499 |
+  | `perfume bensimon` | 19505 | 21 | 20 | 5 | 31843.5 |
+  | `smart tv 55` | 11719 | 25 | 20 | 5 | 454537 |
+  | `heladera` | 24515 | 26 | 20 | 11 | 2796† |
+  | `cable` | 21466 | 37 | 20 | 6 | 2585 |
+  | `iphone 15` | 13244 | 25 | 12 | 2 | 1468514 |
+  | `mouse` | 25594 | 35 | 20 | 7 | 4990† |
+
+  † min crudo aún puede ser accesorio (`porta notebook`, `organizador heladera`, `mouse pad`) — top-3 de notebook/perfume/TV/ryzen OK.  
+  vs 2026-09-24 (ryzen/perfume/TV ~1–4 s): ahora ~12–24 s / más pages (deadline 30 s + más seeds API). Perfume min estable.
 
 ## Bugs conocidos
 

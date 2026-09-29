@@ -11,7 +11,7 @@ Comparador de precios AR: [PRODUCTO] → crawler LIVE rankea ofertas REALES (pre
 - **streaming SSE**: `POST :4100/crawl/stream` → ndjson eventos (offer/progress/done) · backend reenvía `SearchProgress.results` (parciales) por SSE · frontend renderiza cards a medida llegan (skeleton real) · top-N caps UI 25→50→100 · ML share ≤50% on balance con resto
 - ranking: reputación tienda (curated) + precio + bonus financiación cuotas sin interés `installments` · VTEX `Installments` parse · **title relevance tier** (primario > débil/secundario, §V28)
 - crawl SECONDARY: Node BFS legacy (HTTP-fast + Playwright) si `CRAWLER=legacy` o auto-fallback
-- **ML PRIMARY (implementado):** API oficial catálogo OAuth: `products/search` → `products/{id}` → `products/{id}/items` (precio del item competidor más barato por producto, ARS + §V1) con permiso funcional app "Publicación y sincronización" r/w + re-consent OK (2026-09-23) · buy box NOT GATE: precios vía `/items` aunque `buy_box_winner` `null` · **cuenta token YUCA no vendedora** (`billing.allow=false address_pending`, list=false, kyc imposible — error ML) → `sale_price`/`/items/{id}`/`/sites/MLA/search` 403 por mejoramiento + items sin competencia ⊥ (404 "No winners found" por diseño, no compensable) · `sites/{site}/search` ⊥ (muerto 403 desde 2025) · ⊥ HTML listado · fallback HTML ⊥ (ToS ML — scraping no autorizado; API oficial único camino legal) · **circuit breaker** degrada con gracia (T43/V26) · ML ON en prod (`INCLUDE_ML=1` + secrets OCI Micro; local default OFF `.env.example`) · auto-refresh OAuth on 401 → persist `/data/meli_tokens.json` (volume compose) · docs/ML.md
+- **ML PRIMARY (implementado):** API oficial catálogo OAuth: `products/search` → `products/{id}` → `products/{id}/items` (precio del item competidor más barato por producto, ARS + §V1) con permiso funcional app "Publicación y sincronización" r/w + re-consent OK (2026-09-23) · buy box NOT GATE: precios vía `/items` aunque `buy_box_winner` `null` · **cuenta token YUCA no vendedora** (`billing.allow=false address_pending`, list=false, kyc imposible — error ML) → `sale_price`/`/items/{id}`/`/sites/MLA/search` 403 por mejoramiento + items sin competencia ⊥ (404 "No winners found" por diseño, no compensable) · `sites/{site}/search` ⊥ (muerto 403 desde 2025) · ⊥ HTML listado · fallback HTML ⊥ (ToS ML — scraping no autorizado; API oficial único camino legal) · **circuit breaker** degrada con gracia (T43/V26) · ML ON en prod (`INCLUDE_ML=1` + secrets Fly; local default OFF `.env.example`) · auto-refresh OAuth on 401 → persist `/data/meli_tokens.json` (Fly volume) · docs/ML.md
 - KISS/DRY: normalize/shipping/scoring en Node; Scrapling entrega offers crudas → finalize §V1
 - reputación AR (.ar + bootstrap .com) · ML solo con `MELI_ACCESS_TOKEN`
 - búsqueda SOLO AR · ∀ result → shipping.confirmed
@@ -32,7 +32,7 @@ scraper: GET :4100/health · POST :4100/crawl {product,maxResults,maxNodes,maxDe
 cmd: `npm run dev` (scraper+backend+frontend) · `cd scraper && uv sync && uv run ahorrar-scraper`
 cmd: `npm --prefix frontend run build` → tsc --noEmit && vite build && node scripts/prerender-home.mjs (prerender+check)
 env: PORT · HOST · CORS_ORIGINS · CRAWLER · SCRAPLING_URL · INCLUDE_ML · MELI_* · STEALTH_FETCH · STEALTH_PROXY
-deploy: Vercel UI + **OCI Micro** API primario (`147.15.72.239.sslip.io`) · Render Free **backup** · A1 ARM DISABLED cupo · Fly retirado · docs/PROD.md · deploy/oci/MICRO-PLAN.md
+deploy: Vercel UI + **OCI Micro** API primario (`147.15.72.239.sslip.io`) · Render Free **backup** · A1 ARM DISABLED cupo · Fly muerto · docs/PROD.md · deploy/oci/MICRO-PLAN.md
 docs: `docs/ARCHITECTURE.md` · `docs/progress.md` · `docs/testing-strategy.md` · `docs/CRAWL.md` (política crawl/opt-out) · `docs/decisions/*.md` · `docs/ATTRIBUTIONS.md` · `AGENTS.md` · `ROADMAP.md` · `CHANGELOG.md` · `DONT_DO.md` · `docs/golden-baseline.md` (T58)
 
 §V
@@ -88,9 +88,9 @@ T12|x|discovery procedural: hubs SERP/ML + expand hosts AR + guessSearchUrls (�
 T13|x|HTTP-fast path + BFS paralelo + VTEX catalog API + ML blacklist sesión|V5,V6,V13
 T14|x|Scrapling primary sidecar + Node secondary|V14,§C
 T15|x|ML catálogo client: search_mla via products/search → products/{id}/items (precio competidor más barato por PDP) · get 200 + integración crawl() verificado 2026-09-23 · app pdp r/w + tópicos/callback + re-consent done (grant r/w reflejado) · cuenta YUCA no vendedora (`address_pending`, kyc imposible) → buy box/sale_price/search ⊥, camino precio OK|V1,V14,V15
-T16|x|ML OAuth refresh (`ml_login.py refresh`) + INCLUDE_ML end-to-end en prod (secrets MELI_* + INCLUDE_ML=1; hoy Micro, hist. Fly 2026-09-25)|V1,V14,V15
+T16|x|ML OAuth refresh (`ml_login.py refresh`) + INCLUDE_ML end-to-end en prod (Fly secrets MELI_* + INCLUDE_ML=1, 2026-09-25)|V1,V14,V15
 T17|⊥|ML fallback HTML StealthyFetcher+proxy residencial — DESCARTADO por ToS ML (scraping HTML no autorizado; API oficial es el único camino legal) · en su lugar: circuit breaker degrada con gracia (T43)|V14,§C
-T18|x|Deploy: Vercel frontend + API Docker (hist. Fly → Render → OCI Micro) + DEPLOY.md|§I
+T18|x|Deploy: Vercel frontend + Fly Docker API/Scrapling + DEPLOY.md|§I
 T19|x|streaming scrapers: crawl() on_offer/on_progress callbacks + POST /crawl/stream ndjson (offer/progress/done/error) · /crawl intacto digo|V16,§I
 T20|x|backend stream: SearchProgress.results opcional (contract+guard) + scrapling stream client (ndjson→SSE) + jobStore push parciales por SSE|V16,V10,§I
 T21|x|frontend streaming: LoadingState→cards a medida llegan (skeleton real) + maxResults (histórico 20; hoy caps 25/50/100 §T46)|V16,V17
@@ -105,12 +105,12 @@ T29|x|Índice expandido 14→88 tiendas: scrapeo comparaya.net (API pública /ap
 T30|x|Scrapling latencia: FetcherSession per worker + fetch kinds hub\|api\|html (FETCH_LIMITS) + early-stop (≥8 offers ≥4 hosts → drenar api batch y salir)|V5,V6,§C
 T31|x|Índice v3 platform/alive: ar-shops.json schema + probe offline scripts/probe_ar_shops.py (fingerprint+entry candidates) → 81 alive / 7 dead (vtex 52, woo 9, unknown 26)|V19,§C
 T32|x|Cobertura Woo/Shopify: parsers parse_woo_store_api + parse_shopify_suggest_or_products + fixtures + seeds platform-aware Node↔Python (skip !alive; guesses por platform)|V19,V1,§C
-T33|x|Stealth gated: STEALTH_FETCH=0 default · challenge/403 → StealthyFetcher 1-shot cap 3/crawl · DEPLOY.md nota HTTP-only prod · ⊥ capture_xhr este plan|V6,§C
+T33|x|Stealth gated: STEALTH_FETCH=0 default · challenge/403 → StealthyFetcher 1-shot cap 3/crawl · DEPLOY.md nota HTTP-only Fly · ⊥ capture_xhr este plan|V6,§C
 T34|x|Frávega PDP: `fravega_pdp_url`/`fravegaPdpUrl` arma `/p/{slug}-{itemId}/` (swap productId→itemId, keep --) · probe GraphQL sku(code) · contrato fixture+tests · HTML Frávega skip sin itemId · audit 52 VTEX: solo Frávega tiene patrón (resto CLASSIC /slug/p OK)|V22
 T35|x|prerender home SSG: scripts/prerender-home.mjs (createServer+ssrLoadModule+renderToStaticMarkup) inyecta home en dist/index.html + check marcador idle · build = tsc && vite build && node scripts/prerender-home.mjs|V23,§C,§I
 T36|x|UI polish (feedback capturas): header tagline/footer + chips populares + banner LIVE/countdown + filtros filled + card #1 destacada + displayName + stagger 35ms + íconos Lucide|§C,V23
 T37|x|Filtro Envío gratis: señal real shipping.free (VTEX ShippingSLA Price 0 / ML free_shipping) + re-show pill SortBar · Solo local ⊥ (AR-only)|V12,§C,V25
-T38|x|ML auto-refresh on 401 (`meli_auth.py`) + persist MELI_TOKEN_FILE (/data volume) · retry search_mla · tests unittest|V15,§C
+T38|x|ML auto-refresh on 401 (`meli_auth.py`) + persist MELI_TOKEN_FILE (/data volume Fly) · retry search_mla · tests unittest|V15,§C
 T39|x|caché ofertas por host: offer_cache.py (TTL 10min, dedupe URL, cap 30/host, 64 hosts) + absorb_cached en seeds/expand_origin + save post-probe — E2E: 2da búsqueda misma query 0 fetches (1008ms vs 2447ms)|V24,§C
 T40|x|sitemap discovery: sitemap_candidate_hosts (no-VTEX curado misma categoría) + sitemap_product_urls (caché 24h, regex <loc>, 8 URLs) + worker background en crawl()|V19,§C
 T41|x|probes en paralelo: pipeline 2 etapas (launch_batch N+1 antes de process_batch N) + fix while (batch or crawl_queue)|V5,§C

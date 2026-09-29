@@ -1,0 +1,15 @@
+{
+  "query": "mouse",
+  "offers": [
+    {"name": "Mouse Logitech M280 inalambrico", "price": 18999, "url": "https://compragamer.com/p/m280", "host": "compragamer.com", "label": "product"},
+    {"name": "Mouse gamer Redragon Cobra", "price": 45000, "url": "https://www.fullh4rd.com.ar/p/cobra", "host": "fullh4rd.com.ar", "label": "product"},
+    {"name": "Mousepad para mouse XXL", "price": 12000, "url": "https://compragamer.com/p/mousepad", "host": "compragamer.com", "label": "accessory"},
+    {"name": "Bateria AA para mouse inalambrico", "price": 1800, "url": "https://www.mercadolibre.com.ar/bateria-mouse/p/MLA1", "host": "mercadolibre.com.ar", "label": "accessory", "ml": true},
+    {"name": "Mouse Apple Magic Mouse 2", "price": 89000, "url": "https://www.fravega.com/p/magic-mouse", "host": "fravega.com", "label": "product"},
+    {"name": "Pies teflon repuesto mouse", "price": 3500, "url": "https://www.mercadolibre.com.ar/pies-mouse/p/MLA2", "host": "mercadolibre.com.ar", "label": "accessory", "ml": true},
+    {"name": "Mouse ergonómico vertical USB", "price": 32000, "url": "https://www.musimundo.com/p/vertical", "host": "musimundo.com", "label": "product"},
+    {"name": "Grip tape para mouse gamer", "price": 8000, "url": "https://www.fullh4rd.com.ar/p/grip", "host": "fullh4rd.com.ar", "label": "accessory"},
+    {"name": "Combo teclado y mouse Logitech", "price": 28000, "url": "https://www.garbarino.com/p/combo-km", "host": "garbarino.com", "label": "product"},
+    {"name": "Cable paracord para mouse", "price": 9500, "url": "https://www.venex.com.ar/p/paracord", "host": "venex.com.ar", "label": "accessory"}
+  ]
+}

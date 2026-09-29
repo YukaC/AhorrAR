@@ -752,6 +752,54 @@
       "entry": null,
       "platform": "unknown",
       "alive": false
+    },
+    {
+      "host": "omnitech.ar",
+      "category": "general",
+      "curated": false,
+      "entry": null,
+      "platform": "unknown",
+      "alive": false
+    },
+    {
+      "host": "farmalife.com.ar",
+      "category": "general",
+      "curated": false,
+      "entry": null,
+      "platform": "unknown",
+      "alive": false
+    },
+    {
+      "host": "tienda.gafa.com.ar",
+      "category": "general",
+      "curated": false,
+      "entry": null,
+      "platform": "unknown",
+      "alive": false
+    },
+    {
+      "host": "magazzino.com.ar",
+      "category": "general",
+      "curated": false,
+      "entry": null,
+      "platform": "unknown",
+      "alive": false
+    },
+    {
+      "host": "newsport.com.ar",
+      "category": "general",
+      "curated": false,
+      "entry": null,
+      "platform": "unknown",
+      "alive": false
+    },
+    {
+      "host": "sportline.com.ar",
+      "category": "general",
+      "curated": false,
+      "entry": null,
+      "platform": "unknown",
+      "alive": false
     }
   ]
 }

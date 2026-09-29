@@ -51,18 +51,24 @@
 | `oci-make-env.sh` / `oci-bootstrap-remote.sh` | `.env` + Docker/Caddy/anti-idle perfil **A1** |
 | `oci-anti-idle.sh` | Cron 4–6h anti-reclaim 7d |
 
-## Cutover Micro (cuando Fase C smoke OK)
+## Cutover Micro (hecho)
 
 1. `https://147.15.72.239.sslip.io/api/health` → `ok:true`  
 2. Vercel Production: `VITE_API_BASE=https://147.15.72.239.sslip.io`, `VITE_FREE_HOST=1` + redeploy  
 3. ML DevCenter: redirect + webhook a sslip  
 4. Render **no** apagar (backup) — revert: [`REVERT-RENDER.md`](REVERT-RENDER.md)
 
-## Cutover A1 (cuando haya cupo — futuro)
+## Cutover A1 (cuando haya cupo — checklist)
 
-1. Instancia `ahorrar-api` RUNNING + IP  
-2. `./scripts/oci-finish-when-ready.sh <IP>`  
-3. Vercel: `VITE_API_BASE=https://<IP>.sslip.io`, `VITE_FREE_HOST=0` + redeploy  
+1. `LaunchInstance` A1 Flex 1 OCPU / 6 GB en `sa-saopaulo-1` RUNNING + IP pública.
+2. `./scripts/oci-finish-when-ready.sh <PUBLIC_IP>` (env + Docker + Caddy + anti-idle).
+3. Vercel Production: `VITE_API_BASE=https://<IP>.sslip.io`, `VITE_FREE_HOST=0` + redeploy.
+4. ML DevCenter: redirect + webhook → nuevo sslip.
+5. Perfil full: `WARM_CACHE=1`, `FETCH_WORKERS=4`, `MAX_NODES=120`, `MAX_RESULTS=100`, `CONCURRENCY=2`.
+6. Smoke health + 1 búsqueda; anti-idle cron activo.
+7. Micro como rollback ≥48h antes de apagar.
+
+**No** abrir regiones fuera de home. Guards: [`always-free-guards.md`](always-free-guards.md).
 
 ## Anti-cargo
 

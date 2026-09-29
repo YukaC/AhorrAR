@@ -7,7 +7,7 @@
 | UI | https://ahorrarg.vercel.app | Vercel Hobby |
 | API **primario** | **OCI Micro** `https://147.15.72.239.sslip.io` | E2.1.Micro · reserved IP · sin cold start · `VITE_FREE_HOST=1` |
 | API **backup** | Render Free `ahorrar-api.onrender.com` | Dejar UP · revert: [`deploy/oci/REVERT-RENDER.md`](../deploy/oci/REVERT-RENDER.md) |
-| Fly | `ahorrar-api.fly.dev` | **RETIRADO** — no usar |
+| Fly | `ahorrar-api.fly.dev` | **MUERTO** — no usar |
 
 **Vercel Production (activo):**
 

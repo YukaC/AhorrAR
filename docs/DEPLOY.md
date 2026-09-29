@@ -9,9 +9,8 @@
 | UI (prod) | https://ahorrarg.vercel.app |
 | API health (**primario**: OCI Micro) | `https://147.15.72.239.sslip.io/api/health` |
 | API health (**backup**: Render Free) | `https://ahorrar-api.onrender.com/api/health` |
+| API health (Fly) | ~~https://ahorrar-api.fly.dev/api/health~~ **caído** (no usar) |
 | Repo | https://github.com/YukaC/AhorrAR |
-
-> **Fly (`ahorrar-api.fly.dev`) está retirado.** No health-check, no secrets, no redirect ML.
 
 Aliases Vercel (`ahorrar-wine.vercel.app`, `*-yukas-projects-*.vercel.app`, …) → **308** → `ahorrarg.vercel.app`.
 
@@ -26,7 +25,7 @@ Browser → Vercel Hobby  https://ahorrarg.vercel.app
               perfil slim ~1 GB — deploy/oci/docker-compose.micro.yml
 ```
 
-**Backup:** Render Free (cold start ~15m). Revert: [`deploy/oci/REVERT-RENDER.md`](../deploy/oci/REVERT-RENDER.md).
+**Backup:** Render Free (cold start). Revert: [`deploy/oci/REVERT-RENDER.md`](../deploy/oci/REVERT-RENDER.md).
 
 **OCI A1 Flex** (Ampere, perfil full) está **preparado pero DISABLED** hasta cupo en `sa-saopaulo-1`. Ver `deploy/oci/DISABLED.md`.
 
@@ -41,22 +40,7 @@ Browser → Vercel Hobby
               Caddy :443 · perfil FULL — deploy/oci/.env.example
 ```
 
-### Perfil Micro (slim — prod hoy)
-
-| Variable | Valor típico |
-|---|---|
-| `WARM_CACHE` | `0` |
-| `FETCH_WORKERS` | `2` |
-| `MAX_NODES` | `80` |
-| `MAX_RESULTS` | `50` |
-| `INCLUDE_ML` | `1` |
-| `CONCURRENCY` | `1` |
-| `MELI_TOKEN_FILE` | `/data/meli_tokens.json` |
-| `VITE_FREE_HOST` | `1` (caps UI 25→50) |
-
-Detalle: [`deploy/oci/MICRO-PLAN.md`](../deploy/oci/MICRO-PLAN.md) · [`deploy/oci/STATUS.md`](../deploy/oci/STATUS.md).
-
-### Perfil A1 (full — futuro)
+### Perfil OCI (full)
 
 | Variable | Valor típico |
 |---|---|
@@ -66,75 +50,93 @@ Detalle: [`deploy/oci/MICRO-PLAN.md`](../deploy/oci/MICRO-PLAN.md) · [`deploy/o
 | `MAX_RESULTS` | `100` |
 | `INCLUDE_ML` | `1` |
 | `CONCURRENCY` | `2` |
-| `VITE_FREE_HOST` | `0` |
+| `MELI_TOKEN_FILE` | `/data/meli_tokens.json` (volume Docker) |
 
-### Anti-idle OCI
+Detalle: [`deploy/oci/README.md`](../deploy/oci/README.md).
 
-Oracle puede **reclamar** instancias con uso promedio de CPU/red/memoria **bajo ~20% durante 7 días**.
+### Anti-idle OCI (no confundir con Render)
+
+Oracle puede **reclamar** instancias con uso promedio de CPU/red/memoria **bajo ~20% durante 7 días**. No es el spin-down de Render (~15m).
 
 ```cron
 0 */6 * * * /opt/ahorrar/scripts/oci-anti-idle.sh >> /var/log/ahorrar-anti-idle.log 2>&1
 ```
 
-### Optimizaciones Render Free (solo backup)
+`WARM_CACHE=1` también mantiene actividad útil de producto; el script es un pulso ligero adicional.
+
+### Optimizaciones Render Free (solo fallback)
+
+Si usás Render en lugar de OCI:
 
 | Capa | Qué |
 |---|---|
 | Front JS | `api-wake.ts`: ping health antes de buscar + al focus; keep-warm cada 12m (tab visible) |
-| UX | Caps UI **25→50** (`VITE_FREE_HOST=1`) |
+| UX | Caps UI **25→50** (`VITE_FREE_HOST=1`, sin 100) |
 | Fetch RAM | `FETCH_WORKERS=2` · límites hub/api/html bajos |
 | Crawl | `MAX_NODES=80` · `WARM_CACHE=0` |
 | Tokens | `/tmp` efímero |
 
 **No** cron 24/7 en Render: quema las 750 Free instance-hours.
 
-## Deploy OCI Micro (prod)
+## OCI Always Free (API recomendada)
 
-1. VM E2.1.Micro + reserved IP + Caddy (`deploy/oci/STATUS.md`).
-2. Compose: `deploy/oci/docker-compose.micro.yml` + `.env.micro`.
-3. Imagen: push a `main` → GHCR `:micro` (`.github/workflows/docker-ghcr.yml`) → `docker compose pull` en la VM.
-4. Vercel Production: `VITE_API_BASE=https://147.15.72.239.sslip.io`, `VITE_FREE_HOST=1`.
-5. ML secrets en `.env.micro` + DevCenter redirect/webhook → Micro (`docs/ML.md`).
+Perfil **full** (warm cache, ML, caps altos) en **VM.Standard.A1.Flex** 1 OCPU / 6 GB. **$0** si respetás [`deploy/oci/always-free-guards.md`](../deploy/oci/always-free-guards.md) (solo región home, sin LB/ADB de pago, sin regiones extra).
 
-## Deploy Render (backup)
+**Guía paso a paso:** [`deploy/oci/README.md`](../deploy/oci/README.md) — Docker en la VM, API solo en `127.0.0.1:4000`, HTTPS con Caddy (`docker compose --profile caddy`) y **`DOMAIN=<IP>.sslip.io`** sin comprar dominio. Vercel: `VITE_API_BASE=https://$DOMAIN`, **`VITE_FREE_HOST=0`**. Anti-idle: `scripts/oci-anti-idle.sh` cada 6h.
 
-1. [Deploy Blueprint](https://render.com/deploy?repo=https://github.com/YukaC/AhorrAR) (o Dashboard → Blueprint → `render.yaml`)
-2. Secrets `MELI_*`
-3. Solo si Micro cae: apuntar Vercel `VITE_API_BASE` a Render (`deploy/oci/REVERT-RENDER.md`)
+## Deploy OCI (primera vez)
+
+1. Capacidad A1: `TENANCY_OCID=… ./scripts/oci-launch-a1.sh …` o `scripts/oci-a1-rotate-retry.sh` (retry en background).
+2. Con IP pública: `./scripts/oci-finish-when-ready.sh <PUBLIC_IP>` (make-env + bootstrap Docker/Caddy/anti-idle).
+3. O manual: Security List 80/443/22 → `setup-vm.sh` → clone `/opt/ahorrar` → `.env` con `DOMAIN=<IP>.sslip.io` → `docker compose --profile caddy up -d --build`.
+4. Vercel Production: `VITE_API_BASE=https://$DOMAIN`, **`VITE_FREE_HOST=0`**.
+5. Estado vivo / anti-cargo: [`deploy/oci/STATUS.md`](../deploy/oci/STATUS.md), [`deploy/oci/always-free-guards.md`](../deploy/oci/always-free-guards.md).
+
+## Deploy Render (puente prod — activo)
+
+1. [Deploy Blueprint](https://render.com/deploy?repo=https://github.com/YukaC/AhorrAR) (o Dashboard → New → Blueprint → `render.yaml`)
+2. Secrets `MELI_*` (sync: false en el yaml)
+3. Vercel Production:
+   - `VITE_API_BASE=https://ahorrar-api.onrender.com`
+   - `VITE_FREE_HOST=1`
+4. **Redeploy** Vercel tras cambiar env (Vite bakea en build)
+
+Cold start: el front ya hace wake/keep-warm (`api-wake.ts`) con tab visible.
 
 ## Deploy automático (GitHub)
 
 | Host | Qué redeploya | Señal |
 |---|---|---|
 | **Vercel** | frontend | check `Vercel` |
-| **GHCR → OCI Micro** | imagen `:micro` | workflow `docker-ghcr.yml` · pull en VM |
-| **Render** | Docker API (backup) | Deployments Render |
+| **OCI** | manual / CI propio (`docker compose pull/build` en VM) | — |
+| **Render** | Docker API (`render.yaml`) | Deployments Render |
+| **Fly** (opcional) | si seguís usando Fly | check `Fly.io` |
 
-Push a **`main`** → UI en Vercel + imagen API. **No** hay redeploy Fly.
+Push a **`main`** → UI en Vercel; API en OCI se actualiza con pull + rebuild en la VM (o pipeline que elijas).
 
-Env Vercel (Micro — prod):
+Env Vercel (OCI):
 
 | Key | Value |
 |---|---|
-| `VITE_API_BASE` | `https://147.15.72.239.sslip.io` |
-| `VITE_FREE_HOST` | `1` |
+| `VITE_API_BASE` | `https://<api-host>` |
+| `VITE_FREE_HOST` | `0` |
 
 Env Vercel (Render fallback):
 
 | Key | Value |
 |---|---|
-| `VITE_API_BASE` | `https://ahorrar-api.onrender.com` |
+| `VITE_API_BASE` | `https://<api>.onrender.com` |
 | `VITE_FREE_HOST` | `1` |
 
-Secrets API (Micro `.env.micro` o Render dashboard): `MELI_*`. `CORS_ORIGINS` debe incluir `https://ahorrarg.vercel.app`.
+Secrets API (OCI `.env` o Render dashboard): `MELI_ACCESS_TOKEN`, `MELI_REFRESH_TOKEN`, `MELI_APP_ID`, `MELI_CLIENT_SECRET`, `MELI_REDIRECT_URI`. `CORS_ORIGINS` debe incluir `https://ahorrarg.vercel.app`.
 
-ML access ~6h: auto-refresh on 401 → `/data/meli_tokens.json` (Micro) o `/tmp` (Render).
+ML access ~6h: auto-refresh on 401 → `/data/meli_tokens.json` (OCI) o `/tmp` (Render). Si refresh falla: `cd scraper && uv run python scripts/ml_login.py refresh` y actualizar secrets.
 
 ## Deploy manual (emergencia)
 
-### 1) API en OCI Micro
+### 1) API en OCI
 
-Ver [`deploy/oci/STATUS.md`](../deploy/oci/STATUS.md) · compose micro.
+Ver [`deploy/oci/README.md`](../deploy/oci/README.md).
 
 ### 1a) API en Render
 
@@ -142,9 +144,16 @@ Ver [`deploy/oci/STATUS.md`](../deploy/oci/STATUS.md) · compose micro.
 render blueprints validate render.yaml
 ```
 
-### 1b) API en Fly — RETIRADO
+### 1b) API en Fly (alternativa)
 
-Fly ya no se usa. No instalar `flyctl` ni redeployar `ahorrar-api`.
+```bash
+curl -L https://fly.io/install.sh | sh
+fly auth login
+chmod +x scripts/deploy-api.sh
+FLY_APP=ahorrar-api ./scripts/deploy-api.sh
+```
+
+`fly.toml`: volume ML en `/data`. No modificar billing Fly desde este doc.
 
 ### Stealth fetch (opcional, solo local)
 
@@ -164,21 +173,28 @@ chmod +x scripts/deploy-frontend.sh
 
 Root: **repo root** (`vercel.json` → `frontend/dist`).
 
+## Orden recomendado (primera vez, OCI)
+
+1. OCI VM + Docker + health en `:4000`  
+2. Caddy TLS + health público  
+3. Vercel `VITE_API_BASE` + `VITE_FREE_HOST=0`  
+4. UI: https://ahorrarg.vercel.app  
+
 ## Local con Docker
 
-Simula Micro / Render slim:
+Simula Render 512MB:
 
 ```bash
 docker compose up --build
-# API http://localhost:4000
+# API http://localhost:4000  (mem_limit 512m)
 ```
 
-Perfil Micro compose:
+Simula OCI (~4G container):
 
 ```bash
 cd deploy/oci
-cp .env.micro.example .env.micro
-docker compose -f docker-compose.micro.yml up --build
+cp .env.example .env   # ajustar INCLUDE_ML etc.
+docker compose up --build
 ```
 
 ## Costos / límites free
@@ -186,17 +202,17 @@ docker compose -f docker-compose.micro.yml up --build
 | Host | Rol | Límites |
 |---|---|---|
 | Vercel Hobby | UI | Generoso para estático |
-| **OCI Micro** | API+crawler **primario** | E2.1 ~1 GB · reserved IP |
-| **OCI A1** (DISABLED) | API full futuro | 1 OCPU/6GB · cupo Oracle |
-| **Render Free** | API **backup** | 512 MB · sleep 15m · 750 h/mes |
-| Fly | **retirado** | — |
+| **OCI Always Free** | API+crawler | A1 Flex 1 OCPU/6GB · build arm64 · reclamo por idle 7d |
+| **Render Free** | API fallback | 512 MB · sleep 15m · 750 h/mes |
+| Fly (card) | API opcional | Volume ML; revisar billing aparte |
 
 ## Archivos
 
-- `Dockerfile` — imagen única API+Scrapling
-- `deploy/oci/` — compose micro/full, Caddy, bootstrap
-- `.github/workflows/docker-ghcr.yml` — publish `:micro`
-- `render.yaml` — Blueprint Free 512MB (backup)
-- `fly.toml` — legado; no usar
+- `Dockerfile` — imagen única API+Scrapling (arm64 + amd64 desde base slim)
+- `deploy/oci/` — compose, `.env.example`, Caddy, `setup-vm.sh`, README
+- `scripts/oci-anti-idle.sh` — pulso cron anti-reclaim OCI
+- `render.yaml` — Blueprint Free 512MB (fallback)
+- `fly.toml` — app `ahorrar-api` (opcional)
+- `docker-compose.yml` — smoke local 512MB
 - `vercel.json` — build frontend
-- `frontend/src/lib/api-wake.ts` — wake + keep-warm (Render; opcional en Micro)
+- `frontend/src/lib/api-wake.ts` — wake + keep-warm (útil en Render; opcional en OCI)

@@ -59,14 +59,20 @@ Env útil (`backend/.env.example`):
 
 ## Deploy (prod)
 
-Live: **https://ahorrarg.vercel.app** (Vercel) + **https://147.15.72.239.sslip.io** (OCI Micro API). Render Free = backup. Fly = retirado.
+Live: **https://ahorrarg.vercel.app** (Vercel) + **https://147.15.72.239.sslip.io** (OCI Micro E2.1).
 
-Detalle en [`docs/DEPLOY.md`](docs/DEPLOY.md) · estado: [`docs/PROD.md`](docs/PROD.md):
+| Rol | Host |
+|---|---|
+| UI | Vercel Hobby |
+| API **primario** | OCI Micro (`147.15.72.239.sslip.io`) |
+| API **backup** | Render Free (`ahorrar-api.onrender.com`) |
+| Fly | **muerto** — no usar |
 
-- **Vercel:** push a `main` redeploya la UI.
-- **OCI Micro (GHCR):** push a `main` (paths Docker/API/scraper) publica `ghcr.io/yukac/ahorrar-api` (`:micro`, `:main`) vía [`.github/workflows/docker-ghcr.yml`](.github/workflows/docker-ghcr.yml); el host Micro hace pull + restart.
-- Deploy UI manual: `./scripts/deploy-frontend.sh --prod`
-- Canónico UI: `ahorrarg.vercel.app` (otros aliases → 308 ahí).
+Detalle: [`docs/PROD.md`](docs/PROD.md) · [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
+- Push a `main` → Vercel (UI) + GHCR imagen API ([`.github/workflows/docker-ghcr.yml`](.github/workflows/docker-ghcr.yml)) → pull en Micro.
+- Caps UI en Micro: `VITE_FREE_HOST=1` (25→50). A1 futuro: `VITE_FREE_HOST=0`.
+- Canónico UI: `ahorrarg.vercel.app` (aliases → 308).
 - CORS: `CORS_ORIGINS=https://ahorrarg.vercel.app,http://localhost:5173`
 
 ## Docs
@@ -75,6 +81,9 @@ Detalle en [`docs/DEPLOY.md`](docs/DEPLOY.md) · estado: [`docs/PROD.md`](docs/P
 - Scraper: [`scraper/README.md`](scraper/README.md)
 - API: [`docs/API.md`](docs/API.md)
 - Deploy: [`docs/DEPLOY.md`](docs/DEPLOY.md)
+- Crawl policy: [`docs/CRAWL.md`](docs/CRAWL.md)
+- Golden baseline: [`docs/golden-baseline.md`](docs/golden-baseline.md)
+- ML coverage: [`docs/ML-COVERAGE.md`](docs/ML-COVERAGE.md)
 - Mercado Libre: [`docs/ML.md`](docs/ML.md)
 - Arquitectura: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - Progreso: [`docs/progress.md`](docs/progress.md) · Roadmap: [`ROADMAP.md`](ROADMAP.md)
@@ -86,5 +95,6 @@ Detalle en [`docs/DEPLOY.md`](docs/DEPLOY.md) · estado: [`docs/PROD.md`](docs/P
 - License: [MIT](LICENSE)
 - Privacy: [PRIVACY.md](PRIVACY.md)
 - Security: [SECURITY.md](SECURITY.md)
+- Crawl policy: [docs/CRAWL.md](docs/CRAWL.md)
 - Third-party notices: [NOTICE](NOTICE)
 - Contributing: [CONTRIBUTING.md](CONTRIBUTING.md)

@@ -1,7 +1,7 @@
 # Plan definitivo — Micro OCI primario + Render backup (+ A1 futuro)
 
-Fecha: 2026-09-26  
-Estado: **en curso** — B1 hecho; Fase C/D pendiente. Prod sigue en Render.  
+Fecha: 2026-09-26 · actualizado 2026-09-28  
+Estado: **cutover D hecho** — prod API = OCI Micro; Render = backup.  
 Contexto vivo: [`docs/PROD.md`](../PROD.md) · [`STATUS.md`](STATUS.md) · [`DISABLED.md`](DISABLED.md) (A1 full).
 
 ## 0. Objetivo

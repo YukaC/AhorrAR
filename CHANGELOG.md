@@ -6,27 +6,23 @@ Unreleased = lo que aún no se desplegó. Los refs §T apuntan al plan en `SPEC.
 
 ## [WIP]
 
-### Changed
-- **Prod API primario = OCI Micro** (`147.15.72.239.sslip.io`); Render Free = backup; **Fly retirado** — docs alineados (`README`/`DEPLOY`/`PROD`/`AGENTS`/`SPEC`)
-- **T55 host-yield cut**: set retenido satisfecho ⇒ skip mid-crawl barren probes; cota `(tier,precio)`; top-3 PDP verify · §V30 · residual wall (zapatillas/TV/notebook/ryzen) → T61 · ver `docs/audit-iphone-latency.md`
-
 ### Added
 - **Render Free deploy**: `render.yaml` perfil 512MB (`FETCH_WORKERS=2`, `MAX_NODES=80` techo, caches acotados) + front `api-wake.ts` (wake/keep-warm/focus) + caps UI 25→50 · entrypoint `/tmp` tokens — §T48
 - **Result caps UI 25 → 50 → 100**: default 25, botón "Mostrar más", API `maxResults` 1–100; caché claveada por cap (`producto:n25`) — §T46/§V17/§V18
 - **SearchBar sync**: chips populares / resume / retry escriben el query en el input
 - **Design system Tailwind v4**: tokens semánticos (`background`/`primary`/`muted`/…) + Geist self-hosted + dark vía CSS vars (sin pares `dark:*`) — theme toggle con View Transitions (fade 320ms)
 - **Relevance anti-accesorio / class evidence**: categoría sola exige sinónimo; reject funda/RAM/crema/para X; ranking con relevance tier — §T44–T45/§V27/§V28
-- **ML auto-refresh on 401**: `meli_auth.py` + persist `MELI_TOKEN_FILE` (`/data` volume) — §T38
-- **ML ON en prod**: secrets `MELI_*` + `INCLUDE_ML=1` (hoy Micro compose; hist. Fly) — §T16
-- **Prod live**: UI https://ahorrarg.vercel.app (Vercel) + API OCI Micro; GHCR `:micro` en push `main`; dominio canónico + redirects 308
+- **ML auto-refresh on 401**: `meli_auth.py` + persist `MELI_TOKEN_FILE` (Fly volume `/data`) — §T38
+- **ML ON en prod**: Fly secrets `MELI_*` + `INCLUDE_ML=1` (`fly.toml`); OAuth refresh documentado — §T16
+- **Prod live**: UI https://ahorrarg.vercel.app (Vercel) + API https://ahorrar-api.fly.dev (Fly); GitHub `main` redeploya ambos; dominio canónico + redirects 308
 - **Relevance query↔title**: filtro Node+Python — marca/modelo sola (`iphone`) exige substring; categoría sola (`perfume`) no — evita junk tipo baffle en #1
 - **Envío gratis con señal real**: `shipping.free` desde VTEX `ShippingSLA[].Price==0` y ML `free_shipping` (gana sobre regex del hint) · pill SortBar re-activado · paridad Node↔Python (fixture contrato con ShippingSLA) — §T37/§V25
 - **Speed Firecrawl-inspired** (scraper Python): caché de ofertas por host (TTL 10min, dedupe, cap 30/host) · sitemap discovery (hosts no-VTEX curados, caché 24h) · probes en paralelo (pipeline 2 etapas) · warm cache de búsquedas populares (`WARM_CACHE=1`) — §T39–T42 · E2E: 2da búsqueda misma query 0 fetches (1008ms vs 2447ms) · **conceptos reimplementados desde cero, sin código de Firecrawl (AGPL-3.0)** — atribución en `docs/ATTRIBUTIONS.md` + `NOTICE`
 - **ML circuit breaker**: `_CircuitBreaker` en `search_mla` (threshold 3, cooldown 300s, half-open) — tras N fallos consecutivos skip ML por cooldown; éxito resetea; búsqueda degrada sin ML, nunca falla — §T43/§V26
-- **Warm cache opt-in**: `WARM_CACHE=1` (A1/full); Micro prod suele `WARM_CACHE=0` — §T42
+- **Warm cache ON en prod**: `WARM_CACHE=1` en `fly.toml` — §T42
 - **Tema automático del dispositivo**: `useTheme` sigue `prefers-color-scheme` del SO (incluidos cambios en vivo) y persiste en `localStorage` **solo tras un toggle manual** — 3 tests nuevos
 - UI: logo → home idle; link GitHub del repo en header; filtro “Solo local” eliminado
-- **Scrapling session + platform seeds**: `FetcherSession` por worker, fetch kinds `hub|api|html`, early-stop; índice `ar-shops.json` v3 (`platform`/`alive`/`entry`) + probe offline `scripts/probe_ar_shops.py`; parsers Woo Store API + Shopify suggest/products; seeds platform-aware Node↔Python; `STEALTH_FETCH` gated (off default prod) — §T30–T33
+- **Scrapling session + platform seeds**: `FetcherSession` por worker, fetch kinds `hub|api|html`, early-stop; índice `ar-shops.json` v3 (`platform`/`alive`/`entry`) + probe offline `scripts/probe_ar_shops.py`; parsers Woo Store API + Shopify suggest/products; seeds platform-aware Node↔Python; `STEALTH_FETCH` gated (off en Fly) — §T30–T33
 - Streaming real por SSE: cards parciales en el frontend mientras el crawler corre — §T19/T20/T21
 - Índice curado de tiendas AR `shared/ar-shops.json` expandido de 14 a **88 tiendas** (32 con entry VTEX probeado con el fetcher real): fuentes comparaya.net API + precialo.com.ar — §T29
 - Test de contrato de seeds Node↔Python: misma query → mismos 24 seeds en el mismo orden (paridad §V19)
@@ -37,7 +33,7 @@ Unreleased = lo que aún no se desplegó. Los refs §T apuntan al plan en `SPEC.
 - Ranking: reputación (índice) + precio + bonus cuotas sin interés (VTEX installments) + cap ML ≤50% — §T23
 
 ### Changed
-- Top-N UI/API: default **25**, steps **50/100** (antes ≤20); `MAX_RESULTS`/`MAX_NODES` → 25/120 (época Fly; hoy Micro/Render perfiles en `docs/DEPLOY.md`); early-stop scraper al cap pedido (ya no corta en 8) — §T46
+- Top-N UI/API: default **25**, steps **50/100** (antes ≤20); `MAX_RESULTS`/`MAX_NODES` Fly → 25/120; early-stop scraper al cap pedido (ya no corta en 8) — §T46
 - Crawler primario: `Fetcher` one-shot → `FetcherSession` reutilizada por worker; guesses de seeds acotados por `platform` del índice (menos 404) — §T30/T32
 - Crawler primario migrado de Node BFS a Scrapling (Python) con stream ndjson `POST /crawl/stream`
 - `shared/contract.ts`: `ProductResult.installments?`, `SearchProgress.results?`
@@ -48,13 +44,13 @@ Unreleased = lo que aún no se desplegó. Los refs §T apuntan al plan en `SPEC.
 - Scraper: `visited` usado antes de definirse en el loop de ML (`crawl.py`)
 - Seeds Node: `ALLOWED_DOMAINS` (export muerto) poblaba el caché del índice a nivel de módulo y anulaba el override `AR_SHOPS_JSON` de los tests; `categoryFor` devolvía `perfume` vs índice `perfumeria` (prioridad por categoría rota) — §B5
 - `onProgress`/tipado de streaming y defaults de depth/nodesVisited
-- Prod Fly desactualizado vs `main` (solo secrets redeploy): `fly deploy` con imagen nueva restableció Carrefour/iPhone vs junk Farmacity (época Fly; **hoy Fly retirado**)
+- Prod Fly desactualizado vs `main` (solo secrets redeploy): `fly deploy` con imagen nueva restableció Carrefour/iPhone vs junk Farmacity
 
 ## [0.1.0] — primeras iteraciones (histórico)
 
 ### Added
-- **ML auto-refresh on 401**: `meli_auth.py` + persist `MELI_TOKEN_FILE` (volume `/data`) — §T38
-- **ML ON en prod**: secrets `MELI_*` + `INCLUDE_ML=1` (hist. Fly `fly.toml`) — §T16
+- **ML auto-refresh on 401**: `meli_auth.py` + persist `MELI_TOKEN_FILE` (Fly volume `/data`) — §T38
+- **ML ON en prod**: Fly secrets `MELI_*` + `INCLUDE_ML=1` (`fly.toml`); OAuth refresh documentado — §T16
 - API Express 5 con jobs en memoria + SSE, calendar de trading, webhook ML (stub)
 - Crawler Node BFS (legacy, respaldo) y crawler Python Scrapling (primario)
 - ML integrado por API oficial (products/search + products/{id}/items), token obligatorio, OFF en prod
