@@ -7,7 +7,7 @@
 
 ## En una línea
 
-v0.2 · Fase 0 cerrada (`#36` @ `4854ab9`) · stashes en ramas `backup/*` · Fase 2: #30 SSRF merged · siguiente #32 golden · T61 bench paralelo · ML ON · 0 bugs §B abiertos.
+v0.2 · Fase 0 cerrada (`#36` @ `4854ab9`) · stashes en ramas `backup/*` · Fase 2 #30–#35 merged · floors 175/63/74/0 · T61 residual pendiente · T61 bench paralelo · ML ON · 0 bugs §B abiertos.
 
 ## §F — protocolo agente (fin de fase)
 
@@ -36,6 +36,20 @@ v0.2 · Fase 0 cerrada (`#36` @ `4854ab9`) · stashes en ramas `backup/*` · Fas
 | Bench DNS-cache effect | ⏳ medir en Micro / local ×3 post-merge |
 
 ## Ledger (evidencia — no afirmar de memoria)
+
+### Post-merge Fase 2 (#30–#35) — 2026-09-29
+
+| PR | Tip merge |
+|---|---|
+| #30 SSRF | `e5a42f4` |
+| #32 golden | `422c231` |
+| #31 stock | `28de87f` |
+| #33 T56 | `b13089e` |
+| #34 T52 | `e1db4fb` |
+| #35 docs | `c0e4f07` |
+| Floors | backend **175** · frontend **63** · Python **74** · e2e **0** |
+
+
 
 ### Post-merge #30 SSRF (2026-09-29)
 
