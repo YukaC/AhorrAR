@@ -27,7 +27,7 @@ export default function EmptyState({ params, filtered, onRetry }: EmptyStateProp
             <MapPin aria-hidden="true" size={14} className="shrink-0" />
             {countryName(params.country)}
           </span>
-          .
+          . Revisá si hay un typo o probá con otra escritura (marca + modelo).
         </p>
       )}
       <button
