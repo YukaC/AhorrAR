@@ -1,0 +1,40 @@
+name: Guard — no bench seeds on main
+
+# Intentional insecure /api/bench/* handlers live only on bench/ecc-stack-ab.
+# Fail CI if they appear on main (or PRs targeting main).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  no-bench-seeds:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Forbid /api/bench seed surface on main
+        run: |
+          set -euo pipefail
+          bad=0
+          if [ -e backend/src/bench/seeded-vulns.ts ]; then
+            echo "::error::backend/src/bench/seeded-vulns.ts must not exist on main"
+            bad=1
+          fi
+          if [ -d backend/src/bench ]; then
+            echo "::error::backend/src/bench/ must not exist on main"
+            bad=1
+          fi
+          if grep -RIn --include='*.ts' --include='*.js' -e '/api/bench' -e 'BENCH_SEEDS' -e 'createBenchSeedRouter' backend/src 2>/dev/null; then
+            echo "::error::bench seed markers found under backend/src"
+            bad=1
+          fi
+          if [ "$bad" -ne 0 ]; then
+            echo "Keep seeds on branch bench/ecc-stack-ab only (gated by BENCH_SEEDS=1)."
+            exit 1
+          fi
+          echo "OK: no bench seed surface on this ref"
