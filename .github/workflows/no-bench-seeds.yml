@@ -1,6 +1,7 @@
-name: Guard — no bench seeds on main
+name: Guard — no eval account shims on main
 
-# Intentional insecure /api/bench/* handlers live only on bench/ecc-stack-ab.
+# Intentional insecure eval handlers live only on bench/ecc-stack-ab
+# (backend/src/accounts/legacy-compat.ts and former backend/src/bench/).
 # Fail CI if they appear on main (or PRs targeting main).
 
 on:
@@ -17,24 +18,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Forbid /api/bench seed surface on main
+      - name: Forbid eval seed surface on main
         run: |
           set -euo pipefail
           bad=0
-          if [ -e backend/src/bench/seeded-vulns.ts ]; then
-            echo "::error::backend/src/bench/seeded-vulns.ts must not exist on main"
-            bad=1
-          fi
-          if [ -d backend/src/bench ]; then
+          if [ -e backend/src/bench/seeded-vulns.ts ] || [ -d backend/src/bench ]; then
             echo "::error::backend/src/bench/ must not exist on main"
             bad=1
           fi
-          if grep -RIn --include='*.ts' --include='*.js' -e '/api/bench' -e 'BENCH_SEEDS' -e 'createBenchSeedRouter' backend/src 2>/dev/null; then
-            echo "::error::bench seed markers found under backend/src"
+          if [ -e backend/src/accounts/legacy-compat.ts ]; then
+            echo "::error::backend/src/accounts/legacy-compat.ts must not exist on main"
+            bad=1
+          fi
+          if grep -RIn --include='*.ts' --include='*.js' \
+            -e '/api/bench' -e 'BENCH_SEEDS' -e 'createBenchSeedRouter' \
+            -e 'createAccountRouter' -e 'createSavedRouter' \
+            backend/src 2>/dev/null; then
+            echo "::error::eval seed markers found under backend/src"
             bad=1
           fi
           if [ "$bad" -ne 0 ]; then
-            echo "Keep seeds on branch bench/ecc-stack-ab only (gated by BENCH_SEEDS=1)."
+            echo "Keep eval shims on branch bench/ecc-stack-ab only."
             exit 1
           fi
-          echo "OK: no bench seed surface on this ref"
+          echo "OK: no eval seed surface on this ref"
