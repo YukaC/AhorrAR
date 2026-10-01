@@ -1,7 +1,6 @@
 name: Guard — no eval account shims on main
 
-# Intentional insecure eval handlers live only on bench/ecc-stack-ab
-# (backend/src/accounts/legacy-compat.ts and former backend/src/bench/).
+# Eval-only account/saved API helpers live on branch bench/ecc-organic-eval.
 # Fail CI if they appear on main (or PRs targeting main).
 
 on:
@@ -14,31 +13,27 @@ permissions:
   contents: read
 
 jobs:
-  no-bench-seeds:
+  no-eval-shims:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Forbid eval seed surface on main
+      - name: Forbid eval account/saved shims on main
         run: |
           set -euo pipefail
           bad=0
-          if [ -e backend/src/bench/seeded-vulns.ts ] || [ -d backend/src/bench ]; then
-            echo "::error::backend/src/bench/ must not exist on main"
-            bad=1
-          fi
-          if [ -e backend/src/accounts/legacy-compat.ts ]; then
-            echo "::error::backend/src/accounts/legacy-compat.ts must not exist on main"
+          if [ -d backend/src/accounts ] || [ -d backend/src/saved ] || [ -d backend/src/bench ]; then
+            echo "::error::eval shim directories must not exist on main (accounts/ saved/ bench/)"
             bad=1
           fi
           if grep -RIn --include='*.ts' --include='*.js' \
             -e '/api/bench' -e 'BENCH_SEEDS' -e 'createBenchSeedRouter' \
-            -e 'createAccountRouter' -e 'createSavedRouter' \
+            -e 'createProfileRouter' -e 'createAccountSearchesRouter' -e 'createSavedRouter' \
+            -e 'legacy-compat' \
             backend/src 2>/dev/null; then
             echo "::error::eval seed markers found under backend/src"
             bad=1
           fi
           if [ "$bad" -ne 0 ]; then
-            echo "Keep eval shims on branch bench/ecc-stack-ab only."
             exit 1
           fi
-          echo "OK: no eval seed surface on this ref"
+          echo "OK: no eval shim surface on this ref"
