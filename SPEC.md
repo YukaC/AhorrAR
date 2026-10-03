@@ -34,7 +34,7 @@ cmd: `npm --prefix frontend run build` → tsc --noEmit && vite build && node sc
 check = `npm run check`
 env: PORT · HOST · CORS_ORIGINS · CRAWLER · SCRAPLING_URL · INCLUDE_ML · MELI_* · STEALTH_FETCH · STEALTH_PROXY
 deploy: Vercel UI + **OCI Micro** API primario (`147.15.72.239.sslip.io`) · Render Free **backup** · A1 ARM DISABLED cupo · Fly retirado · docs/PROD.md · deploy/oci/MICRO-PLAN.md
-docs: `docs/ARCHITECTURE.md` · `docs/progress.md` · `docs/testing-strategy.md` · `docs/CRAWL.md` (política crawl/opt-out) · `docs/decisions/*.md` · `docs/ATTRIBUTIONS.md` · `AGENTS.md` · `ROADMAP.md` · `CHANGELOG.md` · `DONT_DO.md` · `docs/golden-baseline.md` (T58)
+docs: `docs/ARCHITECTURE.md` · `docs/progress.md` · `docs/testing-strategy.md` · `docs/VERIF-HYGIENE.md` (hooks + tiempos de check/related) · `docs/CRAWL.md` (política crawl/opt-out) · `docs/decisions/*.md` · `docs/ATTRIBUTIONS.md` · `AGENTS.md` · `ROADMAP.md` · `CHANGELOG.md` · `DONT_DO.md` · `docs/golden-baseline.md` (T58)
 
 §V
 V1: ∀ result publicado → shipping.confirmed=true ∧ country=Query.country
