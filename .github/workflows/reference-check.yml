@@ -1,0 +1,33 @@
+name: Reference Architecture Check
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  reference-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Run reference architecture checks
+        run: |
+          chmod +x .ra/checks/ra-checks
+          bash .ra/checks/ra-checks .
+
+      - name: Install dependencies
+        run: |
+          npm --prefix backend ci && npm --prefix frontend ci && cd scraper && uv sync && cd ..
+
+      - name: Run project check
+        run: |
+          bash scripts/check
