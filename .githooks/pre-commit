@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Fast pre-commit: typecheck only. Full `check` runs on pre-push / CI.
+# Fast pre-commit: typecheck + tests related to the staged files (< ~15 s measured).
+# Full `check` runs on pre-push / CI.
 set -euo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
@@ -18,4 +19,35 @@ if [ -f package.json ] && python3 -c 'import json,sys; s=json.load(open("package
   esac
 else
   echo "pre-commit: SALTADO (sin typecheck)"
+fi
+
+# Related tests: only the suites that import the files being committed.
+# vitest related needs paths relative to its own package root.
+run_related() {
+  local pkg="$1"; shift
+  [ "$#" -gt 0 ] || return 0
+  [ -d "$pkg/node_modules" ] || { echo "pre-commit: $pkg SALTADO (sin node_modules)"; return 0; }
+  local rel=()
+  for f in "$@"; do rel+=("${f#"$pkg"/}"); done
+  if [ "${#rel[@]}" -eq 0 ]; then return 0; fi
+  echo "pre-commit: vitest related en $pkg (${#rel[@]} archivo/s)"
+  ( cd "$pkg" && npx vitest related --run "${rel[@]}" )
+}
+
+mapfile -t STAGED < <(git diff --cached --name-only --diff-filter=ACMR)
+BE=() ; FE=()
+for f in "${STAGED[@]}"; do
+  [ -n "$f" ] || continue
+  case "$f" in
+    backend/*)  case "$f" in *.ts|*.tsx) BE+=("$f") ;; esac ;;
+    frontend/*) case "$f" in *.ts|*.tsx) FE+=("$f") ;; esac ;;
+    shared/*)   BE+=("$f"); FE+=("$f") ;;
+  esac
+done
+
+if [ "${#BE[@]}" -eq 0 ] && [ "${#FE[@]}" -eq 0 ]; then
+  echo "pre-commit: sin archivos de código staged (related SALTADO)"
+else
+  run_related backend "${BE[@]+"${BE[@]}"}"
+  run_related frontend "${FE[@]+"${FE[@]}"}"
 fi
