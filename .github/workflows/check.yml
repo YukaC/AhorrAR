@@ -21,6 +21,19 @@ jobs:
           cache-dependency-path: |
             backend/package-lock.json
             frontend/package-lock.json
+
+      # backend/test/parsers-contract.test.ts shells out to `uv run python` to compare the
+      # Node and Python parsers. GitHub runners do not ship uv, and without a pre-synced venv
+      # the first `uv run` downloads CPython + the whole dependency set inside the test and
+      # blows the 5 s vitest timeout. Sync before the suite runs.
+      - uses: astral-sh/setup-uv@v10
+        with:
+          version: '0.12.19'
+          enable-cache: true
+          cache-dependency-glob: scraper/uv.lock
+      - name: Sync scraper venv
+        run: uv sync --project scraper
+
       - name: Install
         run: |
           npm --prefix backend ci
