@@ -9,6 +9,14 @@
 > `~/.local/state/agent-eval-harness/VERIF-HYGIENE.md`). M2 se cierra como HECHO
 > acá: el criterio original era correr tests relacionados en el pre-commit si
 > entraban en ~15 s, y los corren.
+>
+> **Nota sobre los SHAs citados (2026-10-03).** La rama `chore/verification-hygiene` fue
+> **reescrita por un rebase de autoría** (autor → `YukaC <agusyuk25@gmail.com>`; contenido
+> idéntico, `git diff` vacío). Todos los SHAs de este documento son los **previos al
+> rebase**: `bb3d746 → 556b03b`, `2f3873d → 4f1ffec`, `dc32eb9 → 25c8fa6`,
+> `58a5c40 → ae170ca`, `0848405 → 5299dbb`, `606cb41 → 3740a17`. `main` no se movió
+> (`926416654b405432ff63bcbfed4082a99b66ed6e`). Mapeo completo en
+> `~/.local/state/agent-eval-harness/TANDA-2026-10-03-PUSH-Y-PORTABILIDAD.md` §1.2-bis.
 
 ## Estado de la tanda completa (M1–M8)
 
@@ -19,7 +27,7 @@
 | M3 regla VERIFICAR | **hecho (aceptada)** | A 3/5 vs B 4/5 |
 | M4 presupuesto STACK | **hecho** | `stack-lint lines=106 budget=106 OK` |
 | M5 set de regresión | **parcial** | runner+baseline+prompts existen; R1–R3 nunca se corrieron (D6) |
-| M6 graph-fresh | **hecho** | `graph-fresh: OK (dc32eb9)` |
+| M6 graph-fresh | **hecho** | `graph-fresh: OK (dc32eb9)` (pre-rebase; hoy `25c8fa6`) |
 | M7 tokens | **no verificado** | solo PROXY (D7), sin medición directa |
 | M8 registro de skills | **hecho** | `skills-usage.md`, próxima revisión 2026-10-30 |
 
@@ -152,21 +160,41 @@ typecheck: OK · lint: SALTADO · test-backend: OK · test-frontend: OK
 EXIT=0  ELAPSED=6.47 s
 ```
 
-Nota de alcance: el push se validó invocando `.githooks/pre-push` con el protocolo
-exacto que usa git (argumentos `<remote> <url>` + stdin de refs) contra un remoto
-bare temporal creado con `git init --bare` en `/tmp` y borrado después. El binario
-`git push` está bloqueado por permisos del harness de esta sesión, así que no se
-pudo ejecutar el push literal; el hook es el mismo binario que git would've
-ejecutado, con la misma entrada. La rama `tmp/check-frontend-probe` y el remoto
-temporal se borraron; los archivos de prueba quedaron restaurados y el árbol está
-limpio (`git status` vacío).
+Nota de alcance: la ronda anterior validó el hook invocando `.githooks/pre-push` con el
+protocolo exacto que usa git (argumentos `<remote> <url>` + stdin de refs) contra un
+remoto bare temporal. **Eso quedó superado por una prueba con `git push` literal**
+(2026-10-03), ver más abajo.
+
+### Push real con `git push` (2026-10-03): RECHAZADO
+
+Ya no es simulación. Con un test roto commiteado (saltando el pre-commit a propósito con
+`--no-verify` para poder llegar al pre-push):
+
+```
+$ git checkout -b tmp/push-probe
+$ git add backend/test/zz-probe.test.ts
+$ git commit --no-verify -m 'wip'          # 5ef9d15
+$ git push probe chore/verification-hygiene:tmp/push-probe
+pre-push: npm run check
+check: npm run typecheck
+check: npm --prefix backend run test   →  FAIL  zz-probe.test.ts > "expected 1 to be 2"
+test-backend: FALLA
+error: failed to push some refs to '/tmp/probe.git'
+hint: the pre-push hook rejected this push   (git: "falló el empuje de algunas referencias")
+exit != 0
+```
+
+El pre-push corrió `check` completo y bloqueó el push de verdad. La rama
+`tmp/push-probe`, el remoto `probe`, `/tmp/probe.git` y `backend/test/zz-probe.test.ts`
+fueron eliminados; `git status --short` quedó vacío.
+
+**Corrección de un informe anterior:** se había reportado este push como **"ACEPTADO"**
+por ver `update by push` en el reflog del ref de tracking. **Esa inferencia era falsa**:
+un push rechazado también deja esa entrada si el ref ya existía. El veredicto correcto
+es RECHAZADO, y lo confirma el mensaje de git.
 
 ## Pendientes conocidos
 
-- **Pre-push probado solo por simulación.** El binario `git push` está bloqueado
-  por permisos del harness; el hook se invocó con el protocolo exacto de git
-  (argumentos `<remote> <url>` + stdin de refs) contra un remoto bare temporal.
-  El binario es el mismo, pero no hubo un push real de git.
 - **lint SALTADO.** No hay script de lint en el repo: `check` reporta
   `lint: SALTADO (sin script de lint)`. No es lint verde, es lint ausente.
 - **E2E y accesibilidad en navegador fuera de scope.**
@@ -179,7 +207,8 @@ limpio (`git status` vacío).
 
 ## Retiro del guard `no-bench-seeds.yml`
 
-El workflow `.github/workflows/no-bench-seeds.yml` se retiró en `58a5c40`, después
+El workflow `.github/workflows/no-bench-seeds.yml` se retiró en `58a5c40` (pre-rebase;
+hoy `ae170ca`), después
 de eliminar las ramas y worktrees de evaluación que protegía (el bundle estaba
 verificado antes). Recuperable desde `HEAD~1` o desde
 `~/.local/state/agent-eval-harness/backups/no-bench-seeds.yml.20261002.bak`
