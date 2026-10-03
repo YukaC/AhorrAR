@@ -10,6 +10,19 @@
 > acá: el criterio original era correr tests relacionados en el pre-commit si
 > entraban en ~15 s, y los corren.
 
+## Estado de la tanda completa (M1–M8)
+
+| M | estado | evidencia |
+|---|---|---|
+| M1 check canónico | **hecho** | `npm run check` verde, un paso reportado por workspace |
+| M2 hooks/CI | **hecho** (evidencia D19) | 4 rechazos con test rojo y 2 pases limpios; peor caso 6.70 s < 15 s |
+| M3 regla VERIFICAR | **hecho (aceptada)** | A 3/5 vs B 4/5 |
+| M4 presupuesto STACK | **hecho** | `stack-lint lines=106 budget=106 OK` |
+| M5 set de regresión | **parcial** | runner+baseline+prompts existen; R1–R3 nunca se corrieron (D6) |
+| M6 graph-fresh | **hecho** | `graph-fresh: OK (dc32eb9)` |
+| M7 tokens | **no verificado** | solo PROXY (D7), sin medición directa |
+| M8 registro de skills | **hecho** | `skills-usage.md`, próxima revisión 2026-10-30 |
+
 ## M1 — check canónico
 
 **Estado: HECHO.** `npm run check` corre typecheck + lint + una suite de tests por
@@ -18,10 +31,12 @@ para incluir frontend: ver "Cambio de contrato de `check`" más abajo.
 
 ## M2 — hooks de verificación local
 
-**Estado: HECHO.** El criterio original de M2 (meter los tests relacionados al
-pre-commit si su costo conjunto con typecheck entra en ~15 s) **se cumple con
-holgura**: peor caso medido 6.70 s. No hay decisión de design compensatoria que
-registrar en `docs/decisions/`.
+**Estado: HECHO (re-cerrado según D19).** El criterio original de M2 (meter los tests
+relacionados al pre-commit si su costo conjunto con typecheck entra en ~15 s) **se cumple
+con holgura**: peor caso medido 6.70 s. La evidencia previa era de la era D2b (pre-commit =
+typecheck-only) y quedó obsoleta cuando el pre-commit volvió a correr tests: D17 ya no
+describe el estado actual. No hay decisión de design compensatoria que registrar en
+`docs/decisions/`.
 
 ### Diseño final
 
