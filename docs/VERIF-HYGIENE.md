@@ -188,20 +188,11 @@ El pre-push corrió `check` completo y bloqueó el push de verdad. La rama
 `tmp/push-probe`, el remoto `probe`, `/tmp/probe.git` y `backend/test/zz-probe.test.ts`
 fueron eliminados; `git status --short` quedó vacío.
 
-**Corrección de un informe anterior:** se había reportado este push como **"ACEPTADO"**
-por ver `update by push` en el reflog del ref de tracking. **Esa inferencia era incorrecta**:
-git actualiza el ref de tracking solo si el remoto acepta el push; si el hook rechaza el
-push antes de que el remoto lo reciba, el ref de tracking no se actualiza por ese rechazo.
+**Corrección de la evidencia de push:** git actualiza el ref de tracking solo si el remoto acepta el push. La evidencia válida se compone de dos hechos separados:
+(1) **Push de la rama limpia: ACEPTADO** (reflog `update by push @ dc32eb9` pre-rebase, push que el remoto sí recibió y aceptó).
+(2) **Push con test roto: RECHAZADO por el pre-push** (`test-backend: FALLA`, git terminó con "falló el empuje de algunas referencias", push nunca llegó al remoto).
+La primera prueba era válida para un push limpio pero no probaba el rechazo de un push con test roto.
 
-Los dos hechos que constituyen la evidencia válida son independientes:
-
-1. **Push de la rama limpia: ACEPTADO.** El push de `chore/verification-hygiene` al
-   remoto fue aceptado. El reflog muestra `update by push @ dc32eb9` (pre-rebase), que
-   sí refleja un push que el remoto recibió y aceptó.
-2. **Push con test roto: RECHAZADO por el pre-push.** El hook `pre-push` corrió
-   `npm run check`, detectó `test-backend: FALLA` y terminó con exit ≠ 0. Git reportó
-   `"falló el empuje de algunas referencias"` y el push nunca llegó al remoto. La primera
-   prueba era válida para un push limpio pero no probaba el rechazo de un push con test roto.
 
 ## Pendientes conocidos
 
