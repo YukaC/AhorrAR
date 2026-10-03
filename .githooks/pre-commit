@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Pre-commit: full project `check` when defined (kept under ~15s on the pilot repo).
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+run_check() {
+  if [ -f package.json ] && python3 -c 'import json,sys; s=json.load(open("package.json")).get("scripts") or {}; sys.exit(0 if "check" in s else 1)'; then
+    if [ -f pnpm-lock.yaml ]; then pm=pnpm
+    elif [ -f yarn.lock ]; then pm=yarn
+    elif [ -f bun.lockb ] || [ -f bun.lock ]; then pm=bun
+    else pm=npm
+    fi
+    echo "pre-commit: $pm run check"
+    case "$pm" in
+      pnpm) pnpm run check ;;
+      yarn) yarn run check ;;
+      bun) bun run check ;;
+      *) npm run check ;;
+    esac
+  elif [ -x "${HOME}/.agents/scripts/check" ]; then
+    env CHECK_ROOT="$ROOT" "${HOME}/.agents/scripts/check"
+  else
+    echo "pre-commit: SALTADO (sin check)"
+  fi
+}
+
+run_check

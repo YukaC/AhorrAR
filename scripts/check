@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Thin wrapper: prefer shared house check; fallback for CI / machines without it.
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+SHARED="${CHECK_BIN:-${HOME}/.agents/scripts/check}"
+if [ -x "$SHARED" ]; then
+  exec env CHECK_ROOT="$ROOT" "$SHARED"
+fi
+# Fallback: same discovered steps the shared script would prefer here
+npm run typecheck
+npm test
