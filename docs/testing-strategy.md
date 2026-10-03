@@ -53,8 +53,9 @@
   `npm run typecheck && npm test && npm --prefix frontend run test && npm --prefix frontend run test:e2e && npm run build`
   (+ `cd scraper && uv run python -m unittest discover -s tests -q`).
 - Hooks locales (`core.hooksPath=.githooks`): pre-commit = typecheck + `vitest related`
-  de los archivos staged · pre-push = `npm run check`. Tiempos medidos y alcance
-  real de `check` (los tests de frontend quedan afuera): `docs/VERIF-HYGIENE.md`.
+  de los archivos staged (ambos workspaces) · pre-push = `npm run check`, que ya
+  corre las suites de backend **y** frontend. Tiempos medidos, contrato de `check`
+  y el e2e que sigue afuera: `docs/VERIF-HYGIENE.md`.
 
 ## Convenciones
 
