@@ -1,0 +1,42 @@
+name: Check
+
+# Mirror of local `npm run check`. Agents can bypass local hooks; CI is authoritative.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      # backend/test/parsers-contract.test.ts shells out to `uv run python` to compare the
+      # Node and Python parsers. GitHub runners do not ship uv, and without a pre-synced venv
+      # the first `uv run` downloads CPython + the whole dependency set inside the test and
+      # blows the 5 s vitest timeout. Sync before the suite runs.
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: '0.12.19'
+          enable-cache: true
+          cache-dependency-glob: scraper/uv.lock
+      - name: Sync scraper venv
+        run: uv sync --project scraper
+
+      - name: Install
+        run: |
+          npm --prefix backend ci
+          npm --prefix frontend ci
+      - name: check
+        run: npm run check

@@ -428,11 +428,6 @@ function isCrossClassConflict(hay: string, tokens: string[]): boolean {
   return claimed !== want;
 }
 
-function significantTitleTokens(hay: string): string[] {
-  const raw = hay.match(TOKEN_RE) ?? [];
-  return raw.filter((t) => !STOP.has(t) && t.length >= 2);
-}
-
 /** Strip parentheticals and trailing negation clauses from a normalized title. */
 function stripParensAndNegations(hay: string): string {
   let s = hay.replace(/\([^)]*\)/g, ' ');
