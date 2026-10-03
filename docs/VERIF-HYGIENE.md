@@ -3,6 +3,18 @@
 > Estado real de los hooks y del comando canónico de check, con los tiempos medidos
 > en esta máquina. Complementa `docs/testing-strategy.md` (qué se testea) y `§I`
 > de `SPEC.md` (`check = npm run check`).
+>
+> Este doc cubre **M1 y M2** del piloto de verificación (M3–M8 son del stack de
+> reglas del harness y se registran en
+> `~/.local/state/agent-eval-harness/VERIF-HYGIENE.md`). M2 se cierra como HECHO
+> acá: el criterio original era correr tests relacionados en el pre-commit si
+> entraban en ~15 s, y los corren.
+
+## M1 — check canónico
+
+**Estado: HECHO.** `npm run check` corre typecheck + lint + una suite de tests por
+workspace, con un paso reportado por línea. Verde en 6.46 s. El contrato cambió
+para incluir frontend: ver "Cambio de contrato de `check`" más abajo.
 
 ## M2 — hooks de verificación local
 
@@ -134,9 +146,26 @@ ejecutado, con la misma entrada. La rama `tmp/check-frontend-probe` y el remoto
 temporal se borraron; los archivos de prueba quedaron restaurados y el árbol está
 limpio (`git status` vacío).
 
-## Pendiente a propósito
+## Pendientes conocidos
 
-El e2e de Playwright (`npm --prefix frontend run test:e2e`) sigue fuera de
-`check`, y por lo tanto fuera de CI. Agregarlo es una decisión de scope propia:
-arranca un browser, no es comparable en costo a un vitest de jsdom, y hoy
-`docs/testing-strategy.md` ya lo lista como paso aparte.
+- **Pre-push probado solo por simulación.** El binario `git push` está bloqueado
+  por permisos del harness; el hook se invocó con el protocolo exacto de git
+  (argumentos `<remote> <url>` + stdin de refs) contra un remoto bare temporal.
+  El binario es el mismo, pero no hubo un push real de git.
+- **lint SALTADO.** No hay script de lint en el repo: `check` reporta
+  `lint: SALTADO (sin script de lint)`. No es lint verde, es lint ausente.
+- **E2E y accesibilidad en navegador fuera de scope.**
+  `npm --prefix frontend run test:e2e` (Playwright) sigue fuera de `check` y de
+  CI: arranca un browser y no es comparable en costo a un vitest de jsdom.
+- **CI sin proteger hasta mergear.** Mientras `chore/verification-hygiene` no esté
+  mergeada, el `check.yml` de la rama no corrió nunca y la verificación es
+  local/hooks.
+- **Tokens (M7) sin medición real.** Solo proxy; ver el registro del harness.
+
+## Retiro del guard `no-bench-seeds.yml`
+
+El workflow `.github/workflows/no-bench-seeds.yml` se retiró en `58a5c40`, después
+de eliminar las ramas y worktrees de evaluación que protegía (el bundle estaba
+verificado antes). Recuperable desde `HEAD~1` o desde
+`~/.local/state/agent-eval-harness/backups/no-bench-seeds.yml.20261002.bak`
+(sha256 `99283ca5…` idéntico al original).
