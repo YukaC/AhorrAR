@@ -1,5 +1,18 @@
 {
   "mode": "warn",
+  "rules": {
+    "hardcoded-secrets": "block",
+    "http-timeout": "block",
+    "db-pool": "block",
+    "health-endpoint": "block",
+    "structured-logs": "block",
+    "static-cache": "block",
+    "no-orchestrator": "block",
+    "artifact": "block",
+    "design-tokens": "block",
+    "a11y-basic": "block",
+    "ui-states": "block"
+  },
   "allow": {
     "disk_paths": ["data/", "tmp/", "storage/", "uploads/", "cache/"],
     "endpoints": ["/api/health", "/healthz", "/health", "/api/healthz", "/readyz"],

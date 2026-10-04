@@ -26,7 +26,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm --prefix backend ci && npm --prefix frontend ci && cd scraper && uv sync && cd ..
+          npm install && cd scraper && uv sync && cd ..
 
       - name: Run project check
         run: |

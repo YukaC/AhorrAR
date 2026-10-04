@@ -103,6 +103,16 @@ def check_modes(verbose: bool) -> bool:
         )
         warn_code, warn_out = run_check(root, "module_state", mode="warn")
         block_code = run_check(root, "module_state", mode="block")[0]
+        
+        # Test per-rule mode blocking via .ra-check.json
+        write_files(
+            root,
+            {
+                ".ra-check.json": '{\n  "mode": "warn",\n  "rules": {\n    "stateless-app": "block"\n  }\n}\n'
+            }
+        )
+        per_rule_block_code = run_check(root, "module_state")[0]
+
         for name in ("src/session-store.js",):
             (root / name).unlink(missing_ok=True)
         clean_block_code = run_check(root, "module_state", mode="block")[0]
@@ -116,6 +126,7 @@ def check_modes(verbose: bool) -> bool:
             any(f["check"] == "stateless-app" for f in parse_findings(warn_out)),
         ),
         ("block mode exits 1 with violations", block_code == 1),
+        ("per-rule block mode exits 1 with violations", per_rule_block_code == 1),
         ("block mode exits 0 once clean", clean_block_code == 0),
     ]
     for label, passed in checks:
@@ -145,6 +156,7 @@ def _check_name(rule: str) -> str:
         "design_tokens": "design-tokens",
         "a11y_basic": "a11y-basic",
         "ui_states": "ui-states",
+        "lint_ratchet": "lint-ratchet",
     }[rule]
 
 
@@ -159,6 +171,23 @@ def check_unified_ci_templates(verbose: bool) -> bool:
     if verbose or not match:
         print(f"{'OK' if match else 'FALLA'} templates/call-reference-check.yml y starter/ci/reference-check.yml son identicos")
     return match
+
+
+def check_ci_generator_fixes(verbose: bool) -> bool:
+    f1 = REPO_ROOT / "templates" / "call-reference-check.yml"
+    content = f1.read_text(encoding="utf-8")
+    if "bash .ra/checks/ra-checks ." not in content:
+        if verbose:
+            print("FALLA: plantilla CI no usa bash para ra-checks")
+        return False
+    adopt_code = (REPO_ROOT / "bin" / "adopt").read_text(encoding="utf-8")
+    if "pnpm/action-setup@v4" not in adopt_code or "node-version: 22" not in adopt_code:
+        if verbose:
+            print("FALLA: bin/adopt no incluye pnpm v4 o Node 22 en CI generator")
+        return False
+    if verbose:
+        print("OK: plantillas CI y bin/adopt contienen los arreglos de runner bash, pnpm v4 y Node 22")
+    return True
 
 
 def main() -> int:
@@ -179,6 +208,9 @@ def main() -> int:
         return 1
     if not check_unified_ci_templates(args.verbose):
         print("FALLARON: plantillas CI divergen")
+        return 1
+    if not check_ci_generator_fixes(args.verbose):
+        print("FALLARON: verificaciones de CI generator fixes")
         return 1
     return 0
 
