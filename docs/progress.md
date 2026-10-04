@@ -7,19 +7,29 @@
 
 ## En una línea
 
-v0.2 · **Plan cerrado** · prod pin `e1db4fb`/`e9504ec0` (SSRF incluido) · main adelante sin deploy · #39 límite conocido.
+v0.4 · **Plan §T cerrado en git** · docs sync 2026-10-04 · prod **pineada** (imagen vieja a propósito) · #39 = IP datacenter · sin más trabajo de plan; ops/producto opcionales.
 
-## Estado de cierre (2026-09-29)
+## Estado actual (2026-10-04)
 
-**Producción (Micro):** imagen anclada `ghcr.io/yukac/ahorrar-api@sha256:e9504ec0086e1e67a23a56c30e796e7ebed684d302a2605d2ab74d5f4a68888d` · rev `e1db4fb` · incluye **#30 SSRF** y el stack pre–merge masivo T61 en git (`cab0797` en `:micro` tip, no en VM). El pin en `deploy/oci/.env` evita que CI reemplace el contenedor.
+Tres capas distintas (no confundir):
 
-**En `main` sin desplegar:** revert same-cat (#37), stock/dedupe (#31), T56 (#33), índice re-probado T52 (#34), T61 (#29), etc. **No se despliega:** mismo día ryzen hosts 7→5 y heladera 9→5 vs pin (Micro cold ×3). Desplegar bajaría variedad sin beneficio visible acordado.
+| Capa | Qué es | Estado |
+|---|---|---|
+| **Código / plan** | `SPEC.md` §T1–T62 | **Cerrado** en `main` (PRs #29–#34 + cierre #39/#40) |
+| **Producción (VM OCI)** | contenedor que sirve `*.sslip.io` | **Pineada** a digest `e9504ec0…` / rev `e1db4fb` (pre–T61). CI no la pisa mientras viva `AHORRAR_IMAGE` en `deploy/oci/.env` |
+| **Ideas futuras** | PWA / alertas / historial | Solo en `ROADMAP.md` “Más adelante” — sin §T |
 
-**#39 (variedad iphone/zapatillas):** funnel **local** 3–4 hosts; Micro (pin o main) 1–2. PR #40 cerrado sin merge (`HOST_MIN_PRODUCTIVE` 2→4 no cambió hosts). `curl -sI` VTEX search (2026-09-29): **Frávega 403 Micro / 206 local**; Carrefour/Cetrogar/sevensport 200/206 en ambos → bloqueo IP datacenter (al menos Frávega). Límite conocido; arreglo ≠ código (proxy = decisión producto). Issue #39 cerrado.
+**Por qué prod ≠ main:** el 2026-09-29 se mergeó T61 (#29), subió a la VM, el cold bench empeoró variedad (zapatillas hosts 3→1) y wall (iphone p50), y se **hizo rollback** al digest anterior. El pin evita que el próximo merge a `main` vuelva a subir T61 sin decisión explícita.
 
-**Smoke manual prod (pin):** artefacto `/tmp/ahorrar-bench/manual-smoke-pin-20260929.json` · 15 queries. Repetido: zapatillas **1 host**; perfume #1 infantil (relevancia); typo `iphoen 15` → 0 results. Sin otro backlog de plan salvo uso real.
+**Qué hay en `main` y no en la VM (lista corta):** T61 degraded/ML join (#29) · stock/dedupe (#31) · T56 frase núcleo (#33) · índice T52 (#34) · revert same-cat (#37) · hygiene/CI posteriores. SSRF (#30) **sí** está en el pin (iba en el stack previo al rollback de T61).
 
-**Si algún día se quita el pin:** funnel + Micro cold ryzen/heladera el mismo día; distinguir caída de `n` por stock/dedupe (OK) vs hosts.
+**#39 en una frase:** tu PC ve Frávega; la IP de Oracle a veces recibe **403**. No es un bug del crawler; arreglarlo sería proxy/salida distinta (decisión de producto), no más PRs de yield-cut.
+
+**Si se quita el pin / redeploy:** cold Micro ×3 (ryzen/heladera/zapatillas/iphone) el mismo día; separar caída de `n` por stock/dedupe (esperado) vs hosts (malo).
+
+### Histórico cierre plan (2026-09-29) — ledger abajo
+
+Smoke pin: `/tmp/ahorrar-bench/manual-smoke-pin-20260929.json`. Detalle de digests, benches y rollback → secciones **Ledger** siguientes (no borrar: evidencia).
 
 ## §F — protocolo agente (fin de fase)
 
@@ -73,7 +83,7 @@ v0.2 · **Plan cerrado** · prod pin `e1db4fb`/`e9504ec0` (SSRF incluido) · mai
 **Métricas HTTP cold que SÍ hay:** wall · hosts · n · stop_reason (logs) · rss · swap.  
 **Que NO midió este bench HTTP:** P@10 · recall · ml_arrived rate (API Node no expone `stopReason`/`mlArrived` en `stats` aún).
 
-**Auto-deploy hoy:** frenado de facto — `AHORRAR_IMAGE=@sha256:e9504ec0…` en `deploy/oci/.env` + `oci-micro-pull.sh` sourcea `.env`. Un merge a main **no** sube T61 mientras el pin viva. ⊥ Fase 2 hasta decisión redeploy.
+**Auto-deploy (sigue vigente 2026-10-04):** frenado de facto — `AHORRAR_IMAGE=@sha256:e9504ec0…` en `deploy/oci/.env` + `oci-micro-pull.sh` sourcea `.env`. Un merge a main **no** sube la VM mientras el pin viva. Redeploy = decisión explícita (quitar/actualizar pin).
 
 
 
@@ -226,7 +236,7 @@ Commit bench: `79324e8`. Techo local 15s: notebook p50 15058ms (borde). Techo Mi
 | zapatillas nike | 18621 | 24600 | −6.0s | ✗ | 3 |
 | cable | **26440** | 8500 | +17.9s | ✓ | 11 |
 
-**Veredicto T61:** NO cumple p50≤25s (ryzen/notebook/cable). 1 ciclo código ya usado (fix ML price=0). Residual → issue. PR sin merge.
+**Veredicto T61 (pre-merge, histórico):** NO cumple p50≤25s (ryzen/notebook/cable). 1 ciclo código ya usado (fix ML price=0). Residual → issue. *(Después: #29 mergeado + rollback VM; ver Estado actual arriba.)*
 
 Parallel-contended bench (descartado por RAM, artefact `/tmp/ahorrar-bench/t61-micro-parallel-bench.jsonl`) peor aún en perfume/cable.
 
@@ -265,7 +275,7 @@ Parallel-contended bench (descartado por RAM, artefact `/tmp/ahorrar-bench/t61-m
 | Ítem | Categoría | Evidencia |
 |---|---|---|
 | T55 / V30 keep / V34 yield / V33 bytes | **en main** | `1ecd88e` + tests |
-| T61 + e2e T53 | **en rama T61** PR #29 | HEAD `815d4eb` |
+| T61 + e2e T53 | **merged #29** (hist. rama `815d4eb`) | en main; no en pin VM |
 | SSRF V32 / stock T60 / golden T58 / T56 / T52 / CRAWL / ML-COVERAGE | **PRs #30–#35** + backups `backup/*` | stashes intactos; ver hashes arriba |
 | SSRF código en main | **no existe aún** | entra con merge #30 |
 
@@ -307,19 +317,20 @@ Parallel-contended bench (descartado por RAM, artefact `/tmp/ahorrar-bench/t61-m
 
 ## En curso
 
-- **T61** (#29): 4 huecos pre-merge (8q + hosts iphone + registry frío + digest ledger) · merge si variedad OK.
-- Holdout + frase núcleo (#25) · T52 re-probe (#24) · T54 A1 (#26) · zapatillas R@10 (#22) · CodeQL (#27) · stash en `backup/*`.
+Nada del plan §T. Trabajo opcional fuera de plan: redeploy (quitar pin), proxy #39, o features “Más adelante” del ROADMAP.
 
-## Falta
+## Falta (ops / producto — no §T)
 
+- [ ] Redeploy VM al tip de `main` (quitar pin) — decisión humana
+- [ ] Proxy / salida no-datacenter si se quiere variedad Frávega en Micro (#39)
+- [ ] Stage Docker `STEALTH_FETCH=1` — diferido
 - [x] Deploy prod Vercel + API (hoy Micro; históricamente Fly luego Render)
 - [x] ML ON en prod (`MELI_*` secrets + `INCLUDE_ML=1`; re-consent OK) — §T16 / `docs/ML.md`
 - [x] Dominio canónico UI `ahorrarg.vercel.app` (+ redirects 308)
 - [x] **Bloque 0 cerrado** — T55 merged + gate Micro (`1ecd88e` / PR #21) · SPEC §T55=`x`
-- [ ] **T61** — 8q Micro frío + stop_reason → merge #29 si iphone variedad OK
+- [x] **T61** — merge #29 + cold 8q + rollback documentado · §T61=`x` (código en main; **no** en VM)
 - [x] Fase 2 #30–#35 merged
-- [ ] T52 / holdout+núcleo / T54 A1 · zapatillas → #22
-- [ ] Holdout relevancia / frase núcleo (#25)
+- [x] T52 / holdout+núcleo (T56) / T54 docs A1 · residual zapatillas → #39 (IP)
 - [x] **Gate Micro post-T55** (2026-09-29, criterio P1.7) — veredicto **quedarse**:
 
   **Imagen viva:** `revision=1ecd88e…` · digest `sha256:a35d6c038ab6…`  
@@ -386,25 +397,25 @@ Parallel-contended bench (descartado por RAM, artefact `/tmp/ahorrar-bench/t61-m
 
 
 
-### Fase 1 — T61 (rama `perf/t61-ml-degraded`)
+### Fase 1 — T61 — CERRADA (merged #29 · 2026-09-29)
 
 | Afirmación | Evidencia |
 |---|---|
-| PR abierto sin merge | https://github.com/YukaC/AhorrAR/pull/29 |
+| PR mergeado | https://github.com/YukaC/AhorrAR/pull/29 |
 | Residual Micro wall | https://github.com/YukaC/AhorrAR/issues/28 (ryzen/notebook/cable >25s fair) |
-| Pin prod intacto | `:micro` @ `1ecd88e` digest `a35d6c038ab6…` · RestartCount=0 |
+| Post-merge | cold 8q en `cab0797` → rollback a pin `e9504ec0` / `e1db4fb` (ver Ledger arriba) |
 | Un ciclo código | `meli_api._offer_from_listings` → None sin ARS+shipping (evita price=0) |
 
-### Fase 2 — WIP stash → PRs (no merge)
+### Fase 2 — PRs #30–#33 — CERRADA (merged 2026-09-29)
 
-| Ítem | PR | Nota |
+| Ítem | PR | Estado |
 |---|---|---|
-| host-allow/SSRF §V32 | #30 | prioridad seguridad |
-| stock + dedupe §T60 | #31 | |
-| golden T58 + holdout sellado | #32 | tuning P@10 baseline 0.877 |
-| frase núcleo + adaptive §V31/T56 | #33 | commit `6ebfbeb` |
+| host-allow/SSRF §V32 | #30 | merged (en pin prod) |
+| stock + dedupe §T60 | #31 | merged (en main; no en pin) |
+| golden T58 + holdout | #32 | merged |
+| frase núcleo + adaptive §V31/T56 | #33 | merged (en main; no en pin) |
 
-### Fase 4 — holdout + núcleo (medida local)
+### Fase 4 — holdout + núcleo (medida local, histórica)
 
 | Split | P@10 | R@10 |
 |---|---:|---:|
@@ -412,19 +423,17 @@ Parallel-contended bench (descartado por RAM, artefact `/tmp/ahorrar-bench/t61-m
 | holdout | 0.917 | 0.850 |
 | gap | **0.066** | <0.10 → anti-overfit OK |
 
-zapatillas nike R@10=0.60. Conteos rama T56: backend **159** / Python **64** (floors main 148/60).
+zapatillas nike R@10=0.60 (histórico rama T56).
 
-### Fase 3 — T52 (en curso)
+### Fase 3 — T52 — CERRADA (merged #34)
 
-- Script faltante en main: `scripts/reprobe-ar-shops.sh` (ROADMAP lo citaba sin archivo) — se agrega en `chore/t52-index-canary`.
-- Canary ≥2 queries/cat · 2 momentos · streak≥2 para `alive=false` · mass-fail guard 0.55.
-- Revive candidatos (probe dead electro/bazar): `store.sony.com.ar`, `shop.lg.com.ar`, `tramontina.com.ar`.
-- Artefactos: `/tmp/ahorrar-shop-canary-*.json` · log `/tmp/ahorrar-reprobe.log` (completar tras run).
+- `scripts/reprobe-ar-shops.sh` en main · canary ≥2q ×2 momentos · mass-fail guard.
+- Revive candidatos electro/bazar documentados en el PR.
 
 
 ## Bugs conocidos
 
-- Ninguno abierto en `SPEC.md` §B. El error preexistente de typecheck `CrawlStats` en `backend/src/search/bfs.ts:18` (noUnusedLocals) está aceptado sin fix.
+- Ninguno abierto en `SPEC.md` §B (§B14 = #39 IP, cerrado como límite).
 
 ## Bloqueantes
 
