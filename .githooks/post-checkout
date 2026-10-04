@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -uo pipefail
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+cd "$ROOT" || exit 0
+command -v codegraph >/dev/null 2>&1 || exit 0
+(
+  codegraph index . >/dev/null 2>&1 || true
+  git rev-parse HEAD > .codegraph/indexed-head 2>/dev/null || true
+) &
+exit 0

@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Full verification before push.
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+if [ -f package.json ] && python3 -c 'import json,sys; s=json.load(open("package.json")).get("scripts") or {}; sys.exit(0 if "check" in s else 1)'; then
+  if [ -f pnpm-lock.yaml ]; then pm=pnpm
+  elif [ -f yarn.lock ]; then pm=yarn
+  elif [ -f bun.lockb ] || [ -f bun.lock ]; then pm=bun
+  else pm=npm
+  fi
+  echo "pre-push: $pm run check"
+  case "$pm" in
+    pnpm) pnpm run check ;;
+    yarn) yarn run check ;;
+    bun) bun run check ;;
+    *) npm run check ;;
+  esac
+elif [ -x "${HOME}/.agents/scripts/check" ]; then
+  echo "pre-push: shared check"
+  env CHECK_ROOT="$ROOT" "${HOME}/.agents/scripts/check"
+else
+  echo "pre-push: SALTADO (sin check)"
+fi
