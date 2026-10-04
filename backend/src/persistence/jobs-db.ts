@@ -64,7 +64,7 @@ export class JobsDb {
   }
 
   list(): PersistedJob[] {
-    const rows = this.db.prepare('SELECT * FROM jobs').all() as unknown as Array<{
+    const rows = this.db.prepare('SELECT * FROM jobs ORDER BY created_at DESC LIMIT 500').all() as unknown as Array<{
       search_id: string;
       params: string;
       status: string;
