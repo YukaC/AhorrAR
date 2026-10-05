@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "cors": "^2.8.6",
-    "crawlee": "^3.18.1",
+    "crawlee": "^3.18.2",
     "express": "^5.2.1",
     "playwright": "^1.63.0"
   },
